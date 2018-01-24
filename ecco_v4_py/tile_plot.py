@@ -1,0 +1,450 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul  3 16:11:15 2017
+
+@author: ifenty
+"""
+from __future__ import division
+import numpy as np
+import matplotlib.pylab as plt
+import xarray as xr
+from mpl_toolkits.basemap import Basemap
+import pyproj as pyproj
+import time
+from copy import deepcopy
+import pyresample as pr
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+def plot_tiles(tiles,  **kwargs):
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # this routine plots the 13 llc faces in either the original 'llc' layout
+    # or the quasi lat-lon  layout
+    # cmin and cmax are the color minimum and maximum
+    # max.  'tiles' is a DataArray of a single 2D variable
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+    # look for the 'plot_style' optional argument
+    # plot_style = 'nogap' :   do not label tiles and no space between subplot
+    plot_style = 'default'
+
+    # by default use jet colormap
+    user_cmap = 'jet'
+    
+    # by default do not show a colorbar 
+    show_colorbar = False
+
+    # by default the colorbar has no label
+    show_cbar_label = False
+
+    # by default the layout is the original llc 
+    layout = 'llc'
+    
+    # by default take the min and max of the values
+    cmin = np.min(tiles)
+    cmax = np.max(tiles)
+    
+    for key in kwargs:
+        if key == "plot_style" :
+            plot_style = kwargs[key]
+        elif key == "cbar":
+            show_colorbar = kwargs[key]
+        elif key == "user_cmap":
+            user_cmap = kwargs[key]
+        elif key == "cbar_label":
+            cbar_label = kwargs[key]
+            show_cbar_label = True
+        elif key == "layout":
+            layout = kwargs[key]
+        elif key == "cmin":
+            cmin = kwargs[key]
+        elif key == "cmax":
+            cmax =  kwargs[key]
+            
+        else:
+            print "unrecognized argument ", key 
+                
+
+    if layout == 'latlon':
+            
+        f, axarr = plt.subplots(4,4, figsize=(9,9))
+        
+        # plotting of the tiles happens in a 4x4 grid
+        # which tile to plot for any one of the 16 spots is indicated with a list
+        # a value of negative one means do not plot anything in that spot.
+        # the top row will have the Arctic tile.  Where we put the Arctic tile
+        # depends on which other tile it is aligned with.  By default, it is
+        # aligned with tile 6, which is the second column.  
+        tile_order_top_row = [-1, 7, -1, -1]
+        
+        # if we have defined the attribute 'Arctic_Align' then perhaps
+        # the Arctic cap is algined with another tile and therefore it's location
+        # in the figure may be different changed.
+        if 'Arctic_Align' in tiles.attrs:
+            aca = tiles.attrs['Arctic_Align']
+            #print 'Arctic Cap Alignment match with tile: ', aca
+            
+            if  aca == 3: # plot in 1st position, column 1
+                tile_order_top_row = [7, -1, -1, -1]
+            elif aca == 6:# plot in 2nd position, column 2
+                tile_order_top_row = [-1, 7, -1, -1]
+            elif aca == 8:# plot in 3rd position, column 3
+                tile_order_top_row = [-1, -1, 7, -1]
+            elif aca == 11:# plot in 4th position, column 4
+                tile_order_top_row = [-1, -1, -1, 7]
+            else:
+                print 'Arctic Cap Alignment is not one of 3, 6, 8, 11.'
+                    
+        # the order of the rest of the tile is fixed.  four columns each with 
+        # three rows.
+        tile_order_bottom_rows =[3, 6, 8, 11,
+                          2, 5, 9, 12, \
+                          1, 4, 10, 13]
+        
+        # these are lists so to combine tile_orde_first and tile_order_rest 
+        # you just add them in python (wierd).  If these were numpy arrays 
+        # one would use np.concatenate()
+        tile_order = tile_order_top_row + tile_order_bottom_rows
+    
+    elif layout == 'llc':
+        f, axarr = plt.subplots(5,5, figsize=(9,9))
+    
+        # plotting of the tiles happens in a 5x5 grid
+        # which tile to plot for any one of the 25 spots is indicated with a list
+        # a value of negative one means do not plot anything in that spot.
+        tile_order = np.array([-1, -1, 11, 12, 13, \
+                      -1, 7, 8, 9, 10, \
+                      3, 6, -1, -1, -1, \
+                      2, 5, -1, -1, -1, \
+                      1, 4, -1, -1, -1])
+        
+
+
+    # loop through the axes array and plot tiles where tile_order != -1
+    for i, ax in enumerate(axarr.ravel()):
+        ax.axis('off')
+
+        cur_tile_num = tile_order[i]
+        
+        if cur_tile_num > 0:
+            cur_tile = tiles.sel(tile=cur_tile_num)
+         
+            im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                         origin='lower')
+
+            ax.set_aspect('equal')
+            
+            ax.set_title('Tile ' + str(cur_tile_num))
+                
+
+    # show the colorbar
+    if show_colorbar:
+        f.subplots_adjust(right=0.8)
+        #[left, bottom, width, height]
+        h=.6;w=.025
+        cbar_ax = f.add_axes([0.85, (1-h)/2, w, h])
+        cbar = f.colorbar(im, cax=cbar_ax)#, format='%.0e')        
+        if show_cbar_label:
+            cbar.set_label(cbar_label)
+
+    f.show()
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+def plot_tiles_proj(lons, lats, data,  **kwargs):
+    
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # this routine plots the 13 llc faces in Robinson layout
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+    # default projection type
+    projection_type = 'robin'
+    
+    # by default the left most longitude in the global map is -180E.
+    user_lon_0 = 0
+
+    # by default use jet colormap
+    user_cmap = 'jet'
+    
+    # by default do not show a colorbar 
+    show_colorbar = False
+
+    # by default the colorbar has no label
+    show_cbar_label = False
+
+    # by default take the min and max of the values
+    cmin = np.min(data)
+    cmax = np.max(data)
+
+    # 1/4 degree is the default resolution in lon and lat to interpolate
+    dx = .25
+    dy = .25
+    
+    # by default the plot_type is pcolor.
+    plot_type = 'pcolor'
+    
+    # the default number of levels for contourf, 
+    num_levels = 20
+    
+    # default background is to fill continents with gray color
+    background_type = 'fc'
+        
+    #%%
+    for key in kwargs:
+        if key == "lon_0" :
+            user_lon_0 = kwargs[key]
+        elif key == "cbar":
+            show_colorbar = kwargs[key]
+        elif key == "user_cmap":
+            user_cmap = kwargs[key]
+        elif key == "cbar_label":
+            cbar_label = kwargs[key]
+            show_cbar_label = True
+        elif key == "cmin":
+            cmin = kwargs[key]
+        elif key == "cmax":
+            cmax =  kwargs[key]
+        elif key == "dx":
+            dx =  kwargs[key]
+        elif key == "dy":
+            dy =  kwargs[key]
+        elif key == "plot_type":
+            plot_type =  kwargs[key]
+        elif key == "num_levels":
+            num_levels =  kwargs[key]
+        elif key == "projection_type":
+            projection_type = kwargs[key]
+        elif key == "background_type":
+            background_type = kwargs[key]
+        else:
+            print "unrecognized argument ", key     
+
+    #%%
+    if type(lons) == xr.core.dataarray.DataArray:
+        lons_1d = lons.values.reshape(np.product(lons.values.shape))
+        lats_1d = lats.values.reshape(np.product(lats.values.shape))   
+
+    elif type(lons) == np.ndarray:
+        lons_1d = lons.reshape(np.product(lons.shape))
+        lats_1d = lats.reshape(np.product(lats.shape) )       
+    else:
+        print 'lons and lats variable either a DataArray or numpy.ndarray'
+        print 'lons found type ', type(lons)
+        print 'lats found type ', type(lats)        
+        return
+    
+    if type(data) == xr.core.dataarray.DataArray:
+        data = data.values
+
+
+    elif type(data) != np.ndarray:
+        print 'data must be either a DataArray or ndarray type \n'
+        print 'found type ', type(data)
+        return
+
+    #%%
+    # To avoid plotting problems around the date line, lon=180E, -180W 
+    # I take the approach of plotting the field in two parts, A and B.  
+    # Typically part 'A' spans from starting longitude to 180E while part 'B' 
+    # spans the from 180E to 360E + starting longitude.  If the starting 
+    # longitudes or 0 or 180 special case.
+    if user_lon_0 > -180 and user_lon_0 < 180:
+        A_left_limit = user_lon_0
+        A_right_limit = 180
+        B_left_limit =  180
+        B_right_limit = 360+user_lon_0
+        center_lon = A_left_limit + 180
+        
+    elif user_lon_0 == 0:
+        A_left_limit = -180
+        A_right_limit = 0
+        B_left_limit =  0
+        B_right_limit = 180
+        center_lon = 180
+        
+    elif user_lon_0 == 180 or user_lon_0 == -180:
+        A_left_limit = -180
+        A_right_limit = 0
+        B_left_limit =  0
+        B_right_limit = 180
+        center_lon = 0
+    else:
+        print 'invalid starting longitude'
+        #return
+
+    # the number of degrees spanned in part A and part B
+    num_deg_A =  A_right_limit - A_left_limit
+    num_deg_B =  B_right_limit - B_left_limit 
+
+    # We will interpolate the data to the new grid.  Store the longitudes to
+    # interpolate to for part A and part B
+    lon_tmp_d = dict()
+    if num_deg_A > 0:
+        lon_tmp_d['A'] = np.linspace(A_left_limit, A_right_limit, num_deg_A)
+        
+    if num_deg_B > 0:
+       lon_tmp_d['B'] = np.linspace(B_left_limit, B_right_limit, num_deg_B)
+
+    
+    # create the basemap object, 'map'
+    if projection_type == 'cyl':
+        map = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
+                llcrnrlon=A_left_limit, urcrnrlon=B_right_limit, 
+                resolution='c')
+    
+    elif projection_type == 'robin':    
+        map = Basemap(projection='robin',lon_0=center_lon, resolution='c')
+
+    else:
+        print 'projection type must be either "cyl" or "robin" '  
+        print 'found ', projection_type
+        #return
+    
+    #%%
+    # get a reference to the current figure (or make a figure if none exists)
+    f = plt.gcf()
+
+    if background_type == 'bm':
+        map.bluemarble()
+        print 'blue marble'
+    elif background_type == 'sr':
+        map.shadedrelief()
+        print 'shaded relief'        
+    elif background_type == 'fc':
+        map.fillcontinents(color='lightgray',lake_color='lightgray')  
+        print 'gray background'                
+
+    # prepare for the interpolation or nearest neighbor mapping
+    
+    # first define the lat lon points of the original data
+    orig_grid = pr.geometry.SwathDefinition(lons=lons_1d, lats=lats_1d)
+    
+    # the latitudes to which we will we interpolate
+    lat_tmp = np.linspace(-89.5, 89.5, 90/dy)
+
+    # loop through both parts (if they exist), do interpolation and plot
+    for key, lon_tmp in lon_tmp_d.iteritems():
+
+        #%%
+        new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
+    
+        
+        # define the lat lon points of the two parts. 
+        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon, 
+                                               lats=new_grid_lat)
+        
+        x,y = map(new_grid_lon, new_grid_lat) 
+    
+        data_latlon_projection = \
+            pr.kd_tree.resample_nearest(orig_grid, data, new_grid, 
+                                        radius_of_influence=100000, 
+                                        fill_value=None) 
+
+        if plot_type == 'pcolor':
+            # plot using pcolor 
+            im=map.pcolor(x,y, data_latlon_projection, 
+                          vmin=cmin, vmax=cmax, cmap=user_cmap)
+
+        elif plot_type == 'contourf':
+            # create a set of contours spanning from cmin to cmax over
+            # num_levels intervals
+            contour_levels = np.linspace(cmin, cmax, num_levels)
+            
+            # plot using contourf
+            im=map.contourf(x,y, data_latlon_projection, num_levels,
+                         vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                         levels=contour_levels, extend="both")
+        else:
+            print 'plot type must be either "pcolor" or "contourf"  '
+            print 'found type ', plot_type
+            #return
+        
+           
+    # draw coastlines, country boundaries, fill continents.
+    map.drawcoastlines(linewidth=1)
+    # don't plot lat/lon labels for robinson     projection.
+    if projection_type == 'robin':      
+        map.drawmeridians(np.arange(0,360,30))
+        map.drawparallels(np.arange(-90,90,30))
+    else:
+        map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
+        map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])
+
+        #map.drawmeridians(np.arange(0,360,60), labels=[False,False, False,True])
+    
+    #%%
+    ax= plt.gca()
+
+    if show_colorbar:
+        f=plt.gcf()
+        f.subplots_adjust(right=0.8)
+        #[left, bottom, width, height]
+        h=.6;w=.025
+        cbar_ax = f.add_axes([0.85, (1-h)/2, w, h])
+        cbar = f.colorbar(im, extend='both', cax=cbar_ax)#, format='%.0e')          
+
+        if show_cbar_label:
+            cbar.set_label(cbar_label)
+    # set the current axes to be the map, not the colorbar
+    plt.sca(ax)
+
+    # return a reference to the figure and the map axes
+    return f, ax, im  
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+def show_tile(tile, cmin, cmax):
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # shows a single llc tile.  
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+    plt.figure()
+    plt.imshow(tile, vmin=cmin, vmax=cmax, origin='lower',cmap='jet')
+    plt.colorbar()
+    plt.show()
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    
+    
+    
+def unique_color(n):
+    
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # returns one of 13 unique colors.
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if n == 1:
+        c='xkcd:red'
+    elif n== 2:
+        c='xkcd:green'
+    elif n== 3:
+        c='xkcd:yellow'
+    elif n== 4:
+        c='xkcd:blue'
+    elif n== 5:
+        c='xkcd:orange'
+    elif n== 6:
+        c='xkcd:purple'
+    elif n== 7:
+        c='xkcd:cyan'
+    elif n== 8:
+        c='xkcd:magenta'
+    elif n== 9:
+        c='xkcd:lime green'
+    elif n== 10:
+        c='xkcd:candy pink'
+    elif n== 11:
+        c='xkcd:teal'
+    elif n== 12:
+        c='xkcd:lavender'
+    elif n== 13:
+        c='xkcd:brown'
+    else:
+        c='xkcd:mint'
+
+    return c
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
