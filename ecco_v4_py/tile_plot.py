@@ -9,10 +9,20 @@ from __future__ import division
 import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
+
+# import all function from the 'mpl_toolkits.basemap' module available with the 
+# prefix 'Basemap'
 from mpl_toolkits.basemap import Basemap
+
+# Performs cartographic transformations and geodetic computations.
+
+# The Proj class can convert from geographic (longitude,latitude) to native 
+# map projection (x,y) coordinates and vice versa, or from one map projection 
+# coordinate system directly to another.
+# https://pypi.python.org/pypi/pyproj?
+#
+# import all functions from the pyproj module as pyproj
 import pyproj as pyproj
-import time
-from copy import deepcopy
 import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -369,10 +379,10 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,30))
     else:
+        # labels = [left,right,top,bottom]
         map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
-        map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])
-
-        #map.drawmeridians(np.arange(0,360,60), labels=[False,False, False,True])
+        print 'HERE'
+        map.drawmeridians(np.arange(0,360,60),  labels= [False,False, False,True])
     
     #%%
     ax= plt.gca()
@@ -391,7 +401,7 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     plt.sca(ax)
 
     # return a reference to the figure and the map axes
-    return f, ax, im  
+    return f, ax, im
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
