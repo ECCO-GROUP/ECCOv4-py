@@ -11,7 +11,8 @@ import matplotlib.pylab as plt
 import xarray as xr
 import time
 from copy import deepcopy
-
+import glob
+from numpy import *
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -153,6 +154,12 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
     # load the netcdf file using xarray.  
     # xarray automatically converts the netcdf file into a Dataset object
     # using the netcdf metadata
+
+    # check to see if file exists.    
+    file = glob.glob(fname)
+    if len(file) == 0:
+        raise IOError(fname + ' not found ')
+
     ds = xr.open_dataset(fname)
 
     # finally, give this Dataset the 'tile' coordinate with current tile_index

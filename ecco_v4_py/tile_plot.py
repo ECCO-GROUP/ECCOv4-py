@@ -89,24 +89,28 @@ def plot_tiles(tiles,  **kwargs):
         # aligned with tile 6, which is the second column.  
         tile_order_top_row = [-1, 7, -1, -1]
         
-        # if we have defined the attribute 'Arctic_Align' then perhaps
-        # the Arctic cap is algined with another tile and therefore it's location
-        # in the figure may be different changed.
-        if 'Arctic_Align' in tiles.attrs:
-            aca = tiles.attrs['Arctic_Align']
-            #print 'Arctic Cap Alignment match with tile: ', aca
-            
-            if  aca == 3: # plot in 1st position, column 1
-                tile_order_top_row = [7, -1, -1, -1]
-            elif aca == 6:# plot in 2nd position, column 2
-                tile_order_top_row = [-1, 7, -1, -1]
-            elif aca == 8:# plot in 3rd position, column 3
-                tile_order_top_row = [-1, -1, 7, -1]
-            elif aca == 11:# plot in 4th position, column 4
-                tile_order_top_row = [-1, -1, -1, 7]
-            else:
-                print 'Arctic Cap Alignment is not one of 3, 6, 8, 11.'
-                    
+        if type(data) == np.ndarray:
+            print 'sent a 13 tile array'
+        else:
+            # we were sent a Dataset or DataArray   
+            # if we have defined the attribute 'Arctic_Align' then perhaps
+            # the Arctic cap is algined with another tile and therefore it's location
+            # in the figure may be different changed.
+            if 'Arctic_Align' in tiles.attrs:
+                aca = tiles.attrs['Arctic_Align']
+                #print 'Arctic Cap Alignment match with tile: ', aca
+                
+                if  aca == 3: # plot in 1st position, column 1
+                    tile_order_top_row = [7, -1, -1, -1]
+                elif aca == 6:# plot in 2nd position, column 2
+                    tile_order_top_row = [-1, 7, -1, -1]
+                elif aca == 8:# plot in 3rd position, column 3
+                    tile_order_top_row = [-1, -1, 7, -1]
+                elif aca == 11:# plot in 4th position, column 4
+                    tile_order_top_row = [-1, -1, -1, 7]
+                else:
+                    print 'Arctic Cap Alignment is not one of 3, 6, 8, 11.'
+                        
         # the order of the rest of the tile is fixed.  four columns each with 
         # three rows.
         tile_order_bottom_rows =[3, 6, 8, 11,
@@ -139,8 +143,11 @@ def plot_tiles(tiles,  **kwargs):
         cur_tile_num = tile_order[i]
         
         if cur_tile_num > 0:
-            cur_tile = tiles.sel(tile=cur_tile_num)
-         
+            if type(tiles) == np.ndarray:
+                cur_tile = tiles[cur_tile_num -1]
+            else:
+                cur_tile = tiles.sel(tile=cur_tile_num)
+                
             im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
                          origin='lower')
 
