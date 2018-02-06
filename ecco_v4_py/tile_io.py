@@ -294,8 +294,8 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         # (1) the depth of the cell top (RF) and (2) cell center distance (DRC)
         # -- step 1, create a new Dataset with just these two parameters
         GRID_ZT = xr.merge([ds.RF, ds.DRC])
-        # -- step 2, rename the vertical coordinate to from 'i1' to 'k_u'
-        GRID_ZT = GRID_ZT.rename({'i1':'k_u'})
+        # -- step 2, rename the vertical coordinate to from 'i1' to 'k_g'
+        GRID_ZT = GRID_ZT.rename({'i1':'k_g'})
 
         # Now coordinates for vertical grid parameters at the cell center 
         # -- step 1, create a new temporary Dataset         
@@ -343,13 +343,13 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         tmp[-1] = tmp[-2]-ds.DRF[-1]
         # -- step 4, create a new Dataset with this new array and give it a 
         #            vertical coordinate index 'k_l' with values [1., 2... nk].
-        GRID_ZB = xr.Dataset({'RB': (['k_l'], tmp)},
-                             coords={'k_l':np.arange(1,nk+1)})
+        #GRID_ZB = xr.Dataset({'RB': (['k_l'], tmp)},
+        #                     coords={'k_l':np.arange(1,nk+1)})
         # -- step 5, give the variable the same attributes as RF (depth in m)
-        GRID_ZB.RB.attrs['long_name'] = 'depth of the deepest grid cell'
-        GRID_ZB.RB.attrs['units'] = 'm'
+        #GRID_ZB.RB.attrs['long_name'] = 'depth of the deepest grid cell'
+        #GRID_ZB.RB.attrs['units'] = 'm'
 
-         # next we'll make land/wet masks.  these will prove very useful
+        # next we'll make land/wet masks.  these will prove very useful
         # later.  
         land_v = deepcopy(GRID_V.hFacS)
         land_v.name = 'land_v'
@@ -368,7 +368,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
 
         # now merge our new and improved Datasets together
         ds = xr.merge([GRID_C, land_c, GRID_G, GRID_U, land_u, GRID_V, land_v,
-                       GRID_ZT, GRID_ZC, GRID_ZB])
+                       GRID_ZT, GRID_ZC]) #, GRID_ZB])
 
         # give the new merged grid dataset the original attributes
         # (metadata description)

@@ -1,10 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Jan 27 11:06:48 2018
+"""ECCO v4 Python: mds_io
 
-@author: ifenty
+This module includes utility routines for loading binary files in the llc 13-tile native flat binary layout.  This layout is the default for MITgcm input and output for global setups using lat-lon-cap (llc) layout.  The llc layout is used for ECCO v4. 
+
+.. _ecco_v4_py Documentation :
+   https://github.com/ECCO-GROUP/ECCOv4-py
 """
+
 from __future__ import division
 import numpy as np
 import matplotlib.pylab as plt
@@ -14,11 +17,32 @@ from copy import deepcopy
 import glob
 
 #%%
-def load_llc_mds(fdir, fname, llc, **kwargs):
+def load_llc_mds(fdir, fname, llc):
+    """
 
-    #%%
-    # construct the netcdf file name based on the variable name and the
-    # the tile index
+    This routine loads a single 2D binary file in the llc layout
+
+    Parameters
+    ----------
+    fdir : string
+        A string with the directory of the binary file to open
+    fname : string
+        A string with the name of the binary file to open
+    llc : int
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+    
+    Returns
+    -------
+    ndarray
+        the binary file contents organized into a llc x llc x 13 `ndarray`, one llc x llc array for each of the 13 tiles
+
+    Raises
+    ------
+    IOError
+        If the file is not found
+
+    """
+    
     datafile = fdir + '/' + fname
     
     print 'loading ' + fname
@@ -31,7 +55,7 @@ def load_llc_mds(fdir, fname, llc, **kwargs):
 
 
     f = open(datafile, 'rb')
-    arr = np.fromfile(f, dtype='>f', count=-1)#.reshape(recshape)[levinds]
+    arr = np.fromfile(f, dtype='>f', count=-1)
     f.close()
     
     arr = np.reshape(arr,(llc*13, llc))
