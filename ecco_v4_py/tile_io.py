@@ -380,7 +380,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         # and give the coordinates more meaningful names
         ds.RC.attrs['long_name'] = 'depth of grid cell center'        
         ds.RF.attrs['long_name'] = 'depth of grid cell top'
-        #ds.RB.attrs['long_name'] = 'depth of grid cell bottom'                    
+        # ds.RB.attrs['long_name'] = 'depth of grid cell bottom'                    
         ds.DRF.attrs['long_name'] = 'vertical distance between the grid cell top and bottom'
         ds.DRC.attrs['long_name'] = 'vertical distance between grid cell centers, starting from the ocean surface'
         
