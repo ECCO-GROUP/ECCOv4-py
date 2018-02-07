@@ -99,18 +99,20 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
 
         # Go through each of these 1D coordinates and drop the 'tile'
         # dimension        
-        RB = ds.RB[0,:].drop('tile')
+        #RB = ds.RB[0,:].drop('tile')
         RC = ds.RC[0,:].drop('tile')
         RF = ds.RF[0,:].drop('tile')
         DRC = ds.DRC[0,:].drop('tile')
         DRF = ds.DRF[0,:].drop('tile')
         
         # drop these coordinates from ds
-        ds = ds.drop(['RB', 'RC','RF','DRC','DRF']); 
+        #ds = ds.drop(['RB', 'RC','RF','DRC','DRF']); 
+        ds = ds.drop(['RC','RF','DRC','DRF']); 
         
         # add the coordinates back in now that we have dropped the 'tile'
         # dimension
-        ds = xr.merge([ds, RB, RC, RF, DRC, DRF])
+        #ds = xr.merge([ds, RB, RC, RF, DRC, DRF])
+        ds = xr.merge([ds, RC, RF, DRC, DRF])
         
         # reset the metadata on ds.
         ds.attrs = orig_attrs
@@ -331,16 +333,16 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         # RB: the depth (in meters) of the bottom of the grid cell 
         # -- step 1, create an empty array of length equal to the number of
         #            vertical levels
-        tmp = np.zeros(nk)
+        #tmp = np.zeros(nk)
         # -- step 2, copy over all the depth coordinates of the grid cell top
         #            starting from k=2 (the "top" of the second grid cell
         #            is the "bottom " of the first grid cell)
-        tmp[0:-1] = GRID_ZT.RF[1:]
+        #tmp[0:-1] = GRID_ZT.RF[1:]
         # -- step 3, calculate and add the depth of the deepest grid cell
         #            the depth of the deepest grid cell is the depth of the 
         #            second from the deepest grid cell plus the height of the
         #            the last grid cell
-        tmp[-1] = tmp[-2]-ds.DRF[-1]
+        #tmp[-1] = tmp[-2]-ds.DRF[-1]
         # -- step 4, create a new Dataset with this new array and give it a 
         #            vertical coordinate index 'k_l' with values [1., 2... nk].
         #GRID_ZB = xr.Dataset({'RB': (['k_l'], tmp)},
@@ -378,7 +380,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         # and give the coordinates more meaningful names
         ds.RC.attrs['long_name'] = 'depth of grid cell center'        
         ds.RF.attrs['long_name'] = 'depth of grid cell top'
-        ds.RB.attrs['long_name'] = 'depth of grid cell bottom'                    
+        #ds.RB.attrs['long_name'] = 'depth of grid cell bottom'                    
         ds.DRF.attrs['long_name'] = 'vertical distance between the grid cell top and bottom'
         ds.DRC.attrs['long_name'] = 'vertical distance between grid cell centers, starting from the ocean surface'
         

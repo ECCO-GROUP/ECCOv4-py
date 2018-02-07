@@ -34,7 +34,7 @@ def load_llc_mds(fdir, fname, llc):
     Returns
     -------
     ndarray
-        the binary file contents organized into a llc x llc x 13 `ndarray`, one llc x llc array for each of the 13 tiles
+        the binary file contents organized into a llc x llc x 13 `ndarray`, one llc x llc array for each of the 13
 
     Raises
     ------
