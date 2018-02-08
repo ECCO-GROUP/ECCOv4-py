@@ -21,8 +21,6 @@ from mpl_toolkits.basemap import Basemap
 # coordinate system directly to another.
 # https://pypi.python.org/pypi/pyproj?
 #
-# import all functions from the pyproj module as pyproj
-import pyproj as pyproj
 import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,10 +33,6 @@ def plot_tiles(tiles,  **kwargs):
     # cmin and cmax are the color minimum and maximum
     # max.  'tiles' is a DataArray of a single 2D variable
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    # look for the 'plot_style' optional argument
-    # plot_style = 'nogap' :   do not label tiles and no space between subplot
-    plot_style = 'default'
 
     # by default use jet colormap
     user_cmap = 'jet'
@@ -53,13 +47,11 @@ def plot_tiles(tiles,  **kwargs):
     layout = 'llc'
     
     # by default take the min and max of the values
-    cmin = np.min(tiles)
-    cmax = np.max(tiles)
+    cmin = np.nanmin(tiles)
+    cmax = np.nanmax(tiles)
     
     for key in kwargs:
-        if key == "plot_style" :
-            plot_style = kwargs[key]
-        elif key == "cbar":
+        if key == "cbar":
             show_colorbar = kwargs[key]
         elif key == "user_cmap":
             user_cmap = kwargs[key]
@@ -72,10 +64,9 @@ def plot_tiles(tiles,  **kwargs):
             cmin = kwargs[key]
         elif key == "cmax":
             cmax =  kwargs[key]
-            
         else:
             print "unrecognized argument ", key 
-                
+               
 
     if layout == 'latlon':
             
@@ -89,7 +80,7 @@ def plot_tiles(tiles,  **kwargs):
         # aligned with tile 6, which is the second column.  
         tile_order_top_row = [-1, 7, -1, -1]
         
-        if type(data) == np.ndarray:
+        if type(tiles) == np.ndarray:
             print 'sent a 13 tile array'
         else:
             # we were sent a Dataset or DataArray   
@@ -192,8 +183,8 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     show_cbar_label = False
 
     # by default take the min and max of the values
-    cmin = np.min(data)
-    cmax = np.max(data)
+    cmin = np.nanmin(data)
+    cmax = np.nanmax(data)
 
     # 1/4 degree is the default resolution in lon and lat to interpolate
     dx = .25
@@ -274,13 +265,6 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         B_right_limit = 360+user_lon_0
         center_lon = A_left_limit + 180
         
-    elif user_lon_0 == 0:
-        A_left_limit = -180
-        A_right_limit = 0
-        B_left_limit =  0
-        B_right_limit = 180
-        center_lon = 180
-        
     elif user_lon_0 == 180 or user_lon_0 == -180:
         A_left_limit = -180
         A_right_limit = 0
@@ -292,8 +276,8 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         #return
 
     # the number of degrees spanned in part A and part B
-    num_deg_A =  A_right_limit - A_left_limit
-    num_deg_B =  B_right_limit - B_left_limit 
+    num_deg_A =  (A_right_limit - A_left_limit)/dx
+    num_deg_B =  (B_right_limit - B_left_limit)/dx
 
     # We will interpolate the data to the new grid.  Store the longitudes to
     # interpolate to for part A and part B

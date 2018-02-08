@@ -21,5 +21,7 @@ from tile_rotation import rotate_single_tile_DataArrays_UV_points
 
 from mds_io import load_llc_mds
 
+from interp_latlon_plot.py import plot_latlon_interp_proj
+from interp_latlon_plot.py import plot_latlon_interp
 
 __all__ = ['dataset_utils','io_utils', 'llc_plot','tile_exchange','tile_io','tile_rotation']
