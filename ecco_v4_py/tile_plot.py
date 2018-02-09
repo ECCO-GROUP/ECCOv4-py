@@ -315,7 +315,6 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         print 'shaded relief'        
     elif background_type == 'fc':
         map.fillcontinents(color='lightgray',lake_color='lightgray')  
-        print 'gray background'                
 
     # prepare for the interpolation or nearest neighbor mapping
     

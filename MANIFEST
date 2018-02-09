@@ -4,6 +4,7 @@ setup.cfg
 setup.py
 ecco_v4_py/__init__.py
 ecco_v4_py/dataset_utils.py
+ecco_v4_py/interp_latlon_plot.py
 ecco_v4_py/mds_io.py
 ecco_v4_py/tile_exchange.py
 ecco_v4_py/tile_io.py
