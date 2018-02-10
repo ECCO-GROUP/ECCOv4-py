@@ -546,10 +546,10 @@ def add_borders_to_GRID_tiles(gds):
 
 
     #Now merge the rotated grid parameters.
-    GRID_Z = gds[['RB', 'RC','RF','DRC','DRF']]
+    GRID_Z = gds[['RC','RF','DRC','DRF']]
     GRID = gds.drop(['DYC','DXG', 'hFacS',
                      'DXC', 'DYG','hFacW','XG','YG',
-                     'RAZ','RB','RC','RF','DRC','DRF'])
+                     'RAZ','RC','RF','DRC','DRF'])
     GRID = xr.merge([GRID, GRID_G, GRID_U, GRID_V, GRID_Z])
     GRID.attrs = gds.attrs
     #%%

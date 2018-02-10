@@ -57,8 +57,16 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
     #  'i'   and 'j_g' for 'v' point variables
     #
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # By default print messages to the screen when loading tile files
+    less_output = False
+
+    for key in kwargs:
+        if key == "less_output":
+            less_output = kwargs[key]
+    #%%
  
-    print "\n>>> LOADING TILES FROM NETCDF\n"
+    if less_output == False:
+        print "\n>>> LOADING TILES FROM NETCDF\n"
     start = time.time()
     
     for tile_index in range(1, 14):  
@@ -74,9 +82,10 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
 
     
     end = time.time()
-    print 'total file load time ', end-start, 's'
+    if less_output == False:
+        print 'total file load time ', end-start, 's'
+        print 'concatenated all tiles.  this can take a few minutes....'
 
-    print 'concatenated all tiles.  this can take a few minutes....'
     start = time.time()    
     ds = xr.concat([ds['1'], ds['2'], ds['3'],
                     ds['4'], ds['5'], ds['6'],
@@ -84,7 +93,9 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
                     ds['10'],ds['11'], ds['12'],
                     ds['13']], 'tile')
     end = time.time()
-    print 'finished concatenating.  time =', end-start, 's'
+
+    if less_output == False:
+        print 'finished concatenating.  time =', end-start, 's'
         
     #%%
     if var == 'GRID':
@@ -116,7 +127,9 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
         
         # reset the metadata on ds.
         ds.attrs = orig_attrs
-        
+
+    print "Finished loading all 13 tiles of " + var        
+
     return ds
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -139,19 +152,24 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
     keep_landmask_and_area = False
     
     #%%
+    less_output = False
     k_subset = []
     for key in kwargs:
         if key == "keep_landmask_and_area":
             keep_landmask_and_area = kwargs[key]
         if key == "k_subset":
             k_subset = kwargs[key]
+        if key == "less_output":
+            less_output = kwargs[key]
         else:
             print "load_tile_from_netcdf unrecognized argument ", key
     #%%
     # construct the netcdf file name based on the variable name and the
     # the tile index
     fname = (data_dir + var + '.' + str(tile_index).zfill(4) + '.nc')
-    print 'loading ' + fname
+
+    if less_output == False:
+        print 'loading ' + fname
 
     # load the netcdf file using xarray.  
     # xarray automatically converts the netcdf file into a Dataset object

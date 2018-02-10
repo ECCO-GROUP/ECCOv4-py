@@ -9,9 +9,9 @@ from tile_exchange import add_borders_to_GRID_tiles
 from tile_io import load_all_tiles_from_netcdf
 from tile_io import load_tile_from_netcdf
 
+from tile_plot import plot_tile
 from tile_plot import plot_tiles
 from tile_plot import plot_tiles_proj
-from tile_plot import show_tile
 from tile_plot import unique_color
 
 from tile_rotation import reorient_GRID_Dataset_to_latlon_layout

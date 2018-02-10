@@ -25,6 +25,66 @@ import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+def plot_tile(tile, **kwargs):
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # shows a single llc tile.  
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+    # by default use jet colormap
+    user_cmap = 'jet'
+    
+    # by default do not show a colorbar 
+    show_colorbar = False
+
+    # by default the colorbar has no label
+    show_cbar_label = False
+
+    # by default take the min and max of the values
+    cmin = np.nanmin(tile)
+    cmax = np.nanmax(tile)
+    
+    #%%
+    for key in kwargs:
+        if key == "cbar":
+            show_colorbar = kwargs[key]
+        elif key == "user_cmap":
+            user_cmap = kwargs[key]
+        elif key == "cbar_label":
+            cbar_label = kwargs[key]
+            show_cbar_label = True
+        elif key == "cmin":
+            cmin = kwargs[key]
+        elif key == "cmax":
+            cmax =  kwargs[key]
+        else:
+            print "unrecognized argument ", key 
+    #%%
+       
+    plt.imshow(tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+               origin='lower')
+    
+    plt.xlabel('+x -->')
+    plt.ylabel('+y -->')
+    
+    # show the colorbar
+    if show_colorbar:
+        cbar = plt.colorbar()
+        if show_cbar_label:
+            cbar.set_label(cbar_label)
+
+    plt.show()
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    
+    
+    
 def plot_tiles(tiles,  **kwargs):
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,19 +193,24 @@ def plot_tiles(tiles,  **kwargs):
 
         cur_tile_num = tile_order[i]
         
+        print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
                 cur_tile = tiles[cur_tile_num -1]
             else:
                 cur_tile = tiles.sel(tile=cur_tile_num)
-                
+            
+            if (layout == 'latlon' and cur_tile_num >7):
+                cur_tile = np.copy(np.rot90(cur_tile))
+            
             im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
                          origin='lower')
 
             ax.set_aspect('equal')
-            
+            ax.axis('on')
             ax.set_title('Tile ' + str(cur_tile_num))
-                
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
 
     # show the colorbar
     if show_colorbar:
@@ -158,6 +223,8 @@ def plot_tiles(tiles,  **kwargs):
             cbar.set_label(cbar_label)
 
     f.show()
+    
+    return f
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -198,7 +265,10 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     
     # default background is to fill continents with gray color
     background_type = 'fc'
-        
+       
+    # default bounding lat for polar stereographic projection is 50 N
+    bound_lat = 50
+    
     #%%
     for key in kwargs:
         if key == "lon_0" :
@@ -226,6 +296,8 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
             projection_type = kwargs[key]
         elif key == "background_type":
             background_type = kwargs[key]
+        elif key == "bounding_lat":
+            bound_lat = kwargs[key]
         else:
             print "unrecognized argument ", key     
 
@@ -298,10 +370,16 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     elif projection_type == 'robin':    
         map = Basemap(projection='robin',lon_0=center_lon, resolution='c')
 
+    elif projection_type == 'stereo':    
+        if bound_lat > 0:
+            map = Basemap(projection='npstere', boundinglat = bound_lat,
+                          lon_0=user_lon_0, resolution='c')
+        else:
+            map = Basemap(projection='spstere', boundinglat = bound_lat,
+                          lon_0=user_lon_0, resolution='c')
     else:
-        print 'projection type must be either "cyl" or "robin" '  
+        raise ValueError('projection type must be either "cyl", "robin", or "stereo"')
         print 'found ', projection_type
-        #return
     
     #%%
     # get a reference to the current figure (or make a figure if none exists)
@@ -368,10 +446,12 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     if projection_type == 'robin':      
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,30))
-    else:
+    elif projection_type == 'stereo':      
+        map.drawmeridians(np.arange(0,360,30))
+        map.drawparallels(np.arange(-90,90,10)) 
+    elif projection_type == 'cyl':
         # labels = [left,right,top,bottom]
         map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
-        print 'HERE'
         map.drawmeridians(np.arange(0,360,60),  labels= [False,False, False,True])
     
     #%%
@@ -397,19 +477,6 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
 
 
 
-def show_tile(tile, cmin, cmax):
-
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # shows a single llc tile.  
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    plt.figure()
-    plt.imshow(tile, vmin=cmin, vmax=cmax, origin='lower',cmap='jet')
-    plt.colorbar()
-    plt.show()
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    
     
     
 def unique_color(n):
