@@ -653,11 +653,10 @@ def add_borders_to_DataArray_U_points(da_u, da_v):
             # whether we have the tile to the right to use first!
             append_border = False
             
-            print 'current tile ', tile_index
+            print '\ncurrent tile ', tile_index
             print 'right tile index ', right_tile_index
             
             if right_tile_index > 0:
-                
                 """
                 now determine if the tile to the "right" of this tile is 
                 rotated relative to itself. if it then we need to use `rot_var`
@@ -665,8 +664,11 @@ def add_borders_to_DataArray_U_points(da_u, da_v):
                 For example tile 6's neighbor to the right is tile 8 which is 
                 rotated relative to tile 6.
                 """
-                if tile_index in rot_tiles and  \
-                    right_tile_index in da_v.tile.values:
+                if tile_index in rot_tiles:
+                    print 'need to use da_v to append'
+                    
+                    if right_tile_index in da_v.tile.values:
+                        print 'we have da_v ', right_tile_index                      
                         # we need to go the right with da_v and it appears that
                         # right_tile_index is in da_v.tile
                         
@@ -684,28 +686,31 @@ def add_borders_to_DataArray_U_points(da_u, da_v):
                         # case, something may have gone wrong.
                         else:
                             print 'something is wrong with the da_v tile'
-                        
-                elif tile_index not in rot_tiles and \
-                    right_tile_index in da_u.tile.values:
-
-                    print 'tile index not in rot tiles', tile_index
-                        
-                    # we need to go the right with da_u and it appears that
-                    # right_tile_index is in da_u.tile
-                    
-                    # there is more than one tile in da_u.  select out the
-                    # right_tile_index that we need
-                    if len(da_u.tile) > 1:
-                        right_arr = da_u.sel(tile=right_tile_index)
-                        append_border = True
-                        print 'appending from da_u tile ', right_tile_index                                                
                     else:
-                        print 'something is wrong with the da_u tile'
-                        print 'the tile to the right cannot be the same as the'
-                        print 'current tile'
-                        print right_tile_index, ref_arr.tile
- 
+                        print 'we do not have da_v ', right_tile_index
+                     
+                else:
+                    print 'need to use da_u to append'
 
+                    if right_tile_index in da_u.tile.values:
+                        print 'we have da_u ', right_tile_index                      
+                        # if there is more than one tile in da_u then select 
+                        # one that we need 
+                        if len(da_u.tile) > 1:
+                            right_arr = da_u.sel(tile=right_tile_index)
+                            append_border = True
+                            print 'appending from da_u tile ', right_tile_index                                                
+                        else:
+                            print 'something is wrong with the da_u tile'
+                            print 'the tile to the right cannot be the same as the'
+                            print 'current tile'
+                            print right_tile_index, ref_arr.tile
+                    else:
+                        print 'we do not have da_u ', right_tile_index
+
+            # after all of that checking, we can now append the border
+            # or add nans along the edge if we don't have the correct tile
+            # to the right.
             if append_border:
                 new_arr=ecco.append_border_to_tile(ref_arr, tile_index,
                                                    'u', llcN,
