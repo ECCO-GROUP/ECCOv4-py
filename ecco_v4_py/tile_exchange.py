@@ -556,6 +556,220 @@ def add_borders_to_GRID_tiles(gds):
     return GRID
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
+
+
+def add_borders_to_DataArray_U_points(da_u, da_v):
+    """
+    A routine that adds a column to the "right side" of the 'u' point 
+    DataArray da_u so that every tracer point in the tile will have two 'u' 
+    values, one on either side.  Consequently, after appending the border 
+    the length of da_u in x will be +1 (one new column)
+    
+    This routine is pretty general.  Any tiles can be in DataArray but if the
+    tiles to the "right" are not available then the new columns will be filled
+    with nans.
+       
+    Parameters
+    ----------
+    da_u : DataArray
+        The `DataArray` object that has tiles of a u-point variable
+        Tiles of the must be in their original llc layout.
+
+    da_v : DataArray
+        The `DataArray` object that has tiles of the v-point variable
+        that corresponds to da_u.  
+        Tiles of the must be in their original llc layout.
+    
+    Returns
+    -------
+    da_u_pad: DataArray
+        a new `DataArray` object that has the appended values of 'u' along
+        its right edge.  The lon_u and lat_u coordinates are lost but all
+        other coordinates remain.
+        
+        
+    """
+    #%%
+    # extract current dimensions of the grid tiles.
+    ni = len(da_v.i)  
+    nj = len(da_u.j)  
+
+    if 'k' in da_u:
+        nk = len(da_v.k)  
+    else:
+        nk = 0
+        
+    if 'time' in da_u:
+        ntime = len(da_u.time.values)
+
+    # define new coordiantes.
+    i_g = np.arange(1, nj+2)
+    j = np.arange(1, ni+1)
+    time = np.arange(1, ntime+1)    
+        
+    llcN = ni
+
+    if nk > 0:
+        k = np.arange(1, nk+1)
+    else:
+        k=0
+    
+            
+    #%%
+    # FIRST, MAKE THE PARAMETER DATASET FOR GRID PARAMETERS SITUATED ON THE CORNER 'G' POINTS.  THERE ARE ONLY THREE: XG, YG and RAZ
+    print "\n>>> ADDING BORDERS TO U POINT TILES\n"
+    
+    #tiles for which the adjacent tile to the right is rotated relative to itself
+    rot_tiles = {4, 5, 6}
+
+    # the new arrays will be one longer in the j direction, we will add 
+    # one column to the right.
+    pad_i = 0 # we do not pad in first dimension (y)
+    pad_j = 1 # add one to the second dimension (x)
+    
+    num_proc_tiles = 0
+    for tile_index in range(1,14):  
+
+        # Proceed if this tile is in the Dataset
+        if tile_index in da_u.tile.values:
+            
+            # we only care about the "right_tile_index" here
+            right_tile_index, top_tile_index, corner_tile_index = \
+                ecco.get_llc_tile_border_mapping(tile_index)
+            
+            if 'tile' in da_u.dims:
+                num_dims = da_u.ndim - 1
+            else:
+                num_dims = da_u.ndim
+
+            if 'tile' in da_u.dims:
+                ref_arr = deepcopy(da_u.sel(tile=tile_index))
+            else:
+                ref_arr = deepcopy(da_u)
+
+            # by default we are not appending anything. we have to determine
+            # whether we have the tile to the right to use first!
+            append_border = False
+            
+            print 'current tile ', tile_index
+            print 'right tile index ', right_tile_index
+            
+            if right_tile_index > 0:
+                
+                """
+                now determine if the tile to the "right" of this tile is 
+                rotated relative to itself. if it then we need to use `rot_var`
+                instead of `var`.
+                For example tile 6's neighbor to the right is tile 8 which is 
+                rotated relative to tile 6.
+                """
+                if tile_index in rot_tiles and  \
+                    right_tile_index in da_v.tile.values:
+                        # we need to go the right with da_v and it appears that
+                        # right_tile_index is in da_v.tile
+                        
+                        # there is more than one tile in da_v.  select out the
+                        # right_tile_index that we need
+                        if len(da_v.tile) > 1:
+                            right_arr = da_v.sel(tile=right_tile_index)
+                            append_border = True
+                            print 'appending from da_v tile ', right_tile_index
+                        # there is only one tile in da_v.  select that one.
+                        elif da_v.tile == right_tile_index:
+                            right_arr = da_v
+                            append_border = True                        
+                            print 'appending from da_v tile ', right_tile_index                        
+                        # case, something may have gone wrong.
+                        else:
+                            print 'something is wrong with the da_v tile'
+                        
+                elif tile_index not in rot_tiles and \
+                    right_tile_index in da_u.tile.values:
+
+                    print 'tile index not in rot tiles', tile_index
+                        
+                    # we need to go the right with da_u and it appears that
+                    # right_tile_index is in da_u.tile
+                    
+                    # there is more than one tile in da_u.  select out the
+                    # right_tile_index that we need
+                    if len(da_u.tile) > 1:
+                        right_arr = da_u.sel(tile=right_tile_index)
+                        append_border = True
+                        print 'appending from da_u tile ', right_tile_index                                                
+                    else:
+                        print 'something is wrong with the da_u tile'
+                        print 'the tile to the right cannot be the same as the'
+                        print 'current tile'
+                        print right_tile_index, ref_arr.tile
+ 
+
+            if append_border:
+                new_arr=ecco.append_border_to_tile(ref_arr, tile_index,
+                                                   'u', llcN,
+                                                   right = right_arr)            
+            else:
+                # if there is no neighbor to the right
+                # pad the ref_array with nans on its right hand side
+                # applies to tiles 10 and 13, they have no tile to 
+                # their right (south pole.)
+                if num_dims == 2:
+                    new_arr = np.pad(ref_arr, 
+                                     pad_width=
+                                        ((0,pad_i), (0,pad_j)),
+                                     mode='constant',
+                                     constant_values = np.nan)
+
+                elif num_dims == 3:
+                    new_arr = np.pad(ref_arr, 
+                                     pad_width=
+                                        ((0,0), 
+                                        (0,pad_i), (0,pad_j)),
+                                     mode='constant', 
+                                     constant_values = np.nan)
+
+            # create a new Dataset with the variable and give it new 
+            # dimensions.
+            if num_dims == 2:
+                tmp_DA = xr.DataArray(new_arr, coords=[('j', j), ('i_g', i_g)])
+
+            elif num_dims == 3:
+                if nk > 0:
+                    tmp_DA = xr.DataArray(new_arr, coords=[('k', k),
+                                                           ('j', j), 
+                                                           ('i_g', i_g)])
+                else:
+                    tmp_DA = xr.DataArray(new_arr, coords=[('time',time),
+                                                           ('j', j), 
+                                                           ('i_g', i_g)])
+            elif num_dims == 4:
+                tmp_DA = xr.DataArray(new_arr, coords=[('time', time), 
+                                                       ('k', k),
+                                                       ('j', j),
+                                                       ('i_g',i_g)])
+                
+            # finished handling 2D or 3D case
+            tmp_DA.attrs = da_u.attrs
+            tmp_DA.coords['tile'] = tile_index
+        
+            num_proc_tiles = num_proc_tiles + 1
+            
+            if num_proc_tiles == 1:
+                da_u_new = tmp_DA
+            else:
+                da_u_new = xr.concat([da_u_new, tmp_DA],'tile')
+
+    # add time coordinates if they are present.
+    for idx, var in enumerate(da_u.coords):
+        print idx, var
+        if 'tim' in var:
+            da_u_new[var] = da_u[var]
+            
+    tmp_DA = []
+            
+    #%%
     
 def get_llc_tile_border_mapping(tile_index):
     """

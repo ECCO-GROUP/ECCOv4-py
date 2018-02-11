@@ -7,7 +7,6 @@ Created on Mon Jul  3 16:11:15 2017
 """
 from __future__ import division
 import numpy as np
-import matplotlib.pylab as plt
 import xarray as xr
 from copy import deepcopy
 
@@ -15,7 +14,7 @@ from copy import deepcopy
 
         
 
-def reorient_GRID_Dataset_to_latlon_layout(gds, **kwargs):
+def reorient_13_tile_GRID_Dataset_to_latlon_layout(gds, **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     #
@@ -41,7 +40,7 @@ def reorient_GRID_Dataset_to_latlon_layout(gds, **kwargs):
 
     # -- step 2: rotate the new subsetted Dataset 
 
-    ds_CG_r = reorient_Dataset_to_latlon_layout_CG_points(ds_CG, **kwargs)
+    ds_CG_r = reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds_CG, **kwargs)
 
     for key, value in ds_CG_r.variables.iteritems():
         if key not in ds_CG_r.coords:
@@ -59,7 +58,7 @@ def reorient_GRID_Dataset_to_latlon_layout(gds, **kwargs):
     ds_V = gds[['DYC','DXG','hFacS','land_v']]    
     
     ds_U_r, ds_V_r = \
-        reorient_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs)
+        reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs)
 
     # merge the rotated Datasets on the C, G, U and V points.
     gds_r = xr.merge([ds_CG_r, ds_U_r, ds_V_r])
@@ -67,6 +66,8 @@ def reorient_GRID_Dataset_to_latlon_layout(gds, **kwargs):
     for key, value in gds_r.variables.iteritems():
         if key not in gds_r.coords:
             gds_r.variables[key].attrs['Arctic_Align'] = aca
+            gds_r.variables[key].attrs['rotated_to_latlon'] = True
+
     #%%
     gds_r.attrs = gds.attrs
     return gds_r
@@ -75,7 +76,7 @@ def reorient_GRID_Dataset_to_latlon_layout(gds, **kwargs):
 
 
 
-def reorient_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
+def reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # this routine takes a Dataset with multiple llc tiles containing
@@ -168,7 +169,9 @@ def reorient_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
 
     for key, value in ds_all.variables.iteritems():
         if key not in ds_all.coords:
-            ds_all.variables[key].attrs['Arctic_Align'] = aca    
+            ds_all.variables[key].attrs['Arctic_Align'] = aca 
+            ds_all.variables[key].attrs['rotated_to_latlon'] = True
+            
     #%%
     return ds_all
 
@@ -293,7 +296,7 @@ def rotate_single_tile_DataArray_CG_points(da, **kwargs):
 
 
 
-def reorient_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
+def reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # Take a pair of Datasets containing variables 
@@ -402,10 +405,12 @@ def reorient_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
     for key, value in ds_U_all.variables.iteritems():
         if key not in ds_U_all.coords:
             ds_U_all.variables[key].attrs['Arctic_Align'] = aca
+            ds_U_all.variables[key].attrs['rotated_to_latlon'] = True
 
     for key, value in ds_V_all.variables.iteritems():
         if key not in ds_V_all.coords:
             ds_V_all.variables[key].attrs['Arctic_Align'] = aca
+            ds_V_all.variables[key].attrs['rotated_to_latlon'] = True            
             
     return ds_U_all, ds_V_all
 
@@ -469,6 +474,10 @@ def rotate_single_tile_Datasets_UV_points(ds_U, ds_V, **kwargs):
 
             ds_U[cur_U_key].values = da_Ur.values
             ds_V[cur_V_key].values = da_Vr.values
+            
+            ds_U[cur_U_key].attrs = da_Ur.attrs
+            ds_V[cur_V_key].attrs = da_Vr.attrs
+            
             
     #%%                         
     return ds_U, ds_V
@@ -571,6 +580,9 @@ def rotate_single_tile_DataArrays_UV_points(da_U, da_V, **kwargs):
     da_U_new.attrs['rotated_to_latlon'] = True
     da_V_new.attrs['rotated_to_latlon'] = True   
         
+    print da_U_new.attrs
+    print da_V_new.attrs
+    
     #%%   
     return da_U_new, da_V_new
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

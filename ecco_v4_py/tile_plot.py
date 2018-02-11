@@ -110,6 +110,12 @@ def plot_tiles(tiles,  **kwargs):
     cmin = np.nanmin(tiles)
     cmax = np.nanmax(tiles)
     
+    tile_labels = True
+
+    fsize = 9  #figure size in inches (h and w)
+    
+    rotate_to_latlon = False
+    
     for key in kwargs:
         if key == "cbar":
             show_colorbar = kwargs[key]
@@ -124,14 +130,25 @@ def plot_tiles(tiles,  **kwargs):
             cmin = kwargs[key]
         elif key == "cmax":
             cmax =  kwargs[key]
+        elif key == "tile_labels":
+            tile_labels = kwargs[key]
+        elif key == "fsize":
+            fsize = kwargs[key]
+        elif key == "rotate_to_latlon":
+            rotate_to_latlon = kwargs[key]
         else:
             print "unrecognized argument ", key 
                
 
     if layout == 'latlon':
-            
-        f, axarr = plt.subplots(4,4, figsize=(9,9))
-        
+
+        if tile_labels:            
+            f, axarr = plt.subplots(4, 4, figsize=(fsize,fsize))
+        else:
+            fac = 1.1194
+            f, axarr = plt.subplots(4, 4, figsize=(fsize*fac,fsize),
+                                    gridspec_kw = {'wspace':0, 'hspace':0})
+
         # plotting of the tiles happens in a 4x4 grid
         # which tile to plot for any one of the 16 spots is indicated with a list
         # a value of negative one means do not plot anything in that spot.
@@ -174,7 +191,13 @@ def plot_tiles(tiles,  **kwargs):
         tile_order = tile_order_top_row + tile_order_bottom_rows
     
     elif layout == 'llc':
-        f, axarr = plt.subplots(5,5, figsize=(9,9))
+        if tile_labels:            
+            f, axarr = plt.subplots(5,5, figsize=(fsize,fsize))
+        else:
+            fac = 1.1194
+            f, axarr = plt.subplots(5, 5, figsize=(fsize*fac,fsize),
+                                    gridspec_kw = {'wspace':0, 'hspace':0})
+            
     
         # plotting of the tiles happens in a 5x5 grid
         # which tile to plot for any one of the 25 spots is indicated with a list
@@ -193,14 +216,14 @@ def plot_tiles(tiles,  **kwargs):
 
         cur_tile_num = tile_order[i]
         
-        print i, cur_tile_num
+        #print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
                 cur_tile = tiles[cur_tile_num -1]
             else:
                 cur_tile = tiles.sel(tile=cur_tile_num)
             
-            if (layout == 'latlon' and cur_tile_num >7):
+            if (layout == 'latlon' and rotate_to_latlon and cur_tile_num >7):
                 cur_tile = np.copy(np.rot90(cur_tile))
             
             im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
@@ -208,13 +231,20 @@ def plot_tiles(tiles,  **kwargs):
 
             ax.set_aspect('equal')
             ax.axis('on')
-            ax.set_title('Tile ' + str(cur_tile_num))
+            if tile_labels:
+                ax.set_title('Tile ' + str(cur_tile_num))
+                
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
     # show the colorbar
     if show_colorbar:
-        f.subplots_adjust(right=0.8)
+        if tile_labels:
+            f.subplots_adjust(left=None, bottom=None, right=0.8)
+        else:
+            f.subplots_adjust(right=0.8, left=None, bottom=None,
+                              top=None, wspace=0, hspace=0)
+            
         #[left, bottom, width, height]
         h=.6;w=.025
         cbar_ax = f.add_axes([0.85, (1-h)/2, w, h])
@@ -222,8 +252,6 @@ def plot_tiles(tiles,  **kwargs):
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    f.show()
-    
     return f
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -383,8 +411,6 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     
     #%%
     # get a reference to the current figure (or make a figure if none exists)
-    f = plt.gcf()
-
     if background_type == 'bm':
         map.bluemarble()
         print 'blue marble'
@@ -401,7 +427,7 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     
     # the latitudes to which we will we interpolate
     lat_tmp = np.linspace(-89.5, 89.5, 90/dy)
-
+    
     # loop through both parts (if they exist), do interpolation and plot
     for key, lon_tmp in lon_tmp_d.iteritems():
 
