@@ -297,10 +297,14 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     # default bounding lat for polar stereographic projection is 50 N
     bound_lat = 50
     
+    user_lat_0 = 45
+    
     #%%
     for key in kwargs:
         if key == "lon_0" :
             user_lon_0 = kwargs[key]
+        elif key == "lat_0":
+            user_lat_0 = kwargs[key]
         elif key == "cbar":
             show_colorbar = kwargs[key]
         elif key == "user_cmap":
@@ -398,6 +402,9 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     elif projection_type == 'robin':    
         map = Basemap(projection='robin',lon_0=center_lon, resolution='c')
 
+    elif projection_type == 'ortho':
+        map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0,
+                      resolution='c')
     elif projection_type == 'stereo':    
         if bound_lat > 0:
             map = Basemap(projection='npstere', boundinglat = bound_lat,

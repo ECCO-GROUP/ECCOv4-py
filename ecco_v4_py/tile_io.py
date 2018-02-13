@@ -406,11 +406,12 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         
     # loop through each Dataset variable (which, for some reason also includes 
     # coordinates) and give each rotatable variable (dim >= 2) an attribute
-    # 'rotated_to_latlon=False' to indicate that the tile has not yet
+    # 'grid_layout' = 'original llc' to indicate that the tile has not yet
     # been rotated
+
     for key, value in ds.variables.iteritems():
         if key not in ds.coords and len(ds[key].shape) >= 2:
-            ds.variables[key].attrs['rotated_to_latlon'] = False
+            ds.variables[key].attrs['grid_layout'] = 'original llc'
 
 
     

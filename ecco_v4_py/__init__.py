@@ -4,8 +4,11 @@ from interp_latlon_plot import plot_latlon_interp_proj
 from interp_latlon_plot import plot_latlon_interp
 
 from tile_exchange import append_border_to_tile
-from tile_exchange import add_borders_to_GRID_tiles
+from tile_exchange import add_borders_to_DataArray_V_points
+from tile_exchange import add_borders_to_DataArray_U_points
+from tile_exchange import add_borders_to_DataArray_G_points
 from tile_exchange import get_llc_tile_border_mapping
+from tile_exchange import add_borders_to_GRID_tiles
 
 from tile_io import load_all_tiles_from_netcdf
 from tile_io import load_tile_from_netcdf
