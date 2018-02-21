@@ -482,9 +482,9 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     
     #%%
     ax= plt.gca()
+    f = plt.gcf()
 
     if show_colorbar:
-        f=plt.gcf()
         f.subplots_adjust(right=0.8)
         #[left, bottom, width, height]
         h=.6;w=.025
