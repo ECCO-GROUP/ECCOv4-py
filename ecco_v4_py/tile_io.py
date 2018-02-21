@@ -7,16 +7,101 @@ Created on Mon Jul  3 16:11:15 2017
 """
 from __future__ import division
 import numpy as np
-import matplotlib.pylab as plt
 import xarray as xr
 import time
 from copy import deepcopy
 import glob
-from numpy import *
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+def load_subset_tiles_from_netcdf(data_dir, var, var_type, 
+                                  tile_subset, 
+                                  k_subset = [],
+                                  keep_landmask_and_area = False,
+                                  less_output = False):
+
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # Reads and concatenates a subset of between 1 and 13 netcdf ecco tiles 
+    # as an xarray DataSet object.  
+    # A new dimension is added, 'i0', corresponding to 
+    # tile number (1, 2, ... 13)
+    # * can handle 2D output: lat, lon [e.g., a time-mean surface field]    
+    # * can handle 3D output: lat, lon, time [e.g., SSH]
+    # * can handle 4D output: lat, lon, depth, time [e.g., THETA]    
+    #
+    # tiles are kept in their original llc orientation (i.e., tiles 8-13 are
+    # rotated by 90 relative to tiles 1-6).
+    #
+    # data_dir : the directory with the netcdf files
+    #    
+    # var      : name of the variable in the netcdf tile file.  For example, 
+    #            var is 'GRID' for the grid files [GRID.0001.nc, GRID.0002.nc, ...
+    #            GRID.0013.nc] and var is 'THETA' for theta files [TEHTA.0001.nc
+    #            THETA.0002.nc, ... THETA.00013.nc]
+    #
+    # var_type : variables can be of one of 5 types.
+    #            'c' for variables situated at the cell center [e.g., THETA, SALT, SSH]
+    #            'g' for variables situated at the cell corners 
+    #            'u' for variables situated at the cell u-velocity points [e.g., UVEL]
+    #            'v' for variables situated at the cell v-velocity points [e.g., VVEL]
+    #            'grid' - a special case for the netcdf GRID files that contain
+    #                     llc grid parameters variables.  GRID files contain
+    #                     variables situated on a mix of 'c','g','u', and 'v' 
+    #                     points.  
+    #
+    # var_type also determines how the coordinates of the variable are renamed.
+    # The default variable dimension names in the llc tile files are not very
+    # descriptive (e.g., 'i1','i2','i3').  
+    # The coordinates corresponding with horizontal dimensions are renamed 
+    # depending on var_type.  To wit,
+    #  'i'   and 'j'   for 'c' point variables 
+    #  'i_g' and 'j_g' for 'g' point  variables
+    #  'i_g' and 'j'   for 'u' point variables
+    #  'i'   and 'j_g' for 'v' point variables
+    #
+    # subset : a list of tiles to load
+    #
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # By default print messages to the screen when loading tile files
+
+    start = time.time()
+
+    num_loaded_tiles = 0
+
+    for tile_index in range(1, 14):  
+        if tile_index in tile_subset:
+            ds_tile = load_tile_from_netcdf(data_dir, var, var_type, 
+                        tile_index,
+                        k_subset = k_subset,
+                        keep_landmask_and_area = keep_landmask_and_area,
+                        less_output = less_output)
+
+            num_loaded_tiles += 1
+
+            if num_loaded_tiles == 1:
+                #ds = {str(tile_index):ds_tile}
+                ds = ds_tile
+            else:
+                #ds[str(tile_index)]=ds_tile
+                ds = xr.concat((ds, ds_tile),'tile')
+
+            ds_tile = []
+        else:
+            if less_output == False:
+                print 'skipping this tile, not on the list ', tile_index
+                
+    end = time.time()
+
+    if less_output == False:
+        print 'total file load and concat time ', end-start, 's'
+
+    return ds
 
 
-def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
+#%%
+def load_all_tiles_from_netcdf(data_dir, var, var_type, 
+                               k_subset = [],
+                               keep_landmask_and_area = False,
+                               less_output = False):
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # Reads and concatenates all of the 13 netcdf ecco tiles as an xarray 
@@ -58,44 +143,17 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
     #
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # By default print messages to the screen when loading tile files
-    less_output = False
-
-    for key in kwargs:
-        if key == "less_output":
-            less_output = kwargs[key]
-    #%%
- 
+    
     if less_output == False:
         print "\n>>> LOADING TILES FROM NETCDF\n"
-    start = time.time()
     
-    for tile_index in range(1, 14):  
-        ds_tile = load_tile_from_netcdf(data_dir, var, var_type,
-                                                tile_index, **kwargs)
+    tile_subset = range(1,14)
 
-        if tile_index == 1:
-            ds= {str(tile_index):ds_tile}
-        else:
-            ds[str(tile_index)]=ds_tile
+    ds = load_subset_tiles_from_netcdf(data_dir, var, var_type, tile_subset,
+                           k_subset = k_subset,
+                           keep_landmask_and_area = keep_landmask_and_area,
+                           less_output = less_output)
 
-        ds_tile = []
-
-    
-    end = time.time()
-    if less_output == False:
-        print 'total file load time ', end-start, 's'
-        print 'concatenated all tiles.  this can take a few minutes....'
-
-    start = time.time()    
-    ds = xr.concat([ds['1'], ds['2'], ds['3'],
-                    ds['4'], ds['5'], ds['6'],
-                    ds['7'], ds['8'], ds['9'],
-                    ds['10'],ds['11'], ds['12'],
-                    ds['13']], 'tile')
-    end = time.time()
-
-    if less_output == False:
-        print 'finished concatenating.  time =', end-start, 's'
         
     #%%
     if var == 'GRID':
@@ -135,7 +193,10 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type, **kwargs):
 
     
         
-def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
+def load_tile_from_netcdf(data_dir, var, var_type, tile_index, 
+                          k_subset = [],
+                          keep_landmask_and_area = False,
+                          less_output = False):
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     # Reads one of the 13 netcdf ecco tiles as an xarray DataSet object
@@ -149,21 +210,8 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
     # area, and lat and lon coordinates.  this information is redundant 
     # because the ECCO grid has all of this information.  keeping it around
     # just makes for very messy Datasets
-    keep_landmask_and_area = False
     
-    #%%
-    less_output = False
-    k_subset = []
-    for key in kwargs:
-        if key == "keep_landmask_and_area":
-            keep_landmask_and_area = kwargs[key]
-        if key == "k_subset":
-            k_subset = kwargs[key]
-        if key == "less_output":
-            less_output = kwargs[key]
-        else:
-            print "load_tile_from_netcdf unrecognized argument ", key
-    #%%
+    
     # construct the netcdf file name based on the variable name and the
     # the tile index
     fname = (data_dir + var + '.' + str(tile_index).zfill(4) + '.nc')
@@ -406,11 +454,12 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index, **kwargs):
         
     # loop through each Dataset variable (which, for some reason also includes 
     # coordinates) and give each rotatable variable (dim >= 2) an attribute
-    # 'rotated_to_latlon=False' to indicate that the tile has not yet
+    # 'grid_layout' = 'original llc' to indicate that the tile has not yet
     # been rotated
+
     for key, value in ds.variables.iteritems():
         if key not in ds.coords and len(ds[key].shape) >= 2:
-            ds.variables[key].attrs['rotated_to_latlon'] = False
+            ds.variables[key].attrs['grid_layout'] = 'original llc'
 
 
     

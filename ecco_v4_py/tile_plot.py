@@ -216,19 +216,34 @@ def plot_tiles(tiles,  **kwargs):
 
         cur_tile_num = tile_order[i]
         
+        have_tile = False
         #print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
-                cur_tile = tiles[cur_tile_num -1]
+                print 'we have an ndarray'
+                # make sure we have this tile in the array
+                if tiles.shape[0] >= cur_tile_num -1:
+                    have_tile = True
+                    cur_tile = tiles[cur_tile_num -1]
+                    
             else:
-                cur_tile = tiles.sel(tile=cur_tile_num)
-            
-            if (layout == 'latlon' and rotate_to_latlon and cur_tile_num >7):
-                cur_tile = np.copy(np.rot90(cur_tile))
-            
-            im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
-                         origin='lower')
-
+                # make sure we have this tile in the array
+                print ' we have a DataArray'
+                print tiles.tile
+                if cur_tile_num in tiles.tile.values:
+                    have_tile = True
+                    cur_tile = tiles.sel(tile=cur_tile_num)
+                    
+            print cur_tile_num, have_tile
+            if have_tile:
+                if (layout == 'latlon' and rotate_to_latlon and 
+                    cur_tile_num >7):
+                    
+                    cur_tile = np.copy(np.rot90(cur_tile))
+                
+                im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                             origin='lower')
+    
             ax.set_aspect('equal')
             ax.axis('on')
             if tile_labels:
@@ -297,10 +312,14 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     # default bounding lat for polar stereographic projection is 50 N
     bound_lat = 50
     
+    user_lat_0 = 45
+    
     #%%
     for key in kwargs:
         if key == "lon_0" :
             user_lon_0 = kwargs[key]
+        elif key == "lat_0":
+            user_lat_0 = kwargs[key]
         elif key == "cbar":
             show_colorbar = kwargs[key]
         elif key == "user_cmap":
@@ -398,6 +417,9 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     elif projection_type == 'robin':    
         map = Basemap(projection='robin',lon_0=center_lon, resolution='c')
 
+    elif projection_type == 'ortho':
+        map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0,
+                      resolution='c')
     elif projection_type == 'stereo':    
         if bound_lat > 0:
             map = Basemap(projection='npstere', boundinglat = bound_lat,

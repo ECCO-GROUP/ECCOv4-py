@@ -66,7 +66,7 @@ def reorient_13_tile_GRID_Dataset_to_latlon_layout(gds, **kwargs):
     for key, value in gds_r.variables.iteritems():
         if key not in gds_r.coords:
             gds_r.variables[key].attrs['Arctic_Align'] = aca
-            gds_r.variables[key].attrs['rotated_to_latlon'] = True
+            gds_r.variables[key].attrs['grid_layout'] = 'rotated llc' 
 
     #%%
     gds_r.attrs = gds.attrs
@@ -170,7 +170,7 @@ def reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
     for key, value in ds_all.variables.iteritems():
         if key not in ds_all.coords:
             ds_all.variables[key].attrs['Arctic_Align'] = aca 
-            ds_all.variables[key].attrs['rotated_to_latlon'] = True
+            ds_all.variables[key].attrs['grid_layout'] = 'rotated llc'
             
     #%%
     return ds_all
@@ -222,7 +222,8 @@ def rotate_single_tile_Dataset_CG_points(ds, **kwargs):
                 rotate_single_tile_DataArray_CG_points(da, **kwargs)
 
             # Assign this new attribute to the variable
-            ds[key].attrs['rotated_to_latlon'] = True                        
+            ds[key].attrs['grid_layout'] = 'rotated llc'
+
     #%%                         
     return ds
 
@@ -272,24 +273,22 @@ def rotate_single_tile_DataArray_CG_points(da, **kwargs):
     if num_dims == 2:
         # assuming that the two dimensions are y and x                    
         da.values = np.rot90(da.values, k=rot_k)
-        # give this variable a new attribute
-        da.attrs['rotated_to_latlon'] = True                        
+
     elif num_dims == 3:
         # assuming that the last two dimensions are y and x
         da.values = np.rot90(da.values,  k=rot_k , axes=(1,2))
-        # give this variable a new attribute
-        da.attrs['rotated_to_latlon'] = True                        
  
     elif num_dims == 4:
         # assuming that the last two dimensions are y and x                    
         da.values = np.rot90(da.values,  k=rot_k , axes=(2,3))
-        # give this variable a new attribute
-        da.attrs['rotated_to_latlon'] = True                        
+
     else:
         print 'variables must have 2, 3, or 4 dimensions'
         print da.name + ' has ' + str(num_dims) + ' dimensions\n'
         print 'so I am returning ' + da.name + ' unchanged.'
         
+    # give this variable a new attribute
+    da.attrs['grid_layout'] = 'rotated_llc'
     #%%            
     return da.values
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
@@ -405,12 +404,12 @@ def reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
     for key, value in ds_U_all.variables.iteritems():
         if key not in ds_U_all.coords:
             ds_U_all.variables[key].attrs['Arctic_Align'] = aca
-            ds_U_all.variables[key].attrs['rotated_to_latlon'] = True
+            ds_U_all.variables[key].attrs['grid_layout'] = 'rotated llc' 
 
     for key, value in ds_V_all.variables.iteritems():
         if key not in ds_V_all.coords:
             ds_V_all.variables[key].attrs['Arctic_Align'] = aca
-            ds_V_all.variables[key].attrs['rotated_to_latlon'] = True            
+            ds_V_all.variables[key].attrs['grid_layout'] = 'rotated llc'
             
     return ds_U_all, ds_V_all
 
@@ -577,8 +576,8 @@ def rotate_single_tile_DataArrays_UV_points(da_U, da_V, **kwargs):
         da_U_new[:] = rot_V
         da_V_new[:] = rot_U
       
-    da_U_new.attrs['rotated_to_latlon'] = True
-    da_V_new.attrs['rotated_to_latlon'] = True   
+    da_U_new.attrs['grid_layout'] = 'rotated llc' 
+    da_V_new.attrs['grid_layout'] = 'rotated llc'
         
     print da_U_new.attrs
     print da_V_new.attrs

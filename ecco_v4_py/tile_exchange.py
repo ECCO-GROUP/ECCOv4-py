@@ -113,464 +113,174 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
     #%%
     for key in kwargs:
         if key == "right":
-            add_right = True
-            right_arr = kwargs[key]
+            if isinstance(kwargs[key], xr.core.dataarray.DataArray):
+                add_right = True
+                right_arr = kwargs[key]
         elif key == "top":
-            add_top = True
-            top_arr = kwargs[key]
+            if isinstance(kwargs[key], xr.core.dataarray.DataArray):
+                add_top = True
+                top_arr = kwargs[key]
         elif key == "corner" :
-            add_corner = True
-            corner_arr = kwargs[key]
-    
+            if isinstance(kwargs[key], xr.core.dataarray.DataArray):
+                add_corner = False
+                corner_arr = kwargs[key]
+
     if add_right == False and add_top == False and add_corner == False:
-        print "You need to indicate at least one side to append, returning an empty array"
+        raise ValueError('You need to have at least one side to append, \
+                         returning an empty array')
+
+    ni = llcN
+    nj = llcN
+    
+    #print ni, nj, llcN
+    
+    new_arr = np.copy(ref_arr)
+    """
+    expand the size of the array so that it can hold the new border values
+    fill border values with nans.  padding goes like (before, after)
+    
+    ex 1: two dimensions, pad one column along the end of the j dimension 
+             pad_width=((0,0), (0,1))
+    ex 2: three dimensions, pad one column along the end of the i dimension 
+             pad_width=((0,0), (0,1), (0,0))
+    ex 3: three dimensions, pad one column at the start of the i dimension
+          and one at the end of the j dimension
+             pad_width=((0,0), (1,0), (0,1))
+    """
+    num_dims = new_arr.ndim
+
+    if point_type == 'g':            
+        pad_i = 1 # add one row (y)
+        pad_j = 1 # add one column (x)
+    elif point_type == 'v':
+        pad_i = 1 # add one row (y)
+        pad_j = 0 # do not add one column (x)
+    elif point_type == 'u':
+        pad_i = 0 # do not add one row (x)
+        pad_j = 1 # add one column (x)
+        
+    # print 'num dims ', num_dims
+
+
+    if num_dims == 2:
+        new_arr=np.pad(new_arr, 
+            pad_width=((0,pad_i), (0,pad_j)), 
+            mode='constant', constant_values = np.nan)
+
+    elif num_dims == 3:
+        new_arr=np.pad(new_arr, 
+            pad_width=((0,0),(0,pad_i), (0,pad_j)),
+            mode='constant', constant_values = np.nan)
+
+    elif num_dims == 4:
+        new_arr = np.pad(new_arr, 
+            pad_width=((0,0),(0,0),(0,pad_i), (0,pad_j)), 
+            mode='constant', constant_values = np.nan)
 
     else:
-            
-        ni = llcN
-        nj = llcN
+        raise ValueError('appending rows or columns in this routine requires \
+                         2,3, or 4D arrays')
+    
+    
+    if (tile_index == 1 or tile_index ==  2 or tile_index == 8 or 
+        tile_index == 9 or tile_index == 10):
         
-        new_arr = np.copy(ref_arr)
-        """
-        expand the size of the array so that it can hold the new border values
-        fill border values with nans.  padding goes like (before, after)
-        
-        ex 1: two dimensions, pad one column along the end of the j dimension 
-                 pad_width=((0,0), (0,1))
-        ex 2: three dimensions, pad one column along the end of the i dimension 
-                 pad_width=((0,0), (0,1), (0,0))
-        ex 3: three dimensions, pad one column at the start of the i dimension
-              and one at the end of the j dimension
-                 pad_width=((0,0), (1,0), (0,1))
-        """
-        num_dims = new_arr.ndim
+        if add_right:
+            new_arr[...,0:nj,-1] = right_arr[...,:,0]
 
-        if point_type == 'g':            
-            pad_i = 1 # add one row (y)
-            pad_j = 1 # add one column (x)
-        elif point_type == 'v':
-            pad_i = 1 # add one row (y)
-            pad_j = 0 # do not add one column (x)
-        elif point_type == 'u':
-            pad_i = 0 # do not add one row (x)
-            pad_j = 1 # add one column (x)
+        if add_top :
+            new_arr[...,-1,0:ni] = top_arr[..., 0,:]
 
-        if num_dims == 2:
-            new_arr=np.pad(new_arr, 
-                pad_width=((0,pad_i), (0,pad_j)), 
-                mode='constant', constant_values = np.nan)
+        if add_corner :
+            new_arr[...,-1,-1]   = corner_arr[..., 0,0]
+     
+    elif tile_index == 3:
+        if add_right:
+            new_arr[...,0:nj,-1] = right_arr[..., :,0]
 
-        elif num_dims == 3:
-            new_arr=np.pad(new_arr, 
-                pad_width=((0,0),(0,pad_i), (0,pad_j)),
-                mode='constant', constant_values = np.nan)
-
-        elif num_dims == 4:
-            new_arr = np.pad(new_arr, 
-                pad_width=((0,0),(0,0),(0,pad_i), (0,pad_j)), 
-                mode='constant', constant_values = np.nan)
-
-        else:
-            print 'appending rows or columns in this routine requires 2,3, or 4D arrays'
-            
-        
-        if (tile_index == 1 or tile_index ==  2 or tile_index == 8 or 
-            tile_index == 9 or tile_index == 10):
-            
-            if add_right:
-                new_arr[...,0:nj,-1] = right_arr[...,:,0]
-
-            if add_top :
-                new_arr[...,-1,0:ni] = top_arr[..., 0,:]
-
-            if add_corner :
-                new_arr[...,-1,-1]   = corner_arr[..., 0,0]
-         
-        elif tile_index == 3:
-            if add_right:
-                new_arr[...,0:nj,-1] = right_arr[..., :,0]
-
-            if add_top:
-                # tricky because tile 7 is rotated relative to 3
-                if point_type == 'g':            
-                    new_arr[...,-1,1:ni+1] = top_arr[..., ::-1,0]                    
-                elif point_type == 'v':
-                    new_arr[...,-1,:] = top_arr[..., :,0]
-                    
-        elif (tile_index == 4 or tile_index == 5):
-            if add_right:
-                if point_type == 'g':
-                    new_arr[...,1:nj+1,-1] = right_arr[..., 0,::-1]
-                    
-                elif point_type == 'u':
-                    new_arr[...,-1] = right_arr[..., 0,::-1]
-                    
-            if add_top:
-                new_arr[...,-1,0:ni] = top_arr[...,0,:]
-                    
-        elif tile_index == 6:
-            if add_right:
-                if point_type == 'g':
-                    new_arr[...,1:nj+1,-1] = right_arr[...,0,::-1]
-                    
-                elif point_type == 'u':
-                    new_arr[...,-1] = right_arr[...,0,::-1]
-                    
-            if add_top:
-                new_arr[...,-1,0:ni] = top_arr[...,0,:]
-                    
-        elif tile_index == 7:
-            if add_right:
-                new_arr[...,0:nj,-1] = right_arr[...,:,0]
-
-            if add_top:
-                if point_type == 'g':
-                    # tricky because tile 11 is rotated relative to 7
-                    new_arr[...,-1,1:ni+1] = top_arr[...,::-1,0]
-
-                elif point_type == 'v':
-                    new_arr[...,-1,:] = top_arr[...,::-1,0]
-        
-        elif (tile_index == 11 or tile_index == 12 or 
-              tile_index == 13):
-            if add_right:
-                new_arr[...,0:ni,-1] = right_arr[...,:,0]
+        if add_top:
+            # tricky because tile 7 is rotated relative to 3
+            if point_type == 'g':            
+                new_arr[...,-1,1:ni+1] = top_arr[..., ::-1,0]                    
+            elif point_type == 'v':
+                new_arr[...,-1,:] = top_arr[..., :,0]
                 
-            if add_top:
-                if point_type == 'g':
-                    new_arr[...,-1,1:nj+1] = top_arr[...,::-1,0]
+    elif (tile_index == 4 or tile_index == 5):
+        if add_right:
+            if point_type == 'g':
+                new_arr[...,1:nj+1,-1] = right_arr[..., 0,::-1]
+                
+            elif point_type == 'u':
+                new_arr[...,-1] = right_arr[..., 0,::-1]
+                
+        if add_top:
+            new_arr[...,-1,0:ni] = top_arr[...,0,:]
+                
+    elif tile_index == 6:
+        if add_right:
+            if point_type == 'g':
+                new_arr[...,1:nj+1,-1] = right_arr[...,0,::-1]
+                
+            elif point_type == 'u':
+                new_arr[...,-1] = right_arr[...,0,::-1]
+                
+        if add_top:
+            new_arr[...,-1,0:ni] = top_arr[...,0,:]
+                
+    elif tile_index == 7:
+        if add_right:
+            new_arr[...,0:nj,-1] = right_arr[...,:,0]
 
-                elif point_type == 'v':
-                    new_arr[...,-1,:] = top_arr[...,::-1,0]
+        if add_top:
+            if point_type == 'g':
+                # tricky because tile 11 is rotated relative to 7
+                new_arr[...,-1,1:ni+1] = top_arr[...,::-1,0]
 
-            if add_corner :
-                """             
-                for tiles 12 and 13 the 'corner g point' is
-                in the top left point, unlike tiles 1-6 for which the 'corner' g point is the top right point.  tile 11 does not have a top left point because of the orientation of tile 7.
-                """                
-                new_arr[...,-1,0] = corner_arr[...,0,0]
+            elif point_type == 'v':
+                new_arr[...,-1,:] = top_arr[...,::-1,0]
+    
+    elif (tile_index == 11 or tile_index == 12 or 
+          tile_index == 13):
+        if add_right:
+            new_arr[...,0:ni,-1] = right_arr[...,:,0]
             
-    #%%
+        if add_top:
+            if point_type == 'g':
+                new_arr[...,-1,1:nj+1] = top_arr[...,::-1,0]
+
+            elif point_type == 'v':
+                new_arr[...,-1,:] = top_arr[...,::-1,0]
+
+        if add_corner :
+            """             
+            for tiles 12 and 13 the 'corner g point' is
+            in the top left point, unlike tiles 1-6 for which the 
+            'corner' g point is the top right point.  tile 11 does not
+            have a top left point because of the orientation of tile 7.
+            """                
+            new_arr[...,-1,0] = corner_arr[...,0,0]
         
+    #%%
     return new_arr
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
-def add_borders_to_GRID_tiles(gds):
+
+
+def add_borders_to_DataArray_V_points(da_u, da_v):
     """
-    A routine that appends the partial halo for all grid tile variables.  
-    
-    
-    
-    Parameters
-    ----------
-    gds : Dataset
-        the `Dataset` object that has the ECCO v4 grid loaded.  The tiles of the grid Dataset must be in their original layout.
-    
+    A routine that adds a column to the "top" of the 'v' point 
+    DataArray da_v so that every tracer point in the tile 
+    will have a 'v' point to the "north" and "south"
 
-    Returns
-    -------
-    GRID: Dataset
-        a new `Dataset` object for the ECCO v4 grid with the added halos.
-        
+    After appending the border the length of da_v in y will
+    be +1 (one new row)
+    
+    This routine is pretty general.  Any tiles can be in the da_u and 
+    da_v DataArrays but if the tiles to the "top" of the da_v tiles
+    are not available then the new rows will be filled with nans.
 
-    """
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # 
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    # extract current dimensions of the grid tiles.
-    ni = len(gds.j)  
-    nj = len(gds.i)  
-    nk = len(gds.k)  
-    llcN = ni
-    
-    # define new coordiantes.
-    i_g = np.arange(1, nj+2)
-    j_g = np.arange(1, ni+2)
-    i = np.arange(1, nj+1)
-    j = np.arange(1, ni+1)
-    k = np.arange(1, nk+1)
-    
-            
-    #%%
-    # FIRST, MAKE THE PARAMETER DATASET FOR GRID PARAMETERS SITUATED ON THE CORNER 'G' POINTS.  THERE ARE ONLY THREE: XG, YG and RAZ
-    print "\n>>> ADDING BORDERS TO GRID TILES\n"
-    
-    print "G points"     
-    vars = ['XG','YG','RAZ']
-    # the new arrays will be one longer in the i and j directions, we will pad on row to the top and one column to the right.
-    pad_i = 1; pad_j = 1
-
-    GRID_G = []
-    for tile_index in range(1,14):  
-        if tile_index in gds.tile.values:
-                
-            for idx, var in enumerate(vars):
-                #get the indexes for the adjacent tiles            
-                right_tile_index, top_tile_index, corner_tile_index = \
-                    get_llc_tile_border_mapping(tile_index)
-    
-                # pull tiles out if there are neighbors (index > 0) 
-                if right_tile_index > 0:
-                    right_arr = gds[var].sel(tile=right_tile_index)
-                if top_tile_index > 0:
-                    top_arr = gds[var].sel(tile=top_tile_index)
-                if corner_tile_index > 0:
-                    corner_arr = gds[var].sel(tile=corner_tile_index)
-                
-                # save the original array for this variable.
-                ref_arr = deepcopy(gds[var].sel(tile=tile_index))    
-    
-                # for the 'G' points there is always an adjacent top tile but not always an adjacent right or corner tile.  these are the different possibilities:
-                # (1) right, top, and corner; 
-                # (2) right, top            
-                # (3) corner, top; (4) top only 
-                if right_tile_index > 0 and corner_tile_index > 0: 
-                    #right, top and corner
-                    new_arr=append_border_to_tile(ref_arr, tile_index, 
-                                                  'g', llcN,
-                                                  right = right_arr, 
-                                                  top = top_arr, 
-                                                  corner = corner_arr)
-                elif right_tile_index > 0: # right, top
-                    new_arr=append_border_to_tile(ref_arr, tile_index,
-                                                  'g',llcN,
-                                                  right = right_arr, 
-                                                  top = top_arr)
-                elif corner_tile_index > 0: # corner and top
-                    new_arr=append_border_to_tile(ref_arr, tile_index,
-                                                  'g', llcN,
-                                                  top = top_arr,
-                                                  corner = corner_arr)
-                else: # top only
-                    new_arr=append_border_to_tile(ref_arr, tile_index, 
-                                                  'g', llcN,
-                                                  top=top_arr)
-                # make a new dataset and define the ecoordinates.
-                tmp_DS = xr.Dataset({var: (['j_g','i_g'], new_arr)},
-                                     coords={'i_g': i_g, 'j_g':j_g})
-                
-                # copy the attributes of the original grid dataste
-                tmp_DS[var].attrs = gds[var].attrs
-                
-                # add the new coordinate, tile.
-                tmp_DS.coords['tile'] = tile_index
-                
-                # if this is the first variable then create the Dataset
-                if idx == 0:
-                    grid_g_tile = tmp_DS
-                else:
-                    # otherwise, merge the new Dataset with the existing Dataset for this tile.
-                    grid_g_tile = xr.merge([grid_g_tile, tmp_DS])
-                    
-    
-            #if this is the first tile, define GRID_G to be the Dataset
-            if tile_index == 1:
-                GRID_G = grid_g_tile
-            else:
-                # otherwise, concatenate the new grid dataset corresponding with this tile to the existing Dataset along the 'tile' dimension
-                GRID_G = xr.concat([GRID_G, grid_g_tile], 'tile')
-
-        # end of tile loop
-    
-    #%%
-    # NEXT MAKE THE PARAMETER DATASET FOR GRID PARAMETERS SITUATED ON THE U POINTS.  THERE ARE FOUR: DXC, DYG, and HFACW, land_u
-    
-    print "U points"    
-    vars = ['DXC','DYG', 'hFacW', 'land_u']
-    
-    # because tiles 8-13 are rotated relative to tiles 1-6, the names of variables are different between them.  When tile 4 needs DXC from tile 10, we need to look for DYC in tile 10, etc.
-    rot_vars = ['DYC', 'DXG', 'hFacS', 'land_v']
-    
-    #tiles for which the adjacent tile to the right is rotated relative to itself
-    rot_tiles = {4, 5, 6}
-
-    # the new arrays will be one longer in the j direction, we will  pad one column to the right.
-    pad_i = 0 # we do not pad in first dimension (y)
-    pad_j = 1 # add one to the second dimension (x)
-    
-    for tile_index in range(1,14):  
-
-        # Proceed if this tile is in the Dataset
-        if tile_index in gds.tile.values:
-            
-            # we only care about the "right_tile_index" here
-            right_tile_index, top_tile_index, corner_tile_index = \
-                get_llc_tile_border_mapping(tile_index)
-            
-            # loop over all vars 
-            for idx, var in enumerate(vars):
-                #print tile_index, idx, var 
-                # one dimension is tile
-                num_dims = gds[var].ndim - 1
-
-                ref_arr = gds[var].sel(tile=tile_index)    
-
-                # check to see that there is a neighbor to the right  tiles 10 and 13 don't have one.)
-                if right_tile_index > 0:
-                    """
-                    if we have a tile whose neighbor to the right is rotated relative to itself, i.e., tile 6's neighbor to the right is tile 8, then we need to pull the 'rot_var' out of the neighbor instead of 'var'
-                    """
-                    if tile_index in rot_tiles:
-                        right_arr = \
-                            gds[rot_vars[idx]].sel(tile=right_tile_index)
-                    else:
-                        right_arr = gds[var].sel(tile=right_tile_index)
-            
-                    new_arr=append_border_to_tile(ref_arr, tile_index,
-                                                  'u', llcN,
-                                                  right = right_arr)            
-                else:
-                    # if there is no neighbor to the right
-                    # pad the ref_array with nans on its right hand side
-                    # applies to tiles 10 and 13, they have no tile to 
-                    # their right (south pole.)
-                    if num_dims == 2:
-                        new_arr = np.pad(ref_arr, 
-                                         pad_width=
-                                            ((0,pad_i), (0,pad_j)),
-                                         mode='constant',
-                                         constant_values = np.nan)
-
-                    elif num_dims == 3:
-                        new_arr = np.pad(ref_arr, 
-                                         pad_width=
-                                            ((0,0), 
-                                            (0,pad_i), (0,pad_j)),
-                                         mode='constant', 
-                                         constant_values = np.nan)
-    
-                # create a new Dataset with the variable and give it new 
-                # dimensions.
-                if num_dims == 2:
-                    tmp_DS = xr.Dataset({var: (['j','i_g'], new_arr)},
-                                         coords={'i_g': i_g, 'j':j})
-                elif num_dims == 3:
-                    tmp_DS = xr.Dataset({var: (['k','j','i_g'], new_arr)},
-                         coords={'k':k, 'j': j, 'i_g':i_g})
-                    
-                # finished handling 2D or 3D case
-                tmp_DS[var].attrs = gds[var].attrs
-                tmp_DS.coords['tile'] = tile_index
-            
-                if idx == 0:
-                    grid_u_tile = tmp_DS
-                else:
-                    grid_u_tile = xr.merge([grid_u_tile, tmp_DS])
-    
-                tmp_DS = []
-                # end of variable loop
-                
-            if tile_index == 1:
-                GRID_U = grid_u_tile
-            else:
-                GRID_U = xr.concat([GRID_U, grid_u_tile], 'tile')
-    
-            grid_u_tile = []
-    
-    
-    """
-    MAKE THE PARAMETER DATASET FOR GRID PARAMETERS SITUATED ON THE 
-    V POINTS.  THERE ARE FOUR: DYC, DXG, hFacS, and land_v
-    """
-    print "V points"
-    vars = ['DYC','DXG', 'hFacS', 'land_v']
-    
-    # tiles for which the adjacent tile to the top is rotated relative to itself
-    rot_tiles = {3, 7, 11, 12, 13}
-    # and the names of the variables on rot_tiles that will be used 
-    # remember, x-->y, y-->x w-->s after rotation.
-    rot_vars = ['DXC', 'DYG','hFacW', 'land_u']
-    
-    pad_i = 1 #  add one to the first dimension (y)
-    pad_j = 0 #  do not pad in second dimension (x)
-    
-    for tile_index in range(1,14):
-
-        # Proceed if this tile is in the Dataset
-        if tile_index in gds.tile.values:
-            grid_u_tile = []
-            
-            # we only care about "top_tile_index" since are are adding to the
-            # top only.
-            right_tile_index, top_tile_index, corner_tile_index = \
-                get_llc_tile_border_mapping(tile_index)
-            
-            for idx, var in enumerate(vars):
-    
-                num_dims = gds[var].ndim - 1                
-
-                ref_arr = gds[var].sel(tile=tile_index)    
-    
-                if tile_index in rot_tiles:
-                    top_arr = gds[rot_vars[idx]].sel(tile=top_tile_index)
-                else:
-                    top_arr = gds[var].sel(tile=top_tile_index)
-        
-                new_arr=append_border_to_tile(ref_arr, tile_index,
-                                              'v',llcN,
-                                              top = top_arr)
-                if num_dims == 2:
-                    tmp_DS = xr.Dataset({var: (['j_g','i'], new_arr)},
-                                         coords={'j_g': j_g, 'i':i})
-                elif num_dims == 3:
-                    # we have three dimensions with the third dimension being 
-                    # depth (hFacS)
-                    tmp_DS = xr.Dataset({var: (['k','j_g','i'], 
-                                               new_arr)},
-                                        coords= {'k':k, 'j_g': j_g, 
-                                                 'i':i})
-                    
-                # Give the dataset the same attributes
-                tmp_DS[var].attrs = gds[var].attrs
-                # and add the tile attribute
-                tmp_DS.coords['tile'] = tile_index
-            
-                if idx == 0:
-                    grid_v_tile = tmp_DS
-                else:
-                    grid_v_tile = xr.merge([grid_v_tile, tmp_DS])
-    
-                tmp_DS = []
-    
-            # concatenate the new Dataset for this tile with GRID_V (or define it
-            # if tile == 1)            
-            if tile_index == 1:
-                GRID_V = grid_v_tile
-            else:
-                GRID_V = xr.concat([GRID_V, grid_v_tile], 'tile')
-    
-            grid_v_tile = []
-
-
-    #Now merge the rotated grid parameters.
-    GRID_Z = gds[['RC','RF','DRC','DRF']]
-    GRID = gds.drop(['DYC','DXG', 'hFacS',
-                     'DXC', 'DYG','hFacW','XG','YG',
-                     'RAZ','RC','RF','DRC','DRF'])
-    GRID = xr.merge([GRID, GRID_G, GRID_U, GRID_V, GRID_Z])
-    GRID.attrs = gds.attrs
-    #%%
-    return GRID
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-def add_borders_to_DataArray_U_points(da_u, da_v):
-    """
-    A routine that adds a column to the "right side" of the 'u' point 
-    DataArray da_u so that every tracer point in the tile will have two 'u' 
-    values, one on either side.  Consequently, after appending the border 
-    the length of da_u in x will be +1 (one new column)
-    
-    This routine is pretty general.  Any tiles can be in DataArray but if the
-    tiles to the "right" are not available then the new columns will be filled
-    with nans.
-       
     Parameters
     ----------
     da_u : DataArray
@@ -578,199 +288,568 @@ def add_borders_to_DataArray_U_points(da_u, da_v):
         Tiles of the must be in their original llc layout.
 
     da_v : DataArray
-        The `DataArray` object that has tiles of the v-point variable
-        that corresponds to da_u.  
+        The `DataArray` object that has tiles of the v-point variable that 
+        corresponds with da_u.   (e.g., VVEL corresponds with UVEL)
         Tiles of the must be in their original llc layout.
-    
+       
     Returns
     -------
-    da_u_pad: DataArray
+    da_v_new: DataArray
+        a new `DataArray` object that has the appended values of 'v' along
+        its top edge.  The lon_u and lat_u coordinates are lost but all
+        other coordinates remain.
+    """
+    
+    #%%
+    # the j_g dimension will be incremented by one.
+    j_g = np.arange(1, len(da_v.j_g)+2)
+    
+    # the i dimension is unchanged.
+    i = da_v['i'].values
+    llcN = len(i)
+    
+    # the k dimension, if it exists, is unchanged.
+    if 'k' in da_v.dims:
+        nk = len(da_v.k)  
+        k = da_v['k'].values
+    else:
+        nk = 0
+
+    # the time dimension, if it exists, is unchanged
+    if 'time' in da_v.dims:
+        time = da_v['time'].values
+            
+    #%%
+    #print "\n>>> ADDING BORDERS TO V POINT TILES\n"
+    
+    # tiles whose tile to the top are rotated 90 degrees counter clockwise
+    rot_tiles = {3, 7, 11, 12, 13}
+
+    # the new arrays will be one longer in the j direction, +1 column
+    pad_i = 1 # pad by one in y (one new row)
+    pad_j = 0 # do not pad in x 
+
+    # set the number of processed tiles counter to zero    
+    num_proc_tiles = 0
+
+    # find the number of non-tile dimensions
+    if 'tile' in da_v.dims:
+        num_dims = da_v.ndim - 1
+    else:
+        num_dims = da_v.ndim
+
+    # loop through all tiles in da_v
+    for tile_index in da_v.tile.values:
+        
+        # find out which tile is to the top of this da_v tile
+        right_tile_index, top_tile_index, corner_tile_index = \
+            get_llc_tile_border_mapping(tile_index)
+
+        # if 'tile' exists as a dimension, select and copy this da_v tile
+        if 'tile' in da_v.dims:
+            ref_arr = deepcopy(da_v.sel(tile=tile_index))
+        else:
+            # otherwise we have a single da_v tile so make a copy of it
+            ref_arr = deepcopy(da_v)
+
+        # the append_border flag will be true if we have a tile to the top.
+        append_border = False
+        
+        #print '\ncurrent da_v tile ', tile_index
+        #print 'top tile index ', top_tile_index
+        
+        # check to see if there even is a tile to the top of da_v tile_index
+        if top_tile_index > 0:
+            #print 'there is a tile to the top of da_v tile ', tile_index
+
+            # determine whether the tile to the top is rotated relative 
+            # to da_v tile_index. if so we'll need da_u!
+            if tile_index in rot_tiles:
+                #print 'append with da_u tile ', top_tile_index
+
+                if top_tile_index in da_u.tile.values:
+                    #print 'we have da_u tile ', top_tile_index                      
+                    
+                    # see if we have multiple da_u tiles. 
+                    if len(da_u.tile) > 1:
+                        # pull out the one we need.
+                        top_arr = da_u.sel(tile=top_tile_index)
+                        append_border = True
+                        #print 'appending from da_u tile ', top_tile_index
+                    # there is only one da_u tile 
+                    elif da_u.tile == top_tile_index:
+                        # it is the one we need.
+                        top_arr = da_u
+                        append_border = True                        
+                        #print 'appending from da_u tile ', top_tile_index                        
+                    # something may have gone wrong.
+                    else:
+                        print 'something is wrong with the da_u tile'
+                        
+                 # if we do not have the da_u tile, then we can't append!
+                else:
+                   print 'we do not have da_u tile ', top_tile_index
+
+            # the values to append to the top come from another da_v tile
+            else:
+                #print 'append with da_v tile ', top_tile_index
+
+                # see if we have the required da_v tile
+                if top_tile_index in da_v.tile.values:
+                    #print 'we have da_v tile ', top_tile_index                      
+
+                    # see if we have multiple da_v tiles
+                    if len(da_v.tile) > 1:
+                        # pull out the one we need.
+                        top_arr = da_v.sel(tile=top_tile_index)
+                        append_border = True
+                        #print 'appending from da_v tile ', top_tile_index
+                    # if we only have one tile then something is wrong because
+                    # the tile to the top of this da_v tile cannot be itself
+                    #else:
+                       # print 'tile to the top cannot be tile_index'
+                # we do not have the required da_v tile.
+                else:
+                    print 'we do not have da_v tile ', top_tile_index
+
+        # there is no tile to the top 
+        else:
+            print 'there is no tile to the top of da_v tile ', tile_index
+
+        # if we have found a tile to the top we can do the appending
+        if append_border:
+            new_arr=append_border_to_tile(ref_arr, tile_index,
+                                               'v', llcN,
+                                               top = top_arr)            
+
+        # if not then we will append an array of nans
+        else:
+            if num_dims == 2:
+                pad = ((0, pad_i), (0, pad_j))
+            elif num_dims == 3:
+                pad = ((0, 0),     (0, pad_i), (0, pad_j))
+            elif num_dims == 4:
+                pad = ((0, 0),     (0, 0),     (0, pad_i), (0, pad_j))
+            
+            new_arr = np.pad(ref_arr, pad_width = pad, mode='constant',
+                             constant_values = np.nan)
+
+        # create a new DataArray
+        if num_dims == 2:
+            new_coords = [('j_g', j_g), ('i', i)]
+        elif num_dims == 3 and nk > 0:
+            new_coords = [('k', k), ('j_g', j_g), ('i', i)]
+        elif num_dims == 3 and nk == 0:
+            new_coords = [('time', time),('j_g', j_g), ('i', i)]
+        elif num_dims == 4:
+            new_coords = [('time', time), ('k', k), ('j_g', j_g), ('i', i)]
+            
+        tmp_DA = xr.DataArray(new_arr, name = da_v.name, coords=new_coords)
+
+        # give the new DataArray the same attributes as da_v
+        tmp_DA.attrs = da_v.attrs
+
+        # give the new DataArray a tile coordinate
+        tmp_DA.coords['tile'] = tile_index
+    
+        # increment the number of processed tiles counter by one
+        num_proc_tiles += 1
+        
+        # set da_v_new equal to tmp_DA if this is the first processed tile
+        if num_proc_tiles == 1:
+            da_v_new = tmp_DA
+        # otherwise, concatentate tmp_DA with da_v_new along the 'tile' dim
+        else:
+            da_v_new = xr.concat([da_v_new, tmp_DA],'tile')
+
+        # reset tmp_DA
+        tmp_DA = []
+
+    # add all time coordinates to_da_v_new from da_v.
+    for idx, var in enumerate(da_v.coords):
+        if 'tim' in var:
+            da_v_new[var] = da_v[var]
+
+    da_v_new.attrs['padded'] = True            
+    #%%
+    return da_v_new
+    #%%
+
+
+def add_borders_to_DataArray_U_points(da_u, da_v):
+    """
+    A routine that adds a column to the "right" of the 'u' point 
+    DataArray da_u so that every tracer point in the tile 
+    will have a 'u' point to the "west" and "east"
+
+    After appending the border the length of da_u in x 
+    will be +1 (one new column)
+    
+    This routine is pretty general.  Any tiles can be in the da_u and 
+    da_v DataArrays but if the tiles to the "right" of the da_u tiles
+    are not available then the new rows will be filled with nans.
+    
+    Parameters
+    ----------
+    da_u : DataArray
+        The `DataArray` object that has tiles of a u-point variable
+        Tiles of the must be in their original llc layout.
+
+    da_v : DataArray
+        The `DataArray` object that has tiles of the v-point variable that 
+        corresponds with da_u.   (e.g., VVEL corresponds with UVEL)
+        Tiles of the must be in their original llc layout.
+       
+    Returns
+    -------
+    da_u_new: DataArray
         a new `DataArray` object that has the appended values of 'u' along
         its right edge.  The lon_u and lat_u coordinates are lost but all
         other coordinates remain.
-        
-        
     """
+    
     #%%
-    # extract current dimensions of the grid tiles.
-    ni = len(da_v.i)  
-    nj = len(da_u.j)  
-
-    if 'k' in da_u:
-        nk = len(da_v.k)  
+    # the i_g dimension will be incremented by one.
+    i_g = np.arange(1, len(da_u.i_g)+2)
+    
+    # the j dimension is unchanged.
+    j = da_u['j'].values
+    llcN = len(j)
+    
+    # the k dimension, if it exists, is unchanged.
+    if 'k' in da_u.dims:
+        nk = len(da_u.k)  
+        k = da_u['k'].values
     else:
         nk = 0
-        
-    if 'time' in da_u:
-        ntime = len(da_u.time.values)
 
-    # define new coordiantes.
-    i_g = np.arange(1, nj+2)
-    j = np.arange(1, ni+1)
-    time = np.arange(1, ntime+1)    
-        
-    llcN = ni
-
-    if nk > 0:
-        k = np.arange(1, nk+1)
-    else:
-        k=0
-    
+    # the time dimension, if it exists, is unchanged
+    if 'time' in da_u.dims:
+        time = da_u['time'].values
             
     #%%
-    # FIRST, MAKE THE PARAMETER DATASET FOR GRID PARAMETERS SITUATED ON THE CORNER 'G' POINTS.  THERE ARE ONLY THREE: XG, YG and RAZ
-    print "\n>>> ADDING BORDERS TO U POINT TILES\n"
+    #print "\n>>> ADDING BORDERS TO U POINT TILES\n"
     
-    #tiles for which the adjacent tile to the right is rotated relative to itself
+    # tiles whose tile to the right are rotated 90 degrees counter clockwise
+    # to add borders from tiles 4, 5, or 6 we need to use the da_v fields
     rot_tiles = {4, 5, 6}
 
-    # the new arrays will be one longer in the j direction, we will add 
-    # one column to the right.
-    pad_i = 0 # we do not pad in first dimension (y)
+    # the new arrays will be one longer in the j direction, +1 column
     pad_j = 1 # add one to the second dimension (x)
-    
+    pad_i = 0 # we do not pad in first dimension (y)    
+
+    # set the number of processed tiles counter to zero    
     num_proc_tiles = 0
-    for tile_index in range(1,14):  
 
-        # Proceed if this tile is in the Dataset
-        if tile_index in da_u.tile.values:
+    # find the number of non-tile dimensions
+    if 'tile' in da_u.dims:
+        num_dims = da_u.ndim - 1
+    else:
+        num_dims = da_u.ndim
             
-            # we only care about the "right_tile_index" here
-            right_tile_index, top_tile_index, corner_tile_index = \
-                ecco.get_llc_tile_border_mapping(tile_index)
-            
-            if 'tile' in da_u.dims:
-                num_dims = da_u.ndim - 1
-            else:
-                num_dims = da_u.ndim
+    # loop through all tiles in da_u
+    for tile_index in da_u.tile.values:
+        
+        # find out which tile is to the right of this da_u tile
+        right_tile_index, top_tile_index, corner_tile_index = \
+            get_llc_tile_border_mapping(tile_index)
+        
+        # if 'tile' exists as a dimension, select and copy the proper da_u tile 
+        if 'tile' in da_u.dims:
+            ref_arr = deepcopy(da_u.sel(tile=tile_index))
+        else:
+            # otherwise we have a single da_u tile so make a copy of it
+            ref_arr = deepcopy(da_u)
 
-            if 'tile' in da_u.dims:
-                ref_arr = deepcopy(da_u.sel(tile=tile_index))
-            else:
-                ref_arr = deepcopy(da_u)
+        # the append_border flag will be true if we have a tile to the right.
+        append_border = False
+        
+        #print '\ncurrent da_u tile ', tile_index
+        #print 'right tile index ', right_tile_index
+        
+        # check to see if there even is a tile to the right of da_u tile_index
+        # tiles 10 and 13 don't have one!
+        if right_tile_index > 0:
+            #print 'there is a tile to the right of da_u tile ', tile_index
 
-            # by default we are not appending anything. we have to determine
-            # whether we have the tile to the right to use first!
-            append_border = False
-            
-            print 'current tile ', tile_index
-            print 'right tile index ', right_tile_index
-            
-            if right_tile_index > 0:
-                
-                """
-                now determine if the tile to the "right" of this tile is 
-                rotated relative to itself. if it then we need to use `rot_var`
-                instead of `var`.
-                For example tile 6's neighbor to the right is tile 8 which is 
-                rotated relative to tile 6.
-                """
-                if tile_index in rot_tiles and  \
-                    right_tile_index in da_v.tile.values:
-                        # we need to go the right with da_v and it appears that
-                        # right_tile_index is in da_v.tile
-                        
-                        # there is more than one tile in da_v.  select out the
-                        # right_tile_index that we need
-                        if len(da_v.tile) > 1:
-                            right_arr = da_v.sel(tile=right_tile_index)
-                            append_border = True
-                            print 'appending from da_v tile ', right_tile_index
-                        # there is only one tile in da_v.  select that one.
-                        elif da_v.tile == right_tile_index:
-                            right_arr = da_v
-                            append_border = True                        
-                            print 'appending from da_v tile ', right_tile_index                        
-                        # case, something may have gone wrong.
-                        else:
-                            print 'something is wrong with the da_v tile'
-                        
-                elif tile_index not in rot_tiles and \
-                    right_tile_index in da_u.tile.values:
+            # determine whether the tile to the right is rotated relative 
+            # to da_u tile_index. if so we'll need da_v!
+            if tile_index in rot_tiles:
+                #print 'append with da_v tile ', right_tile_index
 
-                    print 'tile index not in rot tiles', tile_index
-                        
-                    # we need to go the right with da_u and it appears that
-                    # right_tile_index is in da_u.tile
+                if right_tile_index in da_v.tile.values:
+                    #print 'we have da_v tile ', right_tile_index                      
                     
-                    # there is more than one tile in da_u.  select out the
-                    # right_tile_index that we need
+                    # see if we have multiple da_v tiles. 
+                    if len(da_v.tile) > 1:
+                        # pull out the one we need.
+                        right_arr = da_v.sel(tile=right_tile_index)
+                        append_border = True
+                        #print 'appending from da_v tile ', right_tile_index
+                    # there is only one da_v tile 
+                    elif da_v.tile == right_tile_index:
+                        # it is the one we need.
+                        right_arr = da_v
+                        append_border = True                        
+                        #print 'appending from da_v tile ', right_tile_index                        
+                    # something may have gone wrong.
+                    else:
+                        print 'something is wrong with the da_v tile'
+                        
+                # if we do not have the da_v tile, then we can't append!
+                else:
+                    print 'we do not have da_v tile ', right_tile_index
+
+            # the values to append to the top come from another da_u tile
+            else:
+                #print 'append with da_u tile ', right_tile_index
+
+                # see if we have the required da_u tile
+                if right_tile_index in da_u.tile.values:
+                    #print 'we have da_u tile ', right_tile_index                      
+
+                    # see if we have multiple da_u tiles
                     if len(da_u.tile) > 1:
+                        # pull out the one we need.
                         right_arr = da_u.sel(tile=right_tile_index)
                         append_border = True
-                        print 'appending from da_u tile ', right_tile_index                                                
+                        #print 'appending from da_u tile ', right_tile_index
+                    # if we only have one tile then something is wrong because
+                    # the tile to the right of this da_u tile cannot be itself
                     else:
-                        print 'something is wrong with the da_u tile'
-                        print 'the tile to the right cannot be the same as the'
-                        print 'current tile'
-                        print right_tile_index, ref_arr.tile
- 
-
-            if append_border:
-                new_arr=ecco.append_border_to_tile(ref_arr, tile_index,
-                                                   'u', llcN,
-                                                   right = right_arr)            
-            else:
-                # if there is no neighbor to the right
-                # pad the ref_array with nans on its right hand side
-                # applies to tiles 10 and 13, they have no tile to 
-                # their right (south pole.)
-                if num_dims == 2:
-                    new_arr = np.pad(ref_arr, 
-                                     pad_width=
-                                        ((0,pad_i), (0,pad_j)),
-                                     mode='constant',
-                                     constant_values = np.nan)
-
-                elif num_dims == 3:
-                    new_arr = np.pad(ref_arr, 
-                                     pad_width=
-                                        ((0,0), 
-                                        (0,pad_i), (0,pad_j)),
-                                     mode='constant', 
-                                     constant_values = np.nan)
-
-            # create a new Dataset with the variable and give it new 
-            # dimensions.
-            if num_dims == 2:
-                tmp_DA = xr.DataArray(new_arr, coords=[('j', j), ('i_g', i_g)])
-
-            elif num_dims == 3:
-                if nk > 0:
-                    tmp_DA = xr.DataArray(new_arr, coords=[('k', k),
-                                                           ('j', j), 
-                                                           ('i_g', i_g)])
+                        print 'tile to the right cannot be tile_index'
+                # we do not have the required da_u tile.
                 else:
-                    tmp_DA = xr.DataArray(new_arr, coords=[('time',time),
-                                                           ('j', j), 
-                                                           ('i_g', i_g)])
-            elif num_dims == 4:
-                tmp_DA = xr.DataArray(new_arr, coords=[('time', time), 
-                                                       ('k', k),
-                                                       ('j', j),
-                                                       ('i_g',i_g)])
-                
-            # finished handling 2D or 3D case
-            tmp_DA.attrs = da_u.attrs
-            tmp_DA.coords['tile'] = tile_index
-        
-            num_proc_tiles = num_proc_tiles + 1
-            
-            if num_proc_tiles == 1:
-                da_u_new = tmp_DA
-            else:
-                da_u_new = xr.concat([da_u_new, tmp_DA],'tile')
+                    print 'we do not have da_u tile ', right_tile_index
 
-    # add time coordinates if they are present.
+        # there is no tile to the right 
+        #else:
+        #    print 'there is no tile to the right of da_u tile ', tile_index
+
+        # if we have found a tile to the right we can do the appending
+        if append_border:
+            new_arr=append_border_to_tile(ref_arr, tile_index,
+                                               'u', llcN,
+                                               right = right_arr)            
+
+        # if not then we will append an array of nans
+        else:
+            if num_dims == 2:
+                pad = ((0, pad_i), (0, pad_j))
+            elif num_dims == 3:
+                pad = ((0, 0),     (0, pad_i), (0, pad_j))
+            elif num_dims == 4:
+                pad = ((0, 0),     (0, 0),     (0, pad_i), (0, pad_j))
+            
+            new_arr = np.pad(ref_arr, pad_width = pad, mode='constant',
+                             constant_values = np.nan)
+
+        # create a new DataArray
+        if num_dims == 2:
+            new_coords = [('j', j), ('i_g', i_g)]
+        elif num_dims == 3 and nk > 0:
+            new_coords = [('k', k), ('j', j), ('i_g', i_g)]
+        elif num_dims == 3 and nk == 0:
+            new_coords = [('time', time),('j', j), ('i_g', i_g)]
+        elif num_dims == 4:
+            new_coords = [('time', time), ('k', k), ('j', j), ('i_g',i_g)]
+            
+        tmp_DA = xr.DataArray(new_arr, name = da_u.name, coords=new_coords)
+
+        # give the new DataArray the same attributes as da_u
+        tmp_DA.attrs = da_u.attrs
+
+        # give the new DataArray a tile coordinate
+        tmp_DA.coords['tile'] = tile_index
+    
+        # increment the number of processed tiles counter by one
+        num_proc_tiles += 1
+        
+        # set da_u_new equal to tmp_DA if this is the first processed tile
+        if num_proc_tiles == 1:
+            da_u_new = tmp_DA
+        # otherwise, concatentate tmp_DA with da_u_new along the 'tile' dim
+        else:
+            da_u_new = xr.concat([da_u_new, tmp_DA],'tile')
+
+        # reset tmp_DA
+        tmp_DA = []
+
+    # add all time coordinates to_da_u_new from da_u.
     for idx, var in enumerate(da_u.coords):
-        print idx, var
         if 'tim' in var:
             da_u_new[var] = da_u[var]
-            
-    tmp_DA = []
-            
+
+    da_u_new.attrs['padded'] = True            
+    #%%       
+    return da_u_new
     #%%
     
+    
+    
+def add_borders_to_DataArray_G_points(da_g):
+    """
+    A routine that adds a row and column to the "top" and "right"
+    of the 'g' point DataArray da_g so that every tracer point in the tile 
+    will have a 'g' point on all of its corners
+
+    After appending the border the length of da_g will be +1 in both 
+    i_g and j_g
+    
+    
+    Parameters
+    ----------
+    da_ g: DataArray
+        The `DataArray` object that has tiles of a g-point variable
+        Tiles of the must be in their original llc layout.
+
+       
+    Returns
+    -------
+    da_g_new: DataArray
+        a new `DataArray` object that has the appended values of 'g' along
+        its top and right edges. 
+    """
+    
+    #%%
+    # the i_g and j_g dimensions will be incremented by one.
+    llcN = len(da_g.i_g)
+    j_g = np.arange(1, len(da_g.j_g)+2)
+    i_g = np.arange(1, len(da_g.i_g)+2)
+
+
+    # the k dimension, if it exists, is unchanged.
+    if 'k' in da_g.dims:
+        nk = len(da_g.k)  
+        k = da_g['k'].values
+    else:
+        nk = 0
+
+    # the time dimension, if it exists, is unchanged
+    if 'time' in da_g.dims:
+        time = da_g['time'].values
+            
+    #%%
+    #print "\n>>> ADDING BORDERS TO G POINT TILES\n"
+    
+    # the new arrays will be one longer in each dimensin
+    pad_i = 1 # pad by one in y (one new row)
+    pad_j = 1 # do not pad in x 
+
+    # set the number of processed tiles counter to zero    
+    num_proc_tiles = 0
+
+    # find the number of non-tile dimensions
+    if 'tile' in da_g.dims:
+        num_dims = da_g.ndim - 1
+    else:
+        num_dims = da_g.ndim
+
+    if len(da_g.tile.values) == 1:
+        raise ValueError('You can not append to da_g because you only \
+                          passed a single tile!')
+
+    # loop through all tiles in da_g
+    for tile_index in da_g.tile.values:
+        
+        # find out which tiles are adjacent 
+        right_tile_index, top_tile_index, corner_tile_index = \
+            get_llc_tile_border_mapping(tile_index)
+        
+        ref_arr = deepcopy(da_g.sel(tile=tile_index))
+
+        # the append_border flag will be true if we have a tile to the top.
+        append_border_top    = False
+        append_border_right  = False 
+        append_border_corner = False         
+        
+        #print '\ncurrent da_g tile ', tile_index
+        #print 'top tile index ', top_tile_index
+        #print 'right tile index ', right_tile_index
+        #print 'corner tile index ', corner_tile_index
+        
+        top_arr = []
+        right_arr = []
+        corner_arr = []
+ 
+
+        if top_tile_index in da_g.tile.values:
+            #print 'we have da_g tile to the top ', top_tile_index                      
+            top_arr = da_g.sel(tile=top_tile_index)
+            append_border_top = True
+
+        if right_tile_index in da_g.tile.values:
+            #print 'we have da_g tile to the right ', right_tile_index                      
+            right_arr = da_g.sel(tile=right_tile_index)
+            append_border_right = True
+            
+        if corner_tile_index in da_g.tile.values:
+            #print 'we have da_g tile in the NE corner ', corner_tile_index                      
+            corner_arr = da_g.sel(tile=corner_tile_index)
+            append_border_corner = True
+
+        if append_border_top or append_border_right or append_border_corner:
+            new_arr=append_border_to_tile(ref_arr, tile_index,
+                                          'g', llcN,
+                                          top = top_arr,
+                                          right = right_arr,
+                                          corner = corner_arr)
+
+        # if not then we will append an array of nans
+        else:
+            if num_dims == 2:
+                pad = ((0, pad_i), (0, pad_j))
+            elif num_dims == 3:
+                pad = ((0, 0),     (0, pad_i), (0, pad_j))
+            elif num_dims == 4:
+                pad = ((0, 0),     (0, 0),     (0, pad_i), (0, pad_j))
+            
+            new_arr = np.pad(ref_arr, pad_width = pad, mode='constant',
+                             constant_values = np.nan)
+
+        # create a new DataArray
+        if num_dims == 2:
+            new_coords = [('j_g', j_g), ('i_g', i_g)]
+        elif num_dims == 3 and nk > 0:
+            new_coords = [('k', k), ('j_g', j_g), ('i_g', i_g)]
+        elif num_dims == 3 and nk == 0:
+            new_coords = [('time', time),('j_g', j_g), ('i_g', i_g)]
+        elif num_dims == 4:
+            new_coords = [('time', time), ('k', k), ('j_g', j_g), ('i_g', i_g)]
+            
+        tmp_DA = xr.DataArray(new_arr, name = da_g.name, coords=new_coords)
+
+        # give the new DataArray the same attributes as da_g
+        tmp_DA.attrs = da_g.attrs
+
+        # give the new DataArray a tile coordinate
+        tmp_DA.coords['tile'] = tile_index
+    
+        # increment the number of processed tiles counter by one
+        num_proc_tiles += 1
+        
+        # set da_g_new equal to tmp_DA if this is the first processed tile
+        if num_proc_tiles == 1:
+            da_g_new = tmp_DA
+        # otherwise, concatentate tmp_DA with da_g_new along the 'tile' dim
+        else:
+            da_g_new = xr.concat([da_g_new, tmp_DA],'tile')
+
+        # reset tmp_DA
+        tmp_DA = []
+
+    # add all time coordinates to_da_g_new from da_g.
+    for idx, var in enumerate(da_g.coords):
+        if 'tim' in var:
+            da_g_new[var] = da_g[var]
+
+    da_g_new.attrs['padded'] = True            
+            
+    #%%            
+    return da_g_new
+    #%%
+    
+
 def get_llc_tile_border_mapping(tile_index):
     """
     Return the tile numbers for the tiles adjacent to the tile at 
@@ -850,3 +929,89 @@ def get_llc_tile_border_mapping(tile_index):
     return right_tile_index, top_tile_index, corner_tile_index   
  
             
+def add_borders_to_GRID_tiles(gds):
+    """
+    A routine that appends the partial halo for all grid tile variables.  
+    
+    Parameters
+    ----------
+    gds : Dataset
+        the `Dataset` object that has one or more grid ECCO v4 tile.
+        The tiles of the grid Dataset must be in their original layout.
+    
+
+    Returns
+    -------
+    gds_pad : Dataset
+        a new `Dataset` object for the ECCO v4 grid that has been padded
+        on the top and right sides for 'v' and 'u' point variables, 
+        respectively and on the top, top right corner, and right sides for
+        'g' point variables.  'c' point and vertical grid parameters are
+        untouched.
+        
+        gds_pad also has the new attribute, padded=True
+    """            
+    #%%
+    print "\n>>> ADDING BORDERS TO GRID TILES\n"
+
+    # C points
+    ## no borders added to C points.  We're adding borders AROUND c points
+
+    print " --- 'g' points"
+    # G points
+    XG_b  = add_borders_to_DataArray_G_points(gds.XG).to_dataset();
+
+    YG_b  = add_borders_to_DataArray_G_points(gds.YG).to_dataset();    
+
+    RAZ_b = add_borders_to_DataArray_G_points(gds.RAZ).to_dataset();        
+
+    print " --- 'u' points"
+    # U points
+    DXC_b    = add_borders_to_DataArray_U_points(gds.DXC, 
+                                                 gds.DYC).to_dataset()
+
+    DYG_b    = add_borders_to_DataArray_U_points(gds.DYG, 
+                                                 gds.DXG).to_dataset()
+
+    hFacW_b  = add_borders_to_DataArray_U_points(gds.hFacW, 
+                                                 gds.hFacS).to_dataset()
+
+    land_u_b = add_borders_to_DataArray_U_points(gds.land_u, 
+                                                 gds.land_v).to_dataset()   
+  
+    print " --- 'v' points"
+    # V points
+    DYC_b    = add_borders_to_DataArray_V_points(gds.DXC, 
+                                                 gds.DYC).to_dataset()
+
+    DXG_b    = add_borders_to_DataArray_V_points(gds.DYG, 
+                                                 gds.DXG).to_dataset()
+
+    hFacS_b  = add_borders_to_DataArray_V_points(gds.hFacW, 
+                                                 gds.hFacS).to_dataset()
+
+    land_v_b = add_borders_to_DataArray_V_points(gds.land_u, 
+                                                 gds.land_v).to_dataset()   
+    # now merge 
+    
+    # pull off the vertical parameters
+    gds_tmp_Z = gds[['RC','RF','DRC','DRF']]
+    
+    # drop all of the parameters that we just added borders to and the vertical
+    # grid parameters
+    gds_tmp = gds.drop(['DYC','DXG', 'hFacS',
+                        'DXC', 'DYG','hFacW','XG','YG',
+                        'RAZ','RC','RF','DRC','DRF'])
+    
+    # merge the old c-point grid parameters and the new padded 'g','u', and 'v'
+    # point parameters, and the vertical grid parameters
+    gds_pad = xr.merge([gds_tmp, XG_b, YG_b, RAZ_b, DXC_b, DYG_b, hFacW_b, 
+                        land_u_b, DYC_b, DXG_b, hFacS_b, land_v_b, gds_tmp_Z])
+    
+    # give the new grid Dataset the same parameters
+    gds_pad.attrs = gds.attrs
+    gds_pad.attrs['padded'] = True
+    
+    #%%
+    return gds_pad
+    #%%
