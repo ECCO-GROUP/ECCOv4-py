@@ -216,19 +216,34 @@ def plot_tiles(tiles,  **kwargs):
 
         cur_tile_num = tile_order[i]
         
+        have_tile = False
         #print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
-                cur_tile = tiles[cur_tile_num -1]
+                print 'we have an ndarray'
+                # make sure we have this tile in the array
+                if tiles.shape[0] >= cur_tile_num -1:
+                    have_tile = True
+                    cur_tile = tiles[cur_tile_num -1]
+                    
             else:
-                cur_tile = tiles.sel(tile=cur_tile_num)
-            
-            if (layout == 'latlon' and rotate_to_latlon and cur_tile_num >7):
-                cur_tile = np.copy(np.rot90(cur_tile))
-            
-            im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
-                         origin='lower')
-
+                # make sure we have this tile in the array
+                print ' we have a DataArray'
+                print tiles.tile
+                if cur_tile_num in tiles.tile.values:
+                    have_tile = True
+                    cur_tile = tiles.sel(tile=cur_tile_num)
+                    
+            print cur_tile_num, have_tile
+            if have_tile:
+                if (layout == 'latlon' and rotate_to_latlon and 
+                    cur_tile_num >7):
+                    
+                    cur_tile = np.copy(np.rot90(cur_tile))
+                
+                im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                             origin='lower')
+    
             ax.set_aspect('equal')
             ax.axis('on')
             if tile_labels:
