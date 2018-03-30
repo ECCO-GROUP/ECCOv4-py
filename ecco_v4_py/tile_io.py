@@ -228,7 +228,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     if len(file) == 0:
         raise IOError(fname + ' not found ')
 
-    ds = xr.open_dataset(fname)
+    ds = xr.open_dataset(fname, decode_times=False)
 
     # finally, give this Dataset the 'tile' coordinate with current tile_index
     ds.coords['tile'] = tile_index

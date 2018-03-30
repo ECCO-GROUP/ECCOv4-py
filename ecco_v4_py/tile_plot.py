@@ -26,7 +26,7 @@ import pyresample as pr
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-def plot_tile(tile, **kwargs):
+def plot_tile(tile, cmap='jet', **kwargs):
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # shows a single llc tile.  
@@ -34,9 +34,6 @@ def plot_tile(tile, **kwargs):
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    # by default use jet colormap
-    user_cmap = 'jet'
     
     # by default do not show a colorbar 
     show_colorbar = False
@@ -52,8 +49,6 @@ def plot_tile(tile, **kwargs):
     for key in kwargs:
         if key == "cbar":
             show_colorbar = kwargs[key]
-        elif key == "user_cmap":
-            user_cmap = kwargs[key]
         elif key == "cbar_label":
             cbar_label = kwargs[key]
             show_cbar_label = True
@@ -65,7 +60,7 @@ def plot_tile(tile, **kwargs):
             print "unrecognized argument ", key 
     #%%
        
-    plt.imshow(tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+    plt.imshow(tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                origin='lower')
     
     plt.xlabel('+x -->')
@@ -158,7 +153,7 @@ def plot_tiles(tiles,  **kwargs):
         tile_order_top_row = [-1, 7, -1, -1]
         
         if type(tiles) == np.ndarray:
-            print 'sent a 13 tile array'
+            pass
         else:
             # we were sent a Dataset or DataArray   
             # if we have defined the attribute 'Arctic_Align' then perhaps
@@ -220,7 +215,7 @@ def plot_tiles(tiles,  **kwargs):
         #print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
-                print 'we have an ndarray'
+                #print 'we have an ndarray'
                 # make sure we have this tile in the array
                 if tiles.shape[0] >= cur_tile_num -1:
                     have_tile = True
@@ -271,80 +266,44 @@ def plot_tiles(tiles,  **kwargs):
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-def plot_tiles_proj(lons, lats, data,  **kwargs):
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+
+def plot_tiles_proj(lons, lats, data, 
+                    user_lat_0 = 45, 
+                    projection_type = 'robin', 
+                    plot_type = 'pcolor', 
+                    user_lon_0 = 0, 
+                    background_type = 'fc', 
+                    show_cbar_label = False, 
+                    show_colorbar = False, 
+                    bound_lat = 50, 
+                    num_levels = 20, 
+                    cmap='jet', 
+                    map_resolution='c',
+                    dx=.25, 
+                    dy=.25, **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # this routine plots the 13 llc faces in Robinson layout
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
     # default projection type
-    projection_type = 'robin'
-    
     # by default the left most longitude in the global map is -180E.
-    user_lon_0 = 0
-
-    # by default use jet colormap
-    user_cmap = 'jet'
-    
     # by default do not show a colorbar 
-    show_colorbar = False
-
     # by default the colorbar has no label
-    show_cbar_label = False
-
     # by default take the min and max of the values
     cmin = np.nanmin(data)
     cmax = np.nanmax(data)
-
-    # 1/4 degree is the default resolution in lon and lat to interpolate
-    dx = .25
-    dy = .25
     
     # by default the plot_type is pcolor.
-    plot_type = 'pcolor'
-    
     # the default number of levels for contourf, 
-    num_levels = 20
-    
     # default background is to fill continents with gray color
-    background_type = 'fc'
-       
     # default bounding lat for polar stereographic projection is 50 N
-    bound_lat = 50
     
-    user_lat_0 = 45
     
     #%%
     for key in kwargs:
-        if key == "lon_0" :
-            user_lon_0 = kwargs[key]
-        elif key == "lat_0":
-            user_lat_0 = kwargs[key]
-        elif key == "cbar":
-            show_colorbar = kwargs[key]
-        elif key == "user_cmap":
-            user_cmap = kwargs[key]
-        elif key == "cbar_label":
-            cbar_label = kwargs[key]
-            show_cbar_label = True
-        elif key == "cmin":
+        if key == "cmin":
             cmin = kwargs[key]
         elif key == "cmax":
             cmax =  kwargs[key]
-        elif key == "dx":
-            dx =  kwargs[key]
-        elif key == "dy":
-            dy =  kwargs[key]
-        elif key == "plot_type":
-            plot_type =  kwargs[key]
-        elif key == "num_levels":
-            num_levels =  kwargs[key]
-        elif key == "projection_type":
-            projection_type = kwargs[key]
-        elif key == "background_type":
-            background_type = kwargs[key]
-        elif key == "bounding_lat":
-            bound_lat = kwargs[key]
         else:
             print "unrecognized argument ", key     
 
@@ -412,21 +371,22 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     if projection_type == 'cyl':
         map = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
                 llcrnrlon=A_left_limit, urcrnrlon=B_right_limit, 
-                resolution='c')
+                resolution=map_resolution)
     
     elif projection_type == 'robin':    
-        map = Basemap(projection='robin',lon_0=center_lon, resolution='c')
+        map = Basemap(projection='robin',lon_0=center_lon, 
+                      resolution=map_resolution)
 
     elif projection_type == 'ortho':
         map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0,
-                      resolution='c')
+                      resolution=map_resolution)
     elif projection_type == 'stereo':    
         if bound_lat > 0:
             map = Basemap(projection='npstere', boundinglat = bound_lat,
-                          lon_0=user_lon_0, resolution='c')
+                          lon_0=user_lon_0, resolution=map_resolution)
         else:
             map = Basemap(projection='spstere', boundinglat = bound_lat,
-                          lon_0=user_lon_0, resolution='c')
+                          lon_0=user_lon_0, resolution=map_resolution)
     else:
         raise ValueError('projection type must be either "cyl", "robin", or "stereo"')
         print 'found ', projection_type
@@ -441,7 +401,8 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         print 'shaded relief'        
     elif background_type == 'fc':
         map.fillcontinents(color='lightgray',lake_color='lightgray')  
-
+        pass
+    
     # prepare for the interpolation or nearest neighbor mapping
     
     # first define the lat lon points of the original data
@@ -450,6 +411,8 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
     # the latitudes to which we will we interpolate
     lat_tmp = np.linspace(-89.5, 89.5, 90/dy)
     
+    map.drawcoastlines(linewidth=1)
+
     # loop through both parts (if they exist), do interpolation and plot
     for key, lon_tmp in lon_tmp_d.iteritems():
 
@@ -471,7 +434,7 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         if plot_type == 'pcolor':
             # plot using pcolor 
             im=map.pcolor(x,y, data_latlon_projection, 
-                          vmin=cmin, vmax=cmax, cmap=user_cmap)
+                          vmin=cmin, vmax=cmax, cmap=cmap)
 
         elif plot_type == 'contourf':
             # create a set of contours spanning from cmin to cmax over
@@ -480,7 +443,7 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
             
             # plot using contourf
             im=map.contourf(x,y, data_latlon_projection, num_levels,
-                         vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                         vmin=cmin, vmax=cmax, cmap=cmap, 
                          levels=contour_levels, extend="both")
         else:
             print 'plot type must be either "pcolor" or "contourf"  '
@@ -489,7 +452,7 @@ def plot_tiles_proj(lons, lats, data,  **kwargs):
         
            
     # draw coastlines, country boundaries, fill continents.
-    map.drawcoastlines(linewidth=1)
+    #map.drawcoastlines(linewidth=1)
     # don't plot lat/lon labels for robinson     projection.
     if projection_type == 'robin':      
         map.drawmeridians(np.arange(0,360,30))
