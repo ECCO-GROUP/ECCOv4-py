@@ -223,13 +223,13 @@ def plot_tiles(tiles,  **kwargs):
                     
             else:
                 # make sure we have this tile in the array
-                print ' we have a DataArray'
-                print tiles.tile
+                #print ' we have a DataArray'
+                #print tiles.tile
                 if cur_tile_num in tiles.tile.values:
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
                     
-            print cur_tile_num, have_tile
+            #print cur_tile_num, have_tile
             if have_tile:
                 if (layout == 'latlon' and rotate_to_latlon and 
                     cur_tile_num >7):
