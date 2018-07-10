@@ -82,7 +82,7 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
                                         fill_value=None, 
                                         nprocs=nprocs_user) 
 
-    
+    #print 'nprocs_user ', nprocs_user
     
     return new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
