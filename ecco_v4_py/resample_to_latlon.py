@@ -80,7 +80,7 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
             pr.kd_tree.resample_nearest(orig_grid, orig_field, new_grid,
                                         radius_of_influence=1000000,
                                         fill_value=None,
-                                        nprocs=nprocs_user)                                     
+                                        nprocs=nprocs_user)
 
     return new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
