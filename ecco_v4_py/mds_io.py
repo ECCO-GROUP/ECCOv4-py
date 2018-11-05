@@ -76,9 +76,14 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
     f.close()
     
     # define a blank array
-    arr_tiles_k = np.zeros((13, llc, llc, nk))
-    
+
+    if nk > 1:
+        arr_tiles_k = np.zeros((13, nk,llc, llc))
+    else:
+        arr_tiles_k = np.zeros((13, llc, llc))
     #%%
+
+    print("new arr_tiles_k ", arr_tiles_k.shape)
     len_rec = 13*llc*llc
 
     # go through each 2D slice (or record)
@@ -151,11 +156,18 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
             plt.imshow(arr_tiles[1], origin='lower')
             plt.figure()
             plt.imshow(arr_tiles[2], origin='lower')
-    
-        arr_tiles_k[:,:,:,k] = arr_tiles
-  
-    if nk == 1:
-        arr_tiles_k = arr_tiles_k[:,:,:,0]
+      
+        if nk == 1:
+            #print ('nk = 1')
+            #print np.max(arr_tiles)
+            arr_tiles_k = arr_tiles[:,:,:]
+            
+        else:
+            #print ('k' , k)
+            for tile in range(0,13):
+                #print ('tile',tile)
+                arr_tiles_k[tile,k,:,:] = arr_tiles[tile,:,:]
+        
         
     # return the array
     return arr_tiles_k
