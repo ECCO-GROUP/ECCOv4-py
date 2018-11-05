@@ -276,12 +276,15 @@ def plot_tiles_proj(lons, lats, data,
                     background_type = 'fc', 
                     show_cbar_label = False, 
                     show_colorbar = False, 
+                    cbar_label = '',
                     bound_lat = 50, 
                     num_levels = 20, 
                     cmap='jet', 
                     map_resolution='c',
                     dx=.25, 
-                    dy=.25, **kwargs):
+                    dy=.25,
+                    show_grid_lines = True,
+                    **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # default projection type
@@ -454,13 +457,13 @@ def plot_tiles_proj(lons, lats, data,
     # draw coastlines, country boundaries, fill continents.
     #map.drawcoastlines(linewidth=1)
     # don't plot lat/lon labels for robinson     projection.
-    if projection_type == 'robin':      
+    if projection_type == 'robin' and show_grid_lines == True:      
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,30))
-    elif projection_type == 'stereo':      
+    elif projection_type == 'stereo' and show_grid_lines == True:      
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,10)) 
-    elif projection_type == 'cyl':
+    elif projection_type == 'cyl' and show_grid_lines == True:
         # labels = [left,right,top,bottom]
         map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
         map.drawmeridians(np.arange(0,360,60),  labels= [False,False, False,True])
