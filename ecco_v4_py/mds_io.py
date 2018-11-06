@@ -21,7 +21,7 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
                  less_output = False ):
     """
 
-    This routine loads a single 2D binary file in the llc layout
+    This routine loads a field from a MITgcm mds binary file in the llc 13 tie layout
 
     Parameters
     ----------
@@ -32,9 +32,9 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
     llc : int
         the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
     skip : int
-        the number of 2D records to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
+        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
     nk : int
-        number of 2D records to load.  
+        number of 2D slices (or records) to load.  
     filetype: string
         the file type, default is big endian (>) 32 bit float (f)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
@@ -65,17 +65,28 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
 
     f = open(datafile, 'rb')
     dt = np.dtype(filetype)
+
+    # skip ahead 'skip' number of 2D slices
     f.seek(llc*llc*13*skip*dt.itemsize)
 
+    # read in 'nk' 2D slices (or records) from the mds file
     arr_k = np.fromfile(f, dtype=filetype, 
                         count=llc*llc*13*nk)
     
     f.close()
     
-    arr_tiles_k = np.zeros((13, llc, llc, nk))
-    
+    # define a blank array
+
+    if nk > 1:
+        arr_tiles_k = np.zeros((13, nk,llc, llc))
+    else:
+        arr_tiles_k = np.zeros((13, llc, llc))
     #%%
+
+    print("new arr_tiles_k ", arr_tiles_k.shape)
     len_rec = 13*llc*llc
+
+    # go through each 2D slice (or record)
     for k in  range(nk):
 
         tmp = arr_k[len_rec*(k):len_rec*(k+1)]
@@ -145,10 +156,18 @@ def load_llc_mds(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
             plt.imshow(arr_tiles[1], origin='lower')
             plt.figure()
             plt.imshow(arr_tiles[2], origin='lower')
-    
-        arr_tiles_k[:,:,:,k] = arr_tiles
-  
-    if nk == 1:
-        arr_tiles_k = arr_tiles_k[:,:,:,0]
+      
+        if nk == 1:
+            #print ('nk = 1')
+            #print np.max(arr_tiles)
+            arr_tiles_k = arr_tiles[:,:,:]
+            
+        else:
+            #print ('k' , k)
+            for tile in range(0,13):
+                #print ('tile',tile)
+                arr_tiles_k[tile,k,:,:] = arr_tiles[tile,:,:]
         
+        
+    # return the array
     return arr_tiles_k

@@ -223,13 +223,13 @@ def plot_tiles(tiles,  **kwargs):
                     
             else:
                 # make sure we have this tile in the array
-                print ' we have a DataArray'
-                print tiles.tile
+                #print ' we have a DataArray'
+                #print tiles.tile
                 if cur_tile_num in tiles.tile.values:
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
                     
-            print cur_tile_num, have_tile
+            #print cur_tile_num, have_tile
             if have_tile:
                 if (layout == 'latlon' and rotate_to_latlon and 
                     cur_tile_num >7):
@@ -272,7 +272,9 @@ def plot_tiles_proj(lons, lats, data,
                     user_lat_0 = 45, 
                     projection_type = 'robin', 
                     plot_type = 'pcolor', 
-                    user_lon_0 = 0, 
+                    user_lon_0 = 0,
+                    user_width = 5000000,
+                    user_height = 4500000,
                     background_type = 'fc', 
                     show_cbar_label = False, 
                     show_colorbar = False, 
@@ -369,7 +371,7 @@ def plot_tiles_proj(lons, lats, data,
     if num_deg_B > 0:
        lon_tmp_d['B'] = np.linspace(B_left_limit, B_right_limit, num_deg_B)
 
-    
+    print ('projection type ', projection_type)
     # create the basemap object, 'map'
     if projection_type == 'cyl':
         map = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
@@ -381,8 +383,13 @@ def plot_tiles_proj(lons, lats, data,
                       resolution=map_resolution)
 
     elif projection_type == 'ortho':
-        map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0,
-                      resolution=map_resolution)
+        map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0)
+
+    elif projection_type == 'aeqd':
+        map = Basemap(projection='aeqd',lat_0=user_lat_0,lon_0=user_lon_0,
+                      resolution=map_resolution, width=user_width,
+                      height=user_height)
+        
     elif projection_type == 'stereo':    
         if bound_lat > 0:
             map = Basemap(projection='npstere', boundinglat = bound_lat,
@@ -391,7 +398,7 @@ def plot_tiles_proj(lons, lats, data,
             map = Basemap(projection='spstere', boundinglat = bound_lat,
                           lon_0=user_lon_0, resolution=map_resolution)
     else:
-        raise ValueError('projection type must be either "cyl", "robin", or "stereo"')
+        raise ValueError('projection type must be either "cyl", "robin", "aqed", or "stereo"')
         print 'found ', projection_type
     
     #%%
@@ -457,14 +464,18 @@ def plot_tiles_proj(lons, lats, data,
     # draw coastlines, country boundaries, fill continents.
     #map.drawcoastlines(linewidth=1)
     # don't plot lat/lon labels for robinson     projection.
+
+    # labels = [left,right,top,bottom]
     if projection_type == 'robin' and show_grid_lines == True:      
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,30))
     elif projection_type == 'stereo' and show_grid_lines == True:      
         map.drawmeridians(np.arange(0,360,30))
         map.drawparallels(np.arange(-90,90,10)) 
-    elif projection_type == 'cyl' and show_grid_lines == True:
-        # labels = [left,right,top,bottom]
+    elif projection_type == 'aeqd' and show_grid_lines == True:
+        map.drawmeridians(np.arange(0,360,30))
+        map.drawparallels(np.arange(-90,90,10))  
+    elif projection_type == 'cyl' and show_grid_lines == True::
         map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
         map.drawmeridians(np.arange(0,360,60),  labels= [False,False, False,True])
     
