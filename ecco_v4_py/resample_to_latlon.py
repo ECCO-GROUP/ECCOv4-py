@@ -6,12 +6,6 @@ import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
 
-# import all function from the 'mpl_toolkits.basemap' module available with the
-# prefix 'Basemap'
-from mpl_toolkits.basemap import Basemap
-
-# Performs cartographic transformations and geodetic computations.
-
 # The Proj class can convert from geographic (longitude,latitude) to native
 # map projection (x,y) coordinates and vice versa, or from one map projection
 # coordinate system directly to another.
@@ -52,8 +46,6 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
         print 'orig_fieldmust be either a DataArray or ndarray type \n'
         print 'found type ', type(orig_field)
         return
-
-
 
     # prepare for the nearest neighbor mapping
 
