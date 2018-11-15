@@ -60,7 +60,7 @@ def load_mds(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f',
     
     print 'loading ' + fname
     
-        # check to see if file exists.    
+    # check to see if file exists.    
     file = glob.glob(datafile)
     if len(file) == 0:
         raise IOError(fname + ' not found ')
