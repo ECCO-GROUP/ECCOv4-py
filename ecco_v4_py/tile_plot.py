@@ -9,7 +9,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
-
+from distutils.util import strtobool
 import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,6 +76,10 @@ def plot_tiles(tiles,  **kwargs):
     # or the quasi lat-lon  layout
     # cmin and cmax are the color minimum and maximum
     # max.  'tiles' is a DataArray of a single 2D variable
+
+    # layout:
+    #     'llc' : 
+    #     'latlon'
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 
     # by default use jet colormap
@@ -88,7 +92,8 @@ def plot_tiles(tiles,  **kwargs):
     show_cbar_label = False
 
     # by default the layout is the original llc 
-    layout = 'llc'
+
+    layout = 'llc' # 
     
     # by default take the min and max of the values
     cmin = np.nanmin(tiles)
@@ -100,14 +105,35 @@ def plot_tiles(tiles,  **kwargs):
     
     rotate_to_latlon = False
     
+    # Which lat-lon tile to plot the Arctic tile over. 
+    # -- can be 3, 6, 8 or 11.
+    aca = 3
+
+    # plotting of the tiles happens in a 4x4 grid
+    # which tile to plot for any one of the 16 spots is indicated with a list
+    # a value of negative one means do not plot anything in that spot.
+    # the top row will have the Arctic tile.  You can choose where the 
+    # Arctic tile goes.  By default it goes in the second column.
+    tile_order_top_row = [-1, 7, -1, -1]
+    
+    if type(tiles) == np.ndarray:
+        pass
+    else:
+        # we were sent a Dataset or DataArray   
+        # if we have defined the attribute 'Arctic_Align' then perhaps
+        # the Arctic cap is algined with another tile and therefore it's location
+        # in the figure may be different changed.
+        if 'Arctic_Align' in tiles.attrs:
+            aca = tiles.attrs['Arctic_Align']
+            #print 'Arctic Cap Alignment match with tile: ', aca
+    
     for key in kwargs:
         if key == "cbar":
             show_colorbar = kwargs[key]
         elif key == "user_cmap":
             user_cmap = kwargs[key]
         elif key == "cbar_label":
-            cbar_label = kwargs[key]
-            show_cbar_label = True
+            show_cbar_label = kwargs[key]
         elif key == "layout":
             layout = kwargs[key]
         elif key == "cmin":
@@ -120,9 +146,33 @@ def plot_tiles(tiles,  **kwargs):
             fsize = kwargs[key]
         elif key == "rotate_to_latlon":
             rotate_to_latlon = kwargs[key]
+        elif key == 'Arctic_Align':
+            aca = kwargs[key]
         else:
             print "unrecognized argument ", key 
-               
+
+    # see if aca is one of four valid values
+    if len(np.intersect1d([3,6,8,11],aca)) > 0:
+        # set the location of the Arctic tile.
+        if  aca == 3: # plot in 1st position, column 1
+            tile_order_top_row = [7, -1, -1, -1]
+        elif aca == 6:# plot in 2nd position, column 2
+            tile_order_top_row = [-1, 7, -1, -1]
+        elif aca == 8:# plot in 3rd position, column 3
+            tile_order_top_row = [-1, -1, 7, -1]
+        elif aca == 11:# plot in 4th position, column 4
+            tile_order_top_row = [-1, -1, -1, 7]
+    else:
+        # if not, set it to be 6.
+        print 'Arctic Cap Alignment is not one of 3, 6, 8, 11, using 3'
+        aca  = 3
+
+
+    if layout == 'llc' and aca != 6:
+        print 'Arctic_Align only makes sense with the lat-lon layout'
+
+    if layout == 'llc' and rotate_to_latlon == True:
+        print 'note: rotate_to_latlon only applies when layout="latlon" '
 
     if layout == 'latlon':
 
@@ -133,36 +183,7 @@ def plot_tiles(tiles,  **kwargs):
             f, axarr = plt.subplots(4, 4, figsize=(fsize*fac,fsize),
                                     gridspec_kw = {'wspace':0, 'hspace':0})
 
-        # plotting of the tiles happens in a 4x4 grid
-        # which tile to plot for any one of the 16 spots is indicated with a list
-        # a value of negative one means do not plot anything in that spot.
-        # the top row will have the Arctic tile.  Where we put the Arctic tile
-        # depends on which other tile it is aligned with.  By default, it is
-        # aligned with tile 6, which is the second column.  
-        tile_order_top_row = [-1, 7, -1, -1]
-        
-        if type(tiles) == np.ndarray:
-            pass
-        else:
-            # we were sent a Dataset or DataArray   
-            # if we have defined the attribute 'Arctic_Align' then perhaps
-            # the Arctic cap is algined with another tile and therefore it's location
-            # in the figure may be different changed.
-            if 'Arctic_Align' in tiles.attrs:
-                aca = tiles.attrs['Arctic_Align']
-                #print 'Arctic Cap Alignment match with tile: ', aca
-                
-                if  aca == 3: # plot in 1st position, column 1
-                    tile_order_top_row = [7, -1, -1, -1]
-                elif aca == 6:# plot in 2nd position, column 2
-                    tile_order_top_row = [-1, 7, -1, -1]
-                elif aca == 8:# plot in 3rd position, column 3
-                    tile_order_top_row = [-1, -1, 7, -1]
-                elif aca == 11:# plot in 4th position, column 4
-                    tile_order_top_row = [-1, -1, -1, 7]
-                else:
-                    print 'Arctic Cap Alignment is not one of 3, 6, 8, 11.'
-                        
+                  
         # the order of the rest of the tile is fixed.  four columns each with 
         # three rows.
         tile_order_bottom_rows =[3, 6, 8, 11,
@@ -204,7 +225,6 @@ def plot_tiles(tiles,  **kwargs):
         #print i, cur_tile_num
         if cur_tile_num > 0:
             if type(tiles) == np.ndarray:
-                #print 'we have an ndarray'
                 # make sure we have this tile in the array
                 if tiles.shape[0] >= cur_tile_num -1:
                     have_tile = True
@@ -212,21 +232,27 @@ def plot_tiles(tiles,  **kwargs):
                     
             else:
                 # make sure we have this tile in the array
-                #print ' we have a DataArray'
-                #print tiles.tile
                 if cur_tile_num in tiles.tile.values:
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
-                    
-            #print cur_tile_num, have_tile
+            
             if have_tile:
-                if (layout == 'latlon' and rotate_to_latlon and 
-                    cur_tile_num >7):
+                if cur_tile_num == 7:
+                    if aca == 3:
+                        cur_tile = np.copy(np.rot90(cur_tile,-1))
+                    elif aca == 8:
+                        cur_tile = np.copy(np.rot90(cur_tile,-3))
+                    elif aca == 11:
+                        cur_tile = np.copy(np.rot90(cur_tile,2))
+
+                elif (layout == 'latlon' and rotate_to_latlon and 
+                    cur_tile_num > 7):
                     
                     cur_tile = np.copy(np.rot90(cur_tile))
                 
                 im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
                              origin='lower')
+            
     
             ax.set_aspect('equal')
             ax.axis('on')
