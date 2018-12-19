@@ -1,6 +1,11 @@
 from dataset_utils import minimal_metadata
 
-from mds_io import load_llc_mds
+from mds_io import load_llc_compact_binary_to_tiles
+from mds_io import load_llc_compact_binary
+from mds_io import llc_compact_to_faces
+from mds_io import llc_faces_to_tiles
+from mds_io import llc_tiles_to_faces
+from mds_io import llc_faces_to_compact
 
 from resample_to_latlon import resample_to_latlon_nearest
 
