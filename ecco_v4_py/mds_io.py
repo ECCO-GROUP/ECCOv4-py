@@ -17,117 +17,7 @@ from copy import deepcopy
 import glob
 
 
-#%%
-def load_llc_compact_binary_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f', 
-                 less_output = False ):
-    """
-
-    This routine loads a field from a MITgcm mds binary file in the llc 13 tie layout
-
-    Parameters
-    ----------
-    fdir : string
-        A string with the directory of the binary file to open
-    fname : string
-        A string with the name of the binary file to open
-    llc : int
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
-    skip : int
-        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
-    nk : int
-        number of 2D slices (or records) to load.  
-    filetype: string
-        the file type, default is big endian (>) 32 bit float (f)
-        alternatively, ('<d') would be little endian (<) 64 bit float (d)
-    less_output : boolean
-        a debug flag.  True means print more to the screen, False means be
-        quieter.  Default False
-        
-    Returns
-    -------
-    data_tiles_k
-        the binary file contents organized into a 13 x nk x llc x llc`data_tiles_k`
-        one llc x llc array for each of the 13 tiles and depth levels
-
-    Raises
-    ------
-    IOError
-        If the file is not found
-
-    """
-    
-    data_compact = load_llc_compact_binary(fdir, fname, llc, skip, nk, filetype, less_output)
-
-    # define a blank array
-    if nk > 1:
-        data_tiles_k = np.zeros((13, nk, llc, llc))
-    else:
-        data_tiles_k = np.zeros((13, llc, llc))
-
-    
-    len_rec = 13*llc*llc
-
-    # go through each 2D slice (or record)
-    for k in range(nk):
-
-        #tmp = arr_k[len_rec*(k):len_rec*(k+1)]
-        #arr = np.reshape(tmp,(13*llc, llc
-
-        if nk == 1:
-            tmp = data_compact
-        else:
-            tmp = data_compact[:,:,k]
-
-        f1, f2, f3, f4, f5 = llc_compact_to_faces(tmp)
-
-        if 1 == 0:
-            plt.close('all')
-            plt.imshow(f1, origin='lower')
-            plt.figure()
-            plt.imshow(f2, origin='lower')   
-            plt.show()
-            
-            plt.figure()
-            plt.imshow(f3, origin='lower')
-            plt.show()
-            
-            plt.figure()
-            plt.imshow(f4, origin='lower')
-            plt.show()
-            
-            plt.figure()
-            plt.imshow(f5, origin='lower')
-            plt.show()
-        
-
-        data_tiles = llc_faces_to_tiles(f1, f2, f3, f4, f5, llc)
-
-        
-        if 1 == 0:
-            plt.figure()
-            plt.imshow(data_tiles[0], origin='lower')
-            plt.figure()
-            plt.imshow(data_tiles[1], origin='lower')
-            plt.figure()
-            plt.imshow(data_tiles[2], origin='lower')
-      
-        if nk == 1:
-            #print ('nk = 1')
-            #print np.max(data_tiles)
-            data_tiles_k = data_tiles[:,:,:]
-            
-        else:
-            #print ('k' , k)
-            for tile in range(0,13):
-                #print ('tile',tile)
-                data_tiles_k[tile,k,:,:] = data_tiles[tile,:,:]
-        
-        
-    # return the array
-    return data_tiles_k
-
-
-def load_llc_compact_binary(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f', 
+def load_llc_compact(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f', 
              less_output = False ):
     """
 
@@ -194,6 +84,214 @@ def load_llc_compact_binary(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f',
 
     # return the array
     return data_compact
+
+
+#%%
+def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', less_output = False ):
+    """
+
+    This routine loads a field from a MITgcm mds binary file in the llc 5 face layout
+
+    Parameters
+    ----------
+    fdir : string
+        A string with the directory of the binary file to open
+    fname : string
+        A string with the name of the binary file to open
+    llc : int
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+    skip : int
+        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
+    nk : int
+        number of 2D slices (or records) to load.  
+    filetype: string
+        the file type, default is big endian (>) 32 bit float (f)
+        alternatively, ('<d') would be little endian (<) 64 bit float (d)
+    less_output : boolean
+        a debug flag.  True means print more to the screen, False means be
+        quieter.  Default False
+        
+    Returns
+    -------
+    f1_k, f2_k, f3_k, f4_k, f5_k
+        the binary file contents organized into a 5 llc faces. 
+        if nk > 1, then the first dimension of f*_k is length nk.
+        otherwise the f*_k arrays are 2D
+        
+
+    Raises
+    ------
+    IOError
+        If the file is not found
+
+    """
+    
+    data_compact = load_llc_compact(fdir, fname, llc, skip, nk, 
+        filetype, less_output)
+
+    # initialize arrays
+    if nk > 1:
+        f1_k = np.zeros((nk, 3*llc, llc))        
+        f2_k = np.zeros((nk, 3*llc, llc))        
+        f3_k = np.zeros((nk, llc, llc))                
+        f4_k = np.zeros((nk, llc, 3*llc))
+        f5_k = np.zeros((nk, llc, 3*llc))        
+        
+    else:
+        f1_k = np.zeros((3*llc, llc))        
+        f2_k = np.zeros((3*llc, llc))        
+        f3_k = np.zeros((llc, llc))        
+        f4_k = np.zeros((llc, 3*llc))
+        f5_k = np.zeros((llc, 3*llc))      
+    
+    len_rec = 13*llc*llc
+
+    # go through each 2D slice of the 3D field (or 2D record)
+    for k in range(nk):
+
+        if nk == 1:
+            tmp = data_compact
+        else:
+            tmp = data_compact[:,:,k]
+
+        f1, f2, f3, f4, f5 = llc_compact_to_faces(tmp)
+
+        print 'F shapes'
+        print f1.shape
+        print f2.shape
+        print f3.shape
+        print f4.shape
+        print f5.shape
+
+        if nk == 1:
+            f1_k = f1
+            f2_k = f2
+            f3_k = f3
+            f4_k = f4
+            f5_k = f5
+            
+        else:
+            for face in range(0,5):
+                f1_k[k,:,:] = f1
+                f2_k[k,:,:] = f2
+                f3_k[k,:,:] = f3
+                f4_k[k,:,:] = f4
+                f5_k[k,:,:] = f5
+        
+        
+    # return the array
+    return f1_k, f2_k, f3_k, f4_k, f5_k
+
+
+
+def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f', 
+                 less_output = False ):
+    """
+
+    This routine loads a field from a MITgcm mds binary file in the llc 13 tile layout
+
+    Parameters
+    ----------
+    fdir : string
+        A string with the directory of the binary file to open
+    fname : string
+        A string with the name of the binary file to open
+    llc : int
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+    skip : int
+        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
+    nk : int
+        number of 2D slices (or records) to load.  
+    filetype: string
+        the file type, default is big endian (>) 32 bit float (f)
+        alternatively, ('<d') would be little endian (<) 64 bit float (d)
+    less_output : boolean
+        a debug flag.  True means print more to the screen, False means be
+        quieter.  Default False
+        
+    Returns
+    -------
+    data_tiles_k
+        the binary file contents organized into a 13 x nk x llc x llc`data_tiles_k`
+        one llc x llc array for each of the 13 tiles and depth levels
+
+    Raises
+    ------
+    IOError
+        If the file is not found
+
+    """
+    
+    data_compact = load_llc_compact(fdir, fname, llc, skip, nk, filetype, less_output)
+
+    # define a blank array
+    if nk > 1:
+        data_tiles_k = np.zeros((13, nk, llc, llc))
+    else:
+        data_tiles_k = np.zeros((13, llc, llc))
+
+    
+    len_rec = 13*llc*llc
+
+    # go through each 2D slice (or record)
+    for k in range(nk):
+
+        #tmp = arr_k[len_rec*(k):len_rec*(k+1)]
+        #arr = np.reshape(tmp,(13*llc, llc
+
+        if nk == 1:
+            tmp = data_compact
+        else:
+            tmp = data_compact[:,:,k]
+
+        f1, f2, f3, f4, f5 = llc_compact_to_faces(tmp)
+
+        if 1 == 0:
+            plt.close('all')
+            plt.imshow(f1, origin='lower')
+            plt.figure()
+            plt.imshow(f2, origin='lower')   
+            plt.show()
+            
+            plt.figure()
+            plt.imshow(f3, origin='lower')
+            plt.show()
+            
+            plt.figure()
+            plt.imshow(f4, origin='lower')
+            plt.show()
+            
+            plt.figure()
+            plt.imshow(f5, origin='lower')
+            plt.show()
+        
+
+        data_tiles = llc_faces_to_tiles(f1, f2, f3, f4, f5)
+
+        
+        if 1 == 0:
+            plt.figure()
+            plt.imshow(data_tiles[0], origin='lower')
+            plt.figure()
+            plt.imshow(data_tiles[1], origin='lower')
+            plt.figure()
+            plt.imshow(data_tiles[2], origin='lower')
+      
+        if nk == 1:
+            #print ('nk = 1')
+            #print np.max(data_tiles)
+            data_tiles_k = data_tiles[:,:,:]
+            
+        else:
+            #print ('k' , k)
+            for tile in range(0,13):
+                #print ('tile',tile)
+                data_tiles_k[tile,k,:,:] = data_tiles[tile,:,:]
+        
+        
+    # return the array
+    return data_tiles_k
+
 
 
 #%%

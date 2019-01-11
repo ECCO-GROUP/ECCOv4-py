@@ -1,7 +1,8 @@
 from dataset_utils import minimal_metadata
 
-from mds_io import load_llc_compact_binary_to_tiles
-from mds_io import load_llc_compact_binary
+from mds_io import load_llc_compact
+from mds_io import load_llc_compact_to_faces
+from mds_io import load_llc_compact_to_tiles
 from mds_io import llc_compact_to_faces
 from mds_io import llc_faces_to_tiles
 from mds_io import llc_tiles_to_faces
