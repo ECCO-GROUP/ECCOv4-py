@@ -16,14 +16,17 @@ import time
 from copy import deepcopy
 import glob
 
-
-def load_llc_compact(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f', 
-             less_output = False ):
+#%%
+def load_binary_array(fdir, fname, ni, nj, nk=1, skip=0, filetype = '>f', 
+                      less_output = False ):
     """
 
-    This routine loads an MITgcm binary file in the lat-lon-cap 'compact' format
-    The compact format has dimension 13*llc x llc x nk
-    
+    Loads a binary array from a file.  The first two dimensions
+    of the array have length ni and nj, respectively.  The array is comprised
+    of one or more 2D 'slices' of dimension ni x nj.  The number of 2D slices
+    to read is 'nk'.  nk is not necessarily the length of the third dimension
+    of the file.  The 'skip' parameter specifies the number of 2D slices
+    to skip over before reading the nk number of 2D slices.  nk can be 1.
 
     Parameters
     ----------
@@ -31,35 +34,40 @@ def load_llc_compact(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f',
         A string with the directory of the binary file to open
     fname : string
         A string with the name of the binary file to open
-    llc : int
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+    ni,nj : int
+        the length of each array dimension.  must all be > 1
     skip : int
-        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
-    nk : int
-        number of 2D slices (or records) to load.  
+        the number of 2D (nj x ni) slices to skip.
+        Default: 0
+    nk   : int
+        the number of 2D (nj x ni) slides to read  (not necessarily
+        the length of the third dimension, just the length that you
+        want to read).  
+        Default 1
     filetype: string
         the file type, default is big endian (>) 32 bit float (f)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
+        Default '>f'
     less_output : boolean
         a debug flag.  True means print more to the screen, False means be
-        quieter.  Default False
+        quieter.  
+        Default: False
         
     Returns
     -------
-    data_compact
-        the binary file contents organized into a 13*llc x llc x nk `arr_k`
-        one 13*llc x llc array for each depth level
-
+    data
+        a numpy array with dimensions nk x nj x ni
+        
     Raises
     ------
     IOError
         If the file is not found
 
     """
-    
     datafile = fdir + '/' + fname
     
-    print 'loading ' + fname
+    if less_output == False:
+        print 'loading ' + fname
     
     # check to see if file exists.    
     file = glob.glob(datafile)
@@ -69,28 +77,44 @@ def load_llc_compact(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f',
     f = open(datafile, 'rb')
     dt = np.dtype(filetype)
 
-    # skip ahead 'skip' number of 2D slices
-    f.seek(llc*llc*13*skip*dt.itemsize)
+    if skip > 0:
+        # skip ahead 'skip' number of 2D slices
+        f.seek(ni*nj*skip*dt.itemsize)
 
-    # read in 'nk' 2D slices (or records) from the mds file
-    arr_k = np.fromfile(f, dtype=filetype, count=llc*llc*13*nk)
-    
-    f.close()
+    if ni*nj > 0:
+        # read in 'nk' 2D slices (or records) from the mds file
+        arr_k = np.fromfile(f, dtype=filetype, count=ni*nj*nk)
 
-    if nk > 1:
-        data_compact = np.reshape(arr_k,(13*llc, llc, nk))
-    else:
-        data_compact = np.reshape(arr_k,(13*llc, llc))
+        f.close()
 
+        if nk > 1:
+            data = np.reshape(arr_k,(nk, nj, ni))
+        else:
+            data = np.reshape(arr_k,(nj, ni))
+        
     # return the array
-    return data_compact
+    else :
+        if less_output == False:
+            print "ni and nj must be > 0"
+
+        data = []
+
+    if less_output == False:
+        print ('data shape ', data.shape)
+
+    return data
+
+
 
 
 #%%
-def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', less_output = False ):
+def load_llc_compact(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f', 
+            less_output = False ):
     """
 
-    This routine loads a field from a MITgcm mds binary file in the llc 5 face layout
+    Loads an MITgcm binary file in the 'compact' format of the 
+    lat-lon-cap (LLC) grids.  Data in the compact format have
+    dimensions 13*llc x llc x nk.
 
     Parameters
     ----------
@@ -99,7 +123,60 @@ def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', l
     fname : string
         A string with the name of the binary file to open
     llc : int
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
+        so `llc` would be `90`.  
+        Default: 90
+    skip : int
+        the number of 2D slices (or records) to skip.  Records could 
+        be vertical levels of a 3D field, or different 2D fields, or both.
+        Default: 0
+    nk : int
+        number of 2D slices (or records) to load.  
+        Default: 1
+    filetype: string
+        the file type, default is big endian (>) 32 bit float (f)
+        alternatively, ('<d') would be little endian (<) 64 bit float (d)
+        Deafult '>f'
+    less_output : boolean
+        a debug flag.  True means print more to the screen, False means be
+        quieter.  Default False
+        
+    Returns
+    -------
+    data_compact
+        a numpy array of dimension 13*llc x llc x nk
+
+    """
+
+    data_compact = load_binary_array(fdir, fname, llc, 13*llc, nk=nk, 
+                    skip=skip, filetype = filetype, less_output = less_output)
+    
+    # return the array
+    return data_compact
+
+
+
+#%%
+def load_llc_compact_to_faces(fdir, fname, llc=90, skip=0, nk=1, 
+        filetype = '>f', less_output = False ):
+    """
+
+    Loads an MITgcm binary file in the 'compact' format of the 
+    lat-lon-cap (LLC) grids and converts it to the '5 faces' format
+    of the LLC grids.  
+
+    Can load 2D and 3D arrays.
+
+    Parameters
+    ----------
+    fdir : string
+        A string with the directory of the binary file to open
+    fname : string
+        A string with the name of the binary file to open
+    llc : int
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
+        so `llc` would be `90`.  
+        Default: 90
     skip : int
         the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
     nk : int
@@ -113,17 +190,14 @@ def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', l
         
     Returns
     -------
-    f1_k, f2_k, f3_k, f4_k, f5_k
-        the binary file contents organized into a 5 llc faces. 
-        if nk > 1, then the first dimension of f*_k is length nk.
-        otherwise the f*_k arrays are 2D
+    F : a dictionary containing the five lat-lon-cap faces
+        F['1'] is a numpy array of face 1.
+        F['2'] is a numpy array of face 2.
+        ...
+        F['5'] is a numpy array of face 5.
+
+        If the faces are 3D, the first dimension is k
         
-
-    Raises
-    ------
-    IOError
-        If the file is not found
-
     """
     
     data_compact = load_llc_compact(fdir, fname, llc, skip, nk, 
@@ -152,16 +226,25 @@ def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', l
         if nk == 1:
             tmp = data_compact
         else:
-            tmp = data_compact[:,:,k]
+            tmp = data_compact[k,:,:]
 
-        f1, f2, f3, f4, f5 = llc_compact_to_faces(tmp)
+        print type(tmp)
+        print tmp.shape
 
-        print 'F shapes'
-        print f1.shape
-        print f2.shape
-        print f3.shape
-        print f4.shape
-        print f5.shape
+        F = llc_compact_to_faces(tmp)
+        f1 = F['1']
+        f2 = F['2']
+        f3 = F['3']
+        f4 = F['4']
+        f5 = F['5']                
+
+        if less_output == False:
+            print 'F shapes'
+            print f1.shape
+            print f2.shape
+            print f3.shape
+            print f4.shape
+            print f5.shape
 
         if nk == 1:
             f1_k = f1
@@ -179,16 +262,26 @@ def load_llc_compact_to_faces(fdir, fname, llc, skip=0, nk=1, filetype = '>f', l
                 f5_k[k,:,:] = f5
         
         
-    # return the array
-    return f1_k, f2_k, f3_k, f4_k, f5_k
+    # put these faces in a dictionary
+    F = {}    
+    F['1'] = f1_k
+    F['2'] = f2_k
+    F['3'] = f3_k
+    F['4'] = f4_k
+    F['5'] = f5_k
+    
+    # return a dictionary of faces
+    return F
 
 
-
-def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f', 
+#%%
+def load_llc_compact_to_tiles(fdir, fname, llc=90, skip=0, nk=1, filetype = '>f', 
                  less_output = False ):
     """
 
-    This routine loads a field from a MITgcm mds binary file in the llc 13 tile layout
+    Loads an MITgcm binary file in the 'compact' format of the 
+    lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
+    of the LLC grids.  
 
     Parameters
     ----------
@@ -197,7 +290,9 @@ def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
     fname : string
         A string with the name of the binary file to open
     llc : int
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain so `llc` would be `90`
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
+        so `llc` would be `90`.  
+        Default: 90
     skip : int
         the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
     nk : int
@@ -211,42 +306,90 @@ def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
         
     Returns
     -------
-    data_tiles_k
-        the binary file contents organized into a 13 x nk x llc x llc`data_tiles_k`
-        one llc x llc array for each of the 13 tiles and depth levels
-
-    Raises
-    ------
-    IOError
-        If the file is not found
+    data_tiles
+        a numpy array of dimension 13 x nk x llc x llc, one llc x llc array 
+        for each of the 13 tiles and nk levels
 
     """
     
-    data_compact = load_llc_compact(fdir, fname, llc, skip, nk, filetype, less_output)
+    data_compact = load_llc_compact(fdir, fname, llc, skip, nk, 
+            filetype, less_output)
+
+    data_tiles   = llc_compact_to_tiles(data_compact, less_output)
+        
+    # return the array
+    return data_tiles
+
+#%%
+def llc_compact_to_tiles(data_compact, less_output = False):
+    """
+
+    Converts a numpy binary array in the 'compact' format of the 
+    lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
+    of the LLC grids.  
+
+    Parameters
+    ----------
+    data_compact
+        a numpy array of dimension 13*llc x llc x nk
+    less_output : boolean
+        a debug flag.  True means print more to the screen, False means be
+        quieter.  
+        Default: False
+        
+    Returns
+    -------
+    data_tiles_k
+        a numpy array of dimension 13 x nk x llc x llc, one llc x llc array 
+        for each of the 13 tiles and nk levels
+
+    """   
+    if less_output == False:
+        print ('data compact shape ', data_compact.shape)
+        print (type(data_compact))
+
+    if data_compact.ndim == 3:
+        nk = np.size(data_compact,0)
+    else:
+        nk = 1
+
+    # the last dimension should have length llc
+    llc = np.size(data_compact,-1)
+
+    if less_output == False:
+        print ('nk = ' , nk)
+        print ('llc = ', llc)
+
 
     # define a blank array
     if nk > 1:
         data_tiles_k = np.zeros((13, nk, llc, llc))
     else:
         data_tiles_k = np.zeros((13, llc, llc))
-
     
+    if less_output == False:
+        print ('data_tiles_k shape = ' , data_tiles_k.shape)
+    
+
     len_rec = 13*llc*llc
 
     # go through each 2D slice (or record)
     for k in range(nk):
 
-        #tmp = arr_k[len_rec*(k):len_rec*(k+1)]
-        #arr = np.reshape(tmp,(13*llc, llc
-
         if nk == 1:
             tmp = data_compact
         else:
-            tmp = data_compact[:,:,k]
+            tmp = data_compact[k,:,:]
 
-        f1, f2, f3, f4, f5 = llc_compact_to_faces(tmp)
+        # operates on a 2D compact array
+        F = llc_compact_to_faces(tmp)
+        f1 = F['1']
+        f2 = F['2']
+        f3 = F['3']
+        f4 = F['4']
+        f5 = F['5']                
 
-        if 1 == 0:
+        if less_output == False:
             plt.close('all')
             plt.imshow(f1, origin='lower')
             plt.figure()
@@ -266,10 +409,10 @@ def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
             plt.show()
         
 
-        data_tiles = llc_faces_to_tiles(f1, f2, f3, f4, f5)
+        data_tiles = llc_faces_to_tiles(F)
 
         
-        if 1 == 0:
+        if less_output == False:
             plt.figure()
             plt.imshow(data_tiles[0], origin='lower')
             plt.figure()
@@ -278,40 +421,53 @@ def load_llc_compact_to_tiles(fdir, fname, llc, skip=0, nk=1, filetype = '>f',
             plt.imshow(data_tiles[2], origin='lower')
       
         if nk == 1:
-            #print ('nk = 1')
-            #print np.max(data_tiles)
-            data_tiles_k = data_tiles[:,:,:]
+            if less_output == False:
+                print ('nk = 1')
+                print np.max(data_tiles)
+            
+            data_tiles_k = data_tiles
             
         else:
-            #print ('k' , k)
+            if less_output == False:
+                print ('k' , k)
+            
             for tile in range(0,13):
-                #print ('tile',tile)
+                if less_output == False:
+                    print ('tile',tile)
+                
                 data_tiles_k[tile,k,:,:] = data_tiles[tile,:,:]
         
-        
-    # return the array
     return data_tiles_k
-
-
 
 #%%
 def llc_compact_to_faces(data_compact):
     """
-    This routine takes an array of size 13*llc x llc and splits into the 5 'faces'
+    Converts a numpy binary array in the 'compact' format of the 
+    lat-lon-cap (LLC) grids and converts it into the 5 'faces'
     of the llc grid.  4 lat-lon approximately pieces and one Arctic 'cap'
+
+    Only works with 2D compact arrays
 
     Parameters
     ----------
     data_compact : 
-        An array of dimension  13*llc x llc 
+        An 2D array of dimension  13*llc x llc 
         
     Returns
     -------
-    f1, f2, f3, f4, f5
-        the 'data_compact'  array split into five faces 
+    F : a dictionary containing the five lat-lon-cap faces
+        F['1'] is a numpy array of face 1.
+        F['2'] is a numpy array of face 2.
+        ...
+        F['5'] is a numpy array of face 5.
 
     """
-    # The length of the second dimension equals 'llc'
+
+    # llc is the length of the second dimension
+    print type(data_compact)
+    print data_compact.shape
+
+
     llc = data_compact.shape[1]
 
     f1 = data_compact[:3*llc,:]
@@ -331,28 +487,48 @@ def llc_compact_to_faces(data_compact):
         i1 = np.arange(0, llc)+(f-11)*llc
         i2 = np.arange(0,3*llc,3) + 10*llc + f -11
         f5[:,i1] = data_compact[i2,:]
+    F = {}
+    F['1'] = f1
+    F['2'] = f2
+    F['3'] = f3
+    F['4'] = f4
+    F['5'] = f5
 
-    return f1, f2, f3, f4, f5
+    return F
 
 
 #%%
-def llc_faces_to_tiles(f1, f2, f3, f4, f5):
+def llc_faces_to_tiles(F):
     """
 
-    This routine takes an array of size 13*llc x llc and splits into the 13 'tiles'
-    of the llc grid.  The result is 12 lat-lon approximately pieces and one Arctic 'cap'
+    Converts a dictionary containing 5 lat-lon-cap faces into 13 tiles
+    of dimension llc x llc x nk.  tiles 1-6 and 8-13 are approximately
+    lat-lon in orientation and tile 7 is the Arctic 'cap'
+    
+    Only works for 2D faces
 
     Parameters
     ----------
-    'f1','f2' ... 'f5' : faces of the llc
+    F : a dictionary containing the five lat-lon-cap faces
+        F['1'] is a numpy array of face 1.
+        F['2'] is a numpy array of face 2.
+        ...
+        F['5'] is a numpy array of face 5.
         
         
     Returns
     -------
-    data_tiles
-         an array of dimension [13 x llc x llc]
+    data_tiles :
+        a numpy array of dimension 13 x nk x llc x llc, one llc x llc array 
+        for each of the 13 tiles and nk levels
 
     """
+    f1 = F['1']
+    f2 = F['2']
+    f3 = F['3']
+    f4 = F['4']
+    f5 = F['5']                
+
     llc = len(f3)
 
     data_tiles = np.zeros((13, llc, llc))
@@ -383,18 +559,22 @@ def llc_faces_to_tiles(f1, f2, f3, f4, f5):
 def llc_tiles_to_faces(data_tiles):
     """
 
-    This routine takes an array of the 13 'tiles' from the lat-lon-cap grid
-    and rearranges them to 5 faces, 4 of which are approximately lat-lon 
-    and the fifth is the Arctic 'cap' 
+    Converts an array of 13 'tiles' from the lat-lon-cap grid
+    and rearranges them to 5 faces.  Faces 1,2,4, and 5 are approximately 
+    lat-lon while face 3 is the Arctic 'cap' 
+
+    Only works for 2D data tiles [so far].
+
 
     Parameters
     ----------
-    data_tiles : the array with 13 tiles
-        An array of dimension 13xllcNxllcN
+    data_tiles : the 2D array with 13 tiles
+        An array of dimension 13xllcxllc
         
     Returns
     -------
-    [f1,f2,f3,f4,f5] = five faces
+    F : an array of five faces
+        F['1'] is face 1
 
     - dimensions:
         f1,f2: 3*llc x llc
@@ -431,10 +611,47 @@ def llc_tiles_to_faces(data_tiles):
     f5[:,llc*1:llc*2] = data_tiles[11,:]
     f5[:,llc*2:] = data_tiles[12,:]
 
-    return f1, f2, f3, f4, f5
+    F = {}
+    F['1'] = f1
+    F['2'] = f2
+    F['3'] = f3
+    F['4'] = f4
+    F['5'] = f5
+    
+    return F
 
 
-def llc_faces_to_compact(f1,f2, f3, f4, f5):
+def llc_faces_to_compact(F):
+    """
+    
+    Converts a dictionary containing five 'faces' of the lat-lon-cap grid
+    and rearranges it to the 'compact' llc format.
+
+    Only works for 2D faces [so far].
+
+
+    Parameters
+    ----------
+    data_tiles : the 2D array with 13 tiles
+        An array of dimension 13xllcxllc
+        
+    Returns
+    -------
+    F : an array of five faces
+        F['1'] is face 1
+
+    - dimensions:
+        f1,f2: 3*llc x llc
+           f3: 3*llc x llc
+        f4,f5: llc x 3*llc  
+    
+    """
+
+    f1 = F['1']
+    f2 = F['2']
+    f3 = F['3']
+    f4 = F['4']
+    f5 = F['5']
 
     llc = len(f3)
     data_compact = np.zeros((13*llc, llc))
