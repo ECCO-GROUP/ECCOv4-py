@@ -12,6 +12,8 @@ import xarray as xr
 from distutils.util import strtobool
 import pyresample as pr
 
+
+#
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -168,8 +170,8 @@ def plot_tiles(tiles,  **kwargs):
         aca  = 3
 
 
-    if layout == 'llc' and aca != 6:
-        print 'Arctic_Align only makes sense with the lat-lon layout'
+    #if layout == 'llc' and aca != 6:
+    #    print 'Arctic_Align only makes sense with the lat-lon layout'
 
     if layout == 'llc' and rotate_to_latlon == True:
         print 'note: rotate_to_latlon only applies when layout="latlon" '
@@ -277,12 +279,10 @@ def plot_tiles(tiles,  **kwargs):
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    return f
+    #return f
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
-    
     
 def unique_color(n):
     

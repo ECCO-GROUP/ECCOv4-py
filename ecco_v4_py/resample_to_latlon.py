@@ -20,20 +20,18 @@ import math
 def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
                      new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
                      new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
-                     nprocs_user) :
-
+                     nprocs_user=1, radius_of_influence = 100000, 
+                     fill_value = None) :
 
 
     #%%
     if type(orig_lats) == xr.core.dataarray.DataArray:
-        orig_lons_1d = \
-            orig_lons.values.reshape(np.product(orig_lons.values.shape))
-        orig_lats_1d = \
-            orig_lats.values.reshape(np.product(orig_lats.values.shape))
-
+        orig_lons_1d = orig_lons.values.ravel()
+        orig_lats_1d = orig_lats.values.ravel()
+        
     elif type(orig_lats) == np.ndarray:
-        orig_lats_1d = orig_lats.reshape(np.product(orig_lats.shape))
-        orig_lons_1d = orig_lons.reshape(np.product(orig_lons.shape))
+        orig_lats_1d = orig_lats.ravel()
+        orig_lons_1d = orig_lons.ravel()
     else:
         print 'orig_lons and orig_lats variable either a DataArray or numpy.ndarray'
         print 'orig_lons found type ', type(orig_lons)
@@ -53,26 +51,34 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
     orig_grid = pr.geometry.SwathDefinition(lons=orig_lons_1d,
                                             lats=orig_lats_1d)
 
-    # the latitudes to which we will we interpolate
+   # the latitudes to which we will we interpolate
 
-    # the latitudes to which we will we interpolate
-    lat_tmp = (np.arange(new_grid_min_lat, new_grid_max_lat,
-                         new_grid_delta_lat))
-    lon_tmp = (np.arange(new_grid_min_lon, new_grid_max_lon,
-                         new_grid_delta_lon))
+    num_lats = (new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat + 1
+    num_lons = (new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lat + 1
 
-    new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
+    if (num_lats > 0) and (num_lons > 0):
+        # linspace is preferred when using floats!
+        lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=num_lats)
+        lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=num_lons)
 
-    # define the lat lon points of the two parts.
-    new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
-                                           lats=new_grid_lat)
+        new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
+
+        # define the lat lon points of the two parts.
+        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
+                                               lats=new_grid_lat)
 
 
-    data_latlon_projection = \
-            pr.kd_tree.resample_nearest(orig_grid, orig_field, new_grid,
-                                        radius_of_influence=1000000,
-                                        fill_value=None,
-                                        nprocs=nprocs_user)
+        data_latlon_projection = \
+                pr.kd_tree.resample_nearest(orig_grid, orig_field, new_grid,
+                                            radius_of_influence=radius_of_influence,
+                                            fill_value=None,
+                                            nprocs=nprocs_user)
+    else:
+        print ('The number of lat and lon points to interpolate to must be > 0')
+        print ('num_lats ', num_lats,  '   num_lons ', num_lons)
+        new_grid_lon = []
+        new_grid_lat = []
+        data_latlon_projection = []
 
     return new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
