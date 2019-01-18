@@ -17,11 +17,11 @@ import math
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
+def resample_to_latlon(orig_lons, orig_lats, orig_field,
                      new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
                      new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
                      nprocs_user=1, radius_of_influence = 100000, 
-                     fill_value = None) :
+                     fill_value = None, mapping_method = 'bin_average') :
 
 
     #%%
@@ -67,12 +67,25 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
         new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
                                                lats=new_grid_lat)
 
+        if mapping_method == 'nearest_neighbor':
+            data_latlon_projection = \
+                    pr.kd_tree.resample_nearest(orig_grid, orig_field, new_grid,
+                                                radius_of_influence=radius_of_influence,
+                                                fill_value=None,
+                                                nprocs=nprocs_user)
+        elif mapping_method == 'bin_average':
+            wf = lambda r: 1
+        
+            data_latlon_projection = \
+                    pr.kd_tree.resample_custom(orig_grid, orig_field, new_grid,
+                                                radius_of_influence=radius_of_influence,
+                                                weight_funcs = wf,
+                                                fill_value=None,
+                                                nprocs=nprocs_user)
+        else:
+            print ('mapping method must be nearest_neighbor or bin_average')
+            data_latlon_projection = []
 
-        data_latlon_projection = \
-                pr.kd_tree.resample_nearest(orig_grid, orig_field, new_grid,
-                                            radius_of_influence=radius_of_influence,
-                                            fill_value=None,
-                                            nprocs=nprocs_user)
     else:
         print ('The number of lat and lon points to interpolate to must be > 0')
         print ('num_lats ', num_lats,  '   num_lons ', num_lons)
@@ -82,3 +95,4 @@ def resample_to_latlon_nearest(orig_lons, orig_lats, orig_field,
 
     return new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

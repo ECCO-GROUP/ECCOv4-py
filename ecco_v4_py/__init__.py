@@ -10,7 +10,7 @@ from mds_io import llc_faces_to_tiles
 from mds_io import llc_tiles_to_faces
 from mds_io import llc_faces_to_compact
 
-from resample_to_latlon import resample_to_latlon_nearest
+from resample_to_latlon import resample_to_latlon
 
 from tile_exchange import append_border_to_tile
 from tile_exchange import add_borders_to_DataArray_V_points
