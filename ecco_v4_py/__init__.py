@@ -1,14 +1,18 @@
 from dataset_utils import minimal_metadata
 
+from llc_array_conversion  import llc_compact_to_tiles
+from llc_array_conversion  import llc_compact_to_faces
+from llc_array_conversion  import llc_faces_to_tiles
+from llc_array_conversion  import llc_faces_to_compact
+from llc_array_conversion  import llc_tiles_to_faces
+from llc_array_conversion  import llc_tiles_to_compact
+
+
 from mds_io import load_binary_array
 from mds_io import load_llc_compact
 from mds_io import load_llc_compact_to_faces
 from mds_io import load_llc_compact_to_tiles
-from mds_io import llc_compact_to_faces
-from mds_io import llc_compact_to_tiles
-from mds_io import llc_faces_to_tiles
-from mds_io import llc_tiles_to_faces
-from mds_io import llc_faces_to_compact
+
 
 from resample_to_latlon import resample_to_latlon
 
@@ -38,4 +42,6 @@ from tile_rotation import reorient_13_tile_Dataset_to_latlon_layout_UV_points
 from tile_rotation import rotate_single_tile_Datasets_UV_points
 from tile_rotation import rotate_single_tile_DataArrays_UV_points
 
-__all__ = ['dataset_utils','mds_io', 'resample_to_latlon', 'tile_exchange', 'tile_io', 'tile_plot','tile_plot_proj', 'tile_rotation']
+from test_llc_array_loading_and_conversion import run_mds_io_and_llc_conversion_test
+
+__all__ = ['dataset_utils','llc_array_conversion', 'mds_io', 'resample_to_latlon', 'tile_exchange', 'tile_io', 'tile_plot','tile_plot_proj', 'tile_rotation', 'test_mds_io_and_conversion']

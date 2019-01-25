@@ -239,18 +239,19 @@ def plot_tiles(tiles,  **kwargs):
                     cur_tile = tiles.sel(tile=cur_tile_num)
             
             if have_tile:
-                if cur_tile_num == 7:
+                if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 7):
                     if aca == 3:
-                        cur_tile = np.copy(np.rot90(cur_tile,-1))
+                        cur_tile = np.rot90(cur_tile,-1)
+                        print 'here'
                     elif aca == 8:
-                        cur_tile = np.copy(np.rot90(cur_tile,-3))
+                        cur_tile = np.rot90(cur_tile,-3)
                     elif aca == 11:
-                        cur_tile = np.copy(np.rot90(cur_tile,2))
+                        cur_tile = np.rot90(cur_tile,2)
 
-                elif (layout == 'latlon' and rotate_to_latlon and 
+                if (layout == 'latlon' and rotate_to_latlon and 
                     cur_tile_num > 7):
                     
-                    cur_tile = np.copy(np.rot90(cur_tile))
+                    cur_tile = np.rot90(cur_tile)
                 
                 im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
                              origin='lower')
