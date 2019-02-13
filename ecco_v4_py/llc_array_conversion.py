@@ -43,7 +43,8 @@ def llc_compact_to_tiles(data_compact, less_output = False):
 
     """
    
-    data_tiles =  llc_faces_to_tiles(llc_compact_to_faces(data_compact), less_output=less_output)
+    data_tiles =  llc_faces_to_tiles(llc_compact_to_faces(data_compact), 
+        less_output=less_output)
         
     return data_tiles
 
@@ -275,7 +276,7 @@ def llc_compact_to_faces(data_compact, less_output = False):
 
 
 #%%
-def llc_faces_to_tiles(F, less_output=False):
+def llc_faces_to_tiles(F, less_output=False, location_on_model_grid = 'C'):
     """
 
     Converts a dictionary, F, containing 5 lat-lon-cap faces into 13 tiles
@@ -288,6 +289,14 @@ def llc_faces_to_tiles(F, less_output=False):
     ----------
     F : a dictionary containing the five lat-lon-cap faces
         F[n] is a numpy array of face n, n in [1..5]
+    location_on_model_grid = one of 'C','U','V','G'
+        corresponding to traCer point, U velocity point, V velocity point or 
+        edGe or (corner) point.
+        
+        'C' points: XC,YC, RAC, are [llc, llc]
+        'G' points: XG,YG, DYU, DXV, RAZ: [llc+1, llc+1]
+        'U' points: DXC, RAW [llc, llc+1]
+        'V' points: DYC, RAS [llc+1, llc]
 
     less_output : boolean
         A debugging flag.  False = less debugging output
@@ -316,8 +325,12 @@ def llc_faces_to_tiles(F, less_output=False):
     dims = f3.shape
     num_dims = len(dims)
     
-    # final dimension is always of length llc
-    llc = dims[-1]
+    # final dimension of face 1 is always of length llc
+    ni_3 = f3.shape[-1]
+    nj_3 = f3.shape[-2]
+
+    llc = ni_3 # default
+    # 
 
     if num_dims == 2: # we have a single 2D slices (y, x)
         data_tiles = np.zeros((13, llc, llc))

@@ -5,6 +5,7 @@ Created on Wed Jan 23 15:13:33 2019
 
 @author: ifenty
 """
+from __future__ import division
 
 import numpy as np
 import matplotlib.pylab as plt
