@@ -10,9 +10,13 @@ import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
 
-# import all function from the 'mpl_toolkits.basemap' module available with the 
-# prefix 'Basemap'
-from mpl_toolkits.basemap import Basemap
+from  pyproj import Proj, transform
+import matplotlib.path as mpath
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import cartopy.util as cu
+
 
 # Performs cartographic transformations and geodetic computations.
 
@@ -32,8 +36,6 @@ def plot_tiles_proj(lons, lats, data,
                     projection_type = 'robin', 
                     plot_type = 'pcolor', 
                     user_lon_0 = 0,
-                    user_width = 5000000,
-                    user_height = 4500000,
                     background_type = 'fc', 
                     show_cbar_label = False, 
                     show_colorbar = False, 
@@ -41,7 +43,6 @@ def plot_tiles_proj(lons, lats, data,
                     bound_lat = 50, 
                     num_levels = 20, 
                     cmap='jet', 
-                    map_resolution='c',
                     dx=.25, 
                     dy=.25,
                     show_grid_lines = True,
@@ -83,7 +84,6 @@ def plot_tiles_proj(lons, lats, data,
         print 'lons and lats variable either a DataArray or numpy.ndarray'
         print 'lons found type ', type(lons)
         print 'lats found type ', type(lats)        
-        return
     
     if type(data) == xr.core.dataarray.DataArray:
         data = data.values
@@ -92,7 +92,6 @@ def plot_tiles_proj(lons, lats, data,
     elif type(data) != np.ndarray:
         print 'data must be either a DataArray or ndarray type \n'
         print 'found type ', type(data)
-        return
 
     #%%
     # To avoid plotting problems around the date line, lon=180E, -180W 
@@ -117,10 +116,14 @@ def plot_tiles_proj(lons, lats, data,
         print 'invalid starting longitude'
         #return
 
+    #%%
     # the number of degrees spanned in part A and part B
-    num_deg_A =  (A_right_limit - A_left_limit)/dx
-    num_deg_B =  (B_right_limit - B_left_limit)/dx
+    num_deg_A =  int((A_right_limit - A_left_limit)/dx)
+    num_deg_B =  int((B_right_limit - B_left_limit)/dx)
 
+    print num_deg_A, type(num_deg_A)
+    print num_deg_B
+    
     # We will interpolate the data to the new grid.  Store the longitudes to
     # interpolate to for part A and part B
     lon_tmp_d = dict()
@@ -130,132 +133,192 @@ def plot_tiles_proj(lons, lats, data,
     if num_deg_B > 0:
        lon_tmp_d['B'] = np.linspace(B_left_limit, B_right_limit, num_deg_B)
 
+    #%%
+
+
     print ('projection type ', projection_type)
-    # create the basemap object, 'map'
     if projection_type == 'cyl':
-        map = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
-                llcrnrlon=A_left_limit, urcrnrlon=B_right_limit, 
-                resolution=map_resolution)
-    
+        ax = plt.subplot(1,1,1, \
+                         projection = ccrs.LambertCylindrical())
     elif projection_type == 'robin':    
-        map = Basemap(projection='robin',lon_0=center_lon, 
-                      resolution=map_resolution)
-
+        ax = plt.subplot(1,1,1, \
+                         projection = ccrs.Robinson(central_longitude=user_lon_0))
     elif projection_type == 'ortho':
-        map = Basemap(projection='ortho',lat_0=user_lat_0,lon_0=user_lon_0)
-
-    elif projection_type == 'aeqd':
-        map = Basemap(projection='aeqd',lat_0=user_lat_0,lon_0=user_lon_0,
-                      resolution=map_resolution, width=user_width,
-                      height=user_height)
-        
+        ax = plt.subplot(1,1,1, \
+                         projection = ccrs.Orthographic(central_longitude=user_lon_0, \
+                                                        central_latitude=user_lat_0))
     elif projection_type == 'stereo':    
         if bound_lat > 0:
-            map = Basemap(projection='npstere', boundinglat = bound_lat,
-                          lon_0=user_lon_0, resolution=map_resolution)
+            ax = plt.subplot(1,1,1, projection =ccrs.NorthPolarStereo())
         else:
-            map = Basemap(projection='spstere', boundinglat = bound_lat,
-                          lon_0=user_lon_0, resolution=map_resolution)
+            ax = plt.subplot(1,1,1, projection =ccrs.SouthPolarStereo())
     else:
-        raise ValueError('projection type must be either "cyl", "robin", "aqed", or "stereo"')
+        raise ValueError('projection type must be either "cyl", "robin", or "stereo"')
         print 'found ', projection_type
     
-    #%%
-    # get a reference to the current figure (or make a figure if none exists)
-    if background_type == 'bm':
-        map.bluemarble()
-        print 'blue marble'
-    elif background_type == 'sr':
-        map.shadedrelief()
-        print 'shaded relief'        
-    elif background_type == 'fc':
-        map.fillcontinents(color='lightgray',lake_color='lightgray')  
-        pass
-    
-    # prepare for the interpolation or nearest neighbor mapping
-    
+
     # first define the lat lon points of the original data
     orig_grid = pr.geometry.SwathDefinition(lons=lons_1d, lats=lats_1d)
     
+    #%%
     # the latitudes to which we will we interpolate
-    lat_tmp = np.linspace(-89.5, 89.5, 90/dy)
+    lat_tmp = np.linspace(-89.5, 89.5, int(180.0/dy))
+    print lat_tmp
     
-    map.drawcoastlines(linewidth=1)
-
+    f = plt.gcf()
+    #%%
     # loop through both parts (if they exist), do interpolation and plot
     for key, lon_tmp in lon_tmp_d.iteritems():
-
-        #%%
+        print key
         new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
     
         
         # define the lat lon points of the two parts. 
         new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon, 
                                                lats=new_grid_lat)
-        
-        x,y = map(new_grid_lon, new_grid_lat) 
-    
+   
         data_latlon_projection = \
             pr.kd_tree.resample_nearest(orig_grid, data, new_grid, 
                                         radius_of_influence=100000, 
                                         fill_value=None) 
 
         if plot_type == 'pcolor':
-            # plot using pcolor 
-            im=map.pcolor(x,y, data_latlon_projection, 
-                          vmin=cmin, vmax=cmax, cmap=cmap)
+            if (type(ax) == ccrs.NorthPolarStereo) or \
+            (type(ax) == ccrs.NorthPolarStereo) :
+                p, gl, cbar = plot_pcolormesh_polar_stereographic(new_grid_lon,
+                                                                  new_grid_lat, 
+                                                              data_latlon_projection,
+                                                    4326, bound_lat, cmin, cmax, ax,
+                                                    show_colorbar, circle_boundary=True,
+                                                    cmap=cmap, draw_labels=False)
+            else:
+                p, gl, cbar = plot_pcolormesh_global(new_grid_lon,new_grid_lat, 
+                                                     data_latlon_projection,
+                                       4326, cmin, cmax, ax,
+                                       show_colorbar=show_colorbar,
+                                       cmap=cmap, draw_labels=False)
+        f.show()
+        raw_input("Press Enter to continue...")
 
-        elif plot_type == 'contourf':
-            # create a set of contours spanning from cmin to cmax over
-            # num_levels intervals
-            contour_levels = np.linspace(cmin, cmax, num_levels)
-            
-            # plot using contourf
-            im=map.contourf(x,y, data_latlon_projection, num_levels,
-                         vmin=cmin, vmax=cmax, cmap=cmap, 
-                         levels=contour_levels, extend="both")
-        else:
-            print 'plot type must be either "pcolor" or "contourf"  '
-            print 'found type ', plot_type
-            #return
-        
-           
-    # draw coastlines, country boundaries, fill continents.
-    #map.drawcoastlines(linewidth=1)
-    # don't plot lat/lon labels for robinson     projection.
-
-    # labels = [left,right,top,bottom]
-    if projection_type == 'robin' and show_grid_lines == True:      
-        map.drawmeridians(np.arange(0,360,30))
-        map.drawparallels(np.arange(-90,90,30))
-    elif projection_type == 'stereo' and show_grid_lines == True:      
-        map.drawmeridians(np.arange(0,360,30))
-        map.drawparallels(np.arange(-90,90,10)) 
-    elif projection_type == 'aeqd' and show_grid_lines == True:
-        map.drawmeridians(np.arange(0,360,30))
-        map.drawparallels(np.arange(-90,90,10))  
-    elif projection_type == 'cyl' and show_grid_lines == True:
-        map.drawparallels(np.arange(-90,90,30), labels=[True,False,False,False])    
-        map.drawmeridians(np.arange(0,360,60),  labels= [False,False, False,True])
-    
     #%%
     ax= plt.gca()
-    f = plt.gcf()
 
-    if show_colorbar:
-        f.subplots_adjust(right=0.8)
-        #[left, bottom, width, height]
-        h=.6;w=.025
-        cbar_ax = f.add_axes([0.85, (1-h)/2, w, h])
-        cbar = f.colorbar(im, extend='both', cax=cbar_ax)#, format='%.0e')          
 
-        if show_cbar_label:
-            cbar.set_label(cbar_label)
-    # set the current axes to be the map, not the colorbar
-    plt.sca(ax)
-
-    # return a reference to the figure and the map axes
-    return f, ax, im
+    return f, ax, p
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     
+    
+
+def plot_pcolormesh_polar_stereographic(xx,yy, data, 
+                                        data_projection_code, \
+                                        lat_lim, 
+                                        cmin, cmax, ax, \
+                                        show_colorbar=False, \
+                                        circle_boundary = False, \
+                                        cmap='jet',
+                                        draw_labels = False):
+
+    if isinstance(ax.projection, ccrs.NorthPolarStereo):
+        ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
+    elif isinstance(ax.projection, ccrs.SouthPolarStereo):
+        ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
+    else:
+        print 'ax must be either ccrs.NorthPolarStereo or ccrs.SouthPolarStereo'
+
+    if circle_boundary:
+        theta = np.linspace(0, 2*np.pi, 100)
+        center, radius = [0.5, 0.5], 0.5
+        verts = np.vstack([np.sin(theta), np.cos(theta)]).T
+        circle = mpath.Path(verts * radius + center)
+        ax.set_boundary(circle, transform=ax.transAxes)
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=draw_labels,
+                  linewidth=1, color='black', alpha=0.5, linestyle='--')
+
+    if data_projection_code == 4326: # lat lon does nneed to be projected
+        data_crs =  ccrs.PlateCarree()
+    else:
+        data_crs=ccrs.epsg(data_projection_code)
+    
+    p = ax.pcolormesh(xx, yy, data, transform=data_crs, \
+                    vmin=cmin, vmax=cmax, cmap=cmap)
+    
+    ax.add_feature(cfeature.LAND)
+    ax.coastlines('110m', linewidth=0.8)
+
+    cbar = []
+    if show_colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap,norm=plt.Normalize(cmin,cmax))
+        sm._A = []
+        cbar = plt.colorbar(sm,ax=ax)
+    
+    return p, gl, cbar
+
+#%%    
+
+def plot_pcolormesh_global(xx,yy, data, 
+                           data_projection_code,
+                           cmin, cmax, ax, 
+                           show_colorbar=False, 
+                           cmap='jet', draw_labels = False):
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), 
+                  linewidth=1, color='black', draw_labels = draw_labels,
+                  alpha=0.5, linestyle='--')
+
+    if data_projection_code == 4326: # lat lon does nneed to be projected
+        data_crs =  ccrs.PlateCarree()
+    else:
+        data_crs =ccrs.epsg(data_projection_code)
+        
+    p = ax.pcolormesh(xx, yy, data, transform=data_crs, 
+                      vmin=cmin, vmax=cmax, cmap=cmap)
+    
+    ax.coastlines('110m', linewidth=0.8)
+    ax.add_feature(cfeature.LAND)
+
+    cbar = []
+    if show_colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
+        sm._A = []
+        cbar = plt.colorbar(sm,ax=ax)
+    
+    return p, gl, cbar
+    
+
+#%%
+def plot_contourf_global(xx,yy, data, 
+                         data_projection_code, 
+                         levels,
+                         cmin, cmax, ax, 
+                         show_colorbar=False, 
+                         cmap='jet',
+                         draw_labels = False):
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), 
+              linewidth=1, color='black', draw_labels = draw_labels,
+              alpha=0.5, linestyle='--')
+
+    p = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+                  linewidth=1, color='white', alpha=0.5, linestyle='--')
+
+    if data_projection_code == 4326: # lat lon does nneed to be projected
+        data_crs =  ccrs.PlateCarree()
+    else:
+        data_crs =  ccrs.epsg(data_projection_code)
+
+    p = ax.contourf(xx, yy, data, levels, transform=data_crs,  \
+                 vmin=cmin, vmax=cmax, cmap=cmap)
+    
+    ax.coastlines('110m', linewidth=0.8)
+    ax.add_feature(cfeature.LAND)
+    
+    cbar = []
+    if show_colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
+        sm._A = []
+        plt.colorbar(sm,ax=ax)
+
+    return p, gl, cbar
+        
