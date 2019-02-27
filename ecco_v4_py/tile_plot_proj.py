@@ -32,20 +32,17 @@ import pyresample as pr
 
 
 def plot_tiles_proj(lons, lats, data, 
-                    user_lat_0 = 45, 
                     projection_type = 'robin', 
                     plot_type = 'pcolor', 
                     user_lon_0 = 0,
-                    background_type = 'fc', 
-                    show_cbar_label = False, 
-                    show_colorbar = False, 
-                    cbar_label = '',
-                    bound_lat = 50, 
+                    lat_lim = 50, 
                     num_levels = 20, 
                     cmap='jet', 
                     dx=.25, 
                     dy=.25,
+                    show_colorbar = False, 
                     show_grid_lines = True,
+                    show_grid_labels = True,
                     **kwargs):
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,8 +99,8 @@ def plot_tiles_proj(lons, lats, data,
     if user_lon_0 > -180 and user_lon_0 < 180:
         A_left_limit = user_lon_0
         A_right_limit = 180
-        B_left_limit =  180
-        B_right_limit = 360+user_lon_0
+        B_left_limit =  -180
+        B_right_limit = user_lon_0
         center_lon = A_left_limit + 180
         
     elif user_lon_0 == 180 or user_lon_0 == -180:
@@ -128,33 +125,56 @@ def plot_tiles_proj(lons, lats, data,
     # interpolate to for part A and part B
     lon_tmp_d = dict()
     if num_deg_A > 0:
-        lon_tmp_d['A'] = np.linspace(A_left_limit, A_right_limit, num_deg_A)
+        lon_tmp_d['A'] = np.linspace(A_left_limit, A_right_limit, num_deg_A+1)
         
     if num_deg_B > 0:
-       lon_tmp_d['B'] = np.linspace(B_left_limit, B_right_limit, num_deg_B)
+       lon_tmp_d['B'] = np.linspace(B_left_limit, B_right_limit, num_deg_B+1)
 
     #%%
 
 
     print ('projection type ', projection_type)
-    if projection_type == 'cyl':
-        ax = plt.subplot(1,1,1, \
-                         projection = ccrs.LambertCylindrical())
+
+    if projection_type == 'Mercator':
+        ax = plt.axes(projection =  ccrs.Mercator(central_longitude=user_lon_0))
+
+    elif projection_type == 'PlateCaree':
+        ax = plt.axes(projection = ccrs.PlateCarree(central_longitude=user_lon_0))
+
+    elif projection_type == 'cyl':
+        ax = plt.axes(projection = ccrs.LambertCylindrical(central_longitude=user_lon_0))
+        print ('Cannot label gridlines on a Robinson plot.  Only PlateCarree and Mercator plots are currently supported.')        
+        show_grid_labels = False
+
     elif projection_type == 'robin':    
-        ax = plt.subplot(1,1,1, \
-                         projection = ccrs.Robinson(central_longitude=user_lon_0))
+        ax = plt.axes(projection = ccrs.Robinson(central_longitude=user_lon_0))
+        show_grid_labels=False
+        print ('Cannot label gridlines on a Robinson plot.  Only PlateCarree and Mercator plots are currently supported.')
+        show_grid_labels = False
+
     elif projection_type == 'ortho':
-        ax = plt.subplot(1,1,1, \
-                         projection = ccrs.Orthographic(central_longitude=user_lon_0, \
-                                                        central_latitude=user_lat_0))
+        ax = plt.axes(projection =  ccrs.Orthographic(central_longitude=user_lon_0, \
+                                                       central_latitude=user_lat_0))
+        print ('Cannot label gridlines on a Robinson plot.  Only PlateCarree and Mercator plots are currently supported.')        
+        show_grid_labels = False
+
     elif projection_type == 'stereo':    
-        if bound_lat > 0:
-            ax = plt.subplot(1,1,1, projection =ccrs.NorthPolarStereo())
+        if lat_lim > 0:
+            ax = plt.axes(projection =ccrs.NorthPolarStereo())
         else:
-            ax = plt.subplot(1,1,1, projection =ccrs.SouthPolarStereo())
+            ax = plt.axes(projection =ccrs.SouthPolarStereo())
+
+        print ('Cannot label gridlines on a Robinson plot.  Only PlateCarree and Mercator plots are currently supported.')            
+        show_grid_labels = False
+
+    elif projection_type == 'InterruptedGoodeHomolosine':
+        ax = plt.axes(projection =ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
+        show_grid_labels = False
+        
     else:
         raise ValueError('projection type must be either "cyl", "robin", or "stereo"')
-        print 'found ', projection_type
+
+    print 'found ', projection_type
     
 
     # first define the lat lon points of the original data
@@ -162,16 +182,16 @@ def plot_tiles_proj(lons, lats, data,
     
     #%%
     # the latitudes to which we will we interpolate
-    lat_tmp = np.linspace(-89.5, 89.5, int(180.0/dy))
-    print lat_tmp
-    
-    f = plt.gcf()
+    lat_tmp = np.linspace(-89.5, 89.5, int(179.0/dy)+1)    
+
     #%%
     # loop through both parts (if they exist), do interpolation and plot
+    f = plt.gcf()
     for key, lon_tmp in lon_tmp_d.iteritems():
-        print key
         new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
     
+        print new_grid_lon
+        print new_grid_lat
         
         # define the lat lon points of the two parts. 
         new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon, 
@@ -185,25 +205,42 @@ def plot_tiles_proj(lons, lats, data,
         if plot_type == 'pcolor':
             if (type(ax) == ccrs.NorthPolarStereo) or \
             (type(ax) == ccrs.NorthPolarStereo) :
-                p, gl, cbar = plot_pcolormesh_polar_stereographic(new_grid_lon,
-                                                                  new_grid_lat, 
-                                                              data_latlon_projection,
-                                                    4326, bound_lat, cmin, cmax, ax,
-                                                    show_colorbar, circle_boundary=True,
-                                                    cmap=cmap, draw_labels=False)
+                p, gl, cbar = \
+                    plot_pcolormesh_polar_stereographic(new_grid_lon,
+                                                        new_grid_lat, 
+                                                        4326, lat_lim, 
+                                                        cmin, cmax, ax,
+                                                        show_colorbar=False, 
+                                                        circle_boundary=True,
+                                                        cmap=cmap,
+                                                        show_grid_lines=show_grid_lines)
+                print 'polar stereo'
             else:
-                p, gl, cbar = plot_pcolormesh_global(new_grid_lon,new_grid_lat, 
-                                                     data_latlon_projection,
-                                       4326, cmin, cmax, ax,
-                                       show_colorbar=show_colorbar,
-                                       cmap=cmap, draw_labels=False)
-        f.show()
-        raw_input("Press Enter to continue...")
+                p, gl, cbar = \
+                    plot_pcolormesh_global(new_grid_lon,new_grid_lat, 
+                                           data_latlon_projection,
+                                           4326, cmin, cmax, ax,
+                                           show_colorbar=False,
+                                           cmap=cmap, 
+                                           show_grid_lines = show_grid_lines,
+                                           show_grid_labels = show_grid_labels)
+                    
+
+    if show_colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
+        sm._A = []
+        cbar = plt.colorbar(sm,ax=ax)        
+    
+    f.show()
+        #raw_input("Press Enter to continue...")
 
     #%%
+    ax.add_feature(cfeature.LAND)
+    ax.add_feature(cfeature.COASTLINE)
+
     ax= plt.gca()
 
-
+    #%%
     return f, ax, p
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -216,16 +253,21 @@ def plot_pcolormesh_polar_stereographic(xx,yy, data,
                                         cmin, cmax, ax, \
                                         show_colorbar=False, \
                                         circle_boundary = False, \
-                                        cmap='jet',
-                                        draw_labels = False):
+                                        cmap='jet', 
+                                        show_grid_lines=False):
 
+                            
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
         ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
+        print 'north'
     elif isinstance(ax.projection, ccrs.SouthPolarStereo):
         ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
+        print  'south'
     else:
         print 'ax must be either ccrs.NorthPolarStereo or ccrs.SouthPolarStereo'
 
+    print lat_lim
+    
     if circle_boundary:
         theta = np.linspace(0, 2*np.pi, 100)
         center, radius = [0.5, 0.5], 0.5
@@ -233,8 +275,12 @@ def plot_pcolormesh_polar_stereographic(xx,yy, data,
         circle = mpath.Path(verts * radius + center)
         ax.set_boundary(circle, transform=ax.transAxes)
 
-    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=draw_labels,
-                  linewidth=1, color='black', alpha=0.5, linestyle='--')
+    if show_grid_lines :
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), 
+                          linewidth=1, color='black', 
+                          alpha=0.5, linestyle='--')
+    else:
+        gl = []
 
     if data_projection_code == 4326: # lat lon does nneed to be projected
         data_crs =  ccrs.PlateCarree()
@@ -261,12 +307,18 @@ def plot_pcolormesh_global(xx,yy, data,
                            data_projection_code,
                            cmin, cmax, ax, 
                            show_colorbar=False, 
-                           cmap='jet', draw_labels = False):
+                           cmap='jet', 
+                           show_grid_lines = True,
+                           show_grid_labels = True):
 
-    gl = ax.gridlines(crs=ccrs.PlateCarree(), 
-                  linewidth=1, color='black', draw_labels = draw_labels,
-                  alpha=0.5, linestyle='--')
-
+    if show_grid_lines :
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), 
+                          linewidth=1, color='black', 
+                          draw_labels = show_grid_labels,
+                          alpha=0.5, linestyle='--')
+    else:
+        gl = []
+        
     if data_projection_code == 4326: # lat lon does nneed to be projected
         data_crs =  ccrs.PlateCarree()
     else:
@@ -294,13 +346,18 @@ def plot_contourf_global(xx,yy, data,
                          cmin, cmax, ax, 
                          show_colorbar=False, 
                          cmap='jet',
-                         draw_labels = False):
+                         show_grid_lines = True,
+                         show_grid_labels = True):
 
-    gl = ax.gridlines(crs=ccrs.PlateCarree(), 
-              linewidth=1, color='black', draw_labels = draw_labels,
-              alpha=0.5, linestyle='--')
+    if show_grid_lines :
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), 
+                          linewidth=1, color='black', 
+                          draw_labels = show_grid_labels,
+                          alpha=0.5, linestyle='--')
+    else:
+        gl = []
 
-    p = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=show_grid_labels,
                   linewidth=1, color='white', alpha=0.5, linestyle='--')
 
     if data_projection_code == 4326: # lat lon does nneed to be projected
