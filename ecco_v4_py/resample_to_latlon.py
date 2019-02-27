@@ -12,18 +12,16 @@ import xarray as xr
 # https://pypi.python.org/pypi/pyproj?
 #
 import pyresample as pr
-import scipy.interpolate as interpolate
-import math
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 def resample_to_latlon(orig_lons, orig_lats, orig_field,
-                     new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
-                     new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
-                     nprocs_user=1, radius_of_influence = 100000, 
-                     fill_value = None, mapping_method = 'bin_average') :
+                       new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
+                       new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
+                       nprocs_user=1, radius_of_influence = 100000, 
+                       fill_value = None, mapping_method = 'bin_average') :
 
-
+#    print new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon
     #%%
     if type(orig_lats) == xr.core.dataarray.DataArray:
         orig_lons_1d = orig_lons.values.ravel()
@@ -61,6 +59,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=num_lats)
         lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=num_lons)
 
+#        print lon_tmp
         new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
 
         # define the lat lon points of the two parts.
