@@ -301,7 +301,8 @@ def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data',
 
 
 
-##################################################
+####################### ###########################
+    #%%
 if __name__== "__main__":
 
     import sys
@@ -310,9 +311,14 @@ if __name__== "__main__":
     import ecco_v4_py as ecco
     import matplotlib.pylab as plt
 
-    model_grid_dir = '/Volumes/ECCO_BASE/ECCO_v4r3/grid_llc90/'
-
-    TEST_RESULT = ecco.run_mds_io_and_llc_conversion_test(model_grid_dir, make_plots=True)
+    llc_grid_dir = '/Volumes/ECCO_BASE/ECCO_v4r3/grid_llc90/'
+    llc_lons_fname='XC.data'
+    llc_hfacc_fname='hFacC.data', 
+    llc=90, 
+    llc_grid_filetype = '>f', 
+    make_plots=False
+    #%%
+    TEST_RESULT = ecco.run_mds_io_and_llc_conversion_test(llc_grid_dir, make_plots=True)
 
     print(TEST_RESULT)
 
