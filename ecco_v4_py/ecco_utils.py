@@ -119,7 +119,8 @@ def minimal_metadata(ds):
 def months2days(nmon=288, baseyear=1992, basemon=1):
     
     """ 
-    This rouine converts time in days from January 1st of a particular year.
+
+    This rouine converts the mid-month time to days from January 1st of a particular year.
     
     Input:  nmon:           number of months (dtype=integer) 
             baseyear:       year of time of origin (dtype=integer)
