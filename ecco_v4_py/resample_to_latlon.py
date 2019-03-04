@@ -40,7 +40,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         orig_field = orig_field.values
     elif type(orig_field) != np.ndarray and \
          type(orig_field) != np.ma.core.MaskedArray :
-        print 'orig_fieldmust be either a DataArray or ndarray type \n'
+        print 'orig_field must be a type of DataArray, ndarray, or MaskedArray. \n'
         print 'found type ', type(orig_field)
         return
 
