@@ -11,7 +11,7 @@ import matplotlib.pylab as plt
 import matplotlib.path as mpath
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import ecco_v4_py.resample_to_latlon as resample_to_latlon
+from ecco_v4_py.resample_to_latlon import resample_to_latlon
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 def plot_proj_to_latlon_grid(lons, lats, data, 
