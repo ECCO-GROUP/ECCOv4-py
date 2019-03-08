@@ -5,7 +5,7 @@ Created on Mon Jul  3 16:11:15 2017
 
 @author: ifenty
 """
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
@@ -77,7 +77,7 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
         elif key == 'fig_num':
             fig_num = kwargs[key]
         else:
-            print "unrecognized argument ", key 
+            print("unrecognized argument ", key )
     #%%
 
     if fig_num > 0:
@@ -221,7 +221,7 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
             tile_order_top_row = [-1, -1, -1, 7]
     else:
         # if not, set it to be 6.
-        print 'Arctic Cap Alignment is not one of 3, 6, 8, 11, using 3'
+        print('Arctic Cap Alignment is not one of 3, 6, 8, 11, using 3')
         Arctic_cap_tile_location  = 3
 
 
@@ -305,7 +305,7 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
                 if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 7):
                     if Arctic_cap_tile_location == 3:
                         cur_tile = np.rot90(cur_tile,-1)
-                        print 'here'
+                        print('here')
                     elif Arctic_cap_tile_location == 8:
                         cur_tile = np.rot90(cur_tile,-3)
                     elif Arctic_cap_tile_location == 11:
