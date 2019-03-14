@@ -32,6 +32,16 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_grid_lines = True,
                              show_grid_labels = True,
                              **kwargs):
+    """Generate a plot of llc data, resampled to lat/lon grid, on specified 
+    projection.
+
+    Parameters
+    ----------
+    lons    : 
+    lats    :
+    data    : 
+
+    """
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # default projection type = robinson
@@ -94,55 +104,15 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         lon_tmp_d['B'] = [B_left_limit, B_right_limit]
 
     # Make projection axis
-    if projection_type == 'Mercator':
-        ax = plt.axes(projection =  ccrs.Mercator(central_longitude=user_lon_0))
-
-    elif projection_type == 'PlateCaree':
-        ax = plt.axes(projection = ccrs.PlateCarree(central_longitude=user_lon_0))
-
-    elif projection_type == 'cyl':
-        ax = plt.axes(projection = ccrs.LambertCylindrical(central_longitude=user_lon_0))
-        print ('Cannot label gridlines on a LambertCylindrical plot.  Only PlateCarree and Mercator plots are currently supported.')        
-        show_grid_labels = False
-
-    elif projection_type == 'robin':    
-        ax = plt.axes(projection = ccrs.Robinson(central_longitude=user_lon_0))
-        show_grid_labels=False
-        print ('Cannot label gridlines on a Robinson plot.  Only PlateCarree and Mercator plots are currently supported.')
-        show_grid_labels = False
-
-    elif projection_type == 'ortho':
-        ax = plt.axes(projection =  ccrs.Orthographic(central_longitude=user_lon_0))
-        print ('Cannot label gridlines on a Orthographic plot.  Only PlateCarree and Mercator plots are currently supported.')        
-        show_grid_labels = False
-
-    elif projection_type == 'stereo':    
-        if lat_lim > 0:
-            ax = plt.axes(projection =ccrs.NorthPolarStereo())
-        else:
-            ax = plt.axes(projection =ccrs.SouthPolarStereo())
-
-        print ('Cannot label gridlines on a polar stereographic plot.  Only PlateCarree and Mercator plots are currently supported.')            
-        show_grid_labels = False
-
-    elif projection_type == 'InterruptedGoodeHomolosine':
-        print ('Cannot label gridlines on a InterruptedGoodeHomolosine plot.  Only PlateCarree and Mercator plots are currently supported.')            
-        
-        ax = plt.axes(projection = ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
-        show_grid_labels = False
-        
-    else:
-        raise ValueError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", or "stereo"')
-
-    print ('projection type ', projection_type)
+    (ax,show_grid_labels) = _create_projection_axis(
+            projection_type,user_lon_0,lat_lim)
     
 
     #%%
     # loop through different parts of the map to plot (if they exist), 
     # do interpolation and plot
     f = plt.gcf()
-    
-    print(len(lon_tmp_d))
+    #print(len(lon_tmp_d))
     for key, lon_tmp in lon_tmp_d.items():
 
         new_grid_lon, new_grid_lat, data_latlon_projection = \
@@ -314,3 +284,66 @@ def plot_global(xx,yy, data,
         cbar = plt.colorbar(sm,ax=ax)
     
     return p, gl, cbar
+
+# -----------------------------------------------------------------------------
+
+def _create_projection_axis(projection_type,user_lon_0,lat_lim):
+    """Set appropriate axis for projection type
+
+    Parameters
+    ----------
+    projection_type :   string
+                        user specified projection
+
+    user_lon_0      :   double
+                        center longitude value
+
+    lat_lim         :   double
+                        limiting latitude value
+
+
+    Returns
+    -------
+    ax              :   matplotlib axis object
+
+    show_grid_labels:   logical
+                        True = show the grid labels, only currently
+                        supported for PlateCarree and Mercator projections
+    """
+        
+
+    if projection_type == 'Mercator':
+        ax = plt.axes(projection =  ccrs.Mercator(central_longitude=user_lon_0))
+
+    elif projection_type == 'PlateCaree':
+        ax = plt.axes(projection = ccrs.PlateCarree(central_longitude=user_lon_0))
+
+    elif projection_type == 'cyl':
+        ax = plt.axes(projection = ccrs.LambertCylindrical(central_longitude=user_lon_0))
+        show_grid_labels = False
+
+    elif projection_type == 'robin':    
+        ax = plt.axes(projection = ccrs.Robinson(central_longitude=user_lon_0))
+        show_grid_labels = False
+
+    elif projection_type == 'ortho':
+        ax = plt.axes(projection =  ccrs.Orthographic(central_longitude=user_lon_0))
+        show_grid_labels = False
+
+    elif projection_type == 'stereo':    
+        if lat_lim > 0:
+            ax = plt.axes(projection =ccrs.NorthPolarStereo())
+        else:
+            ax = plt.axes(projection =ccrs.SouthPolarStereo())
+
+        show_grid_labels = False
+
+    elif projection_type == 'InterruptedGoodeHomolosine':
+        ax = plt.axes(projection = ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
+        show_grid_labels = False
+        
+    else:
+        raise ValueError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", or "stereo"')
+
+    #print ('projection type ', projection_type)
+    return (ax,show_grid_labels)
