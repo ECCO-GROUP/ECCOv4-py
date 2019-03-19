@@ -314,9 +314,11 @@ def _create_projection_axis(projection_type,user_lon_0,lat_lim):
 
     if projection_type == 'Mercator':
         ax = plt.axes(projection =  ccrs.Mercator(central_longitude=user_lon_0))
+        show_grid_labels = True
 
     elif projection_type == 'PlateCaree':
         ax = plt.axes(projection = ccrs.PlateCarree(central_longitude=user_lon_0))
+        show_grid_labels = True
 
     elif projection_type == 'cyl':
         ax = plt.axes(projection = ccrs.LambertCylindrical(central_longitude=user_lon_0))
