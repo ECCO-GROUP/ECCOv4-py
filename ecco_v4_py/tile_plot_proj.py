@@ -16,7 +16,7 @@ import ecco_v4_py.resample_to_latlon as resample_to_latlon
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 def plot_proj_to_latlon_grid(lons, lats, data, 
                              projection_type = 'robin', 
-                             plot_type = 'pcolor', 
+                             plot_type = 'pcolormesh', 
                              user_lon_0 = -66,
                              lat_lim = 50, 
                              levels = 20, 

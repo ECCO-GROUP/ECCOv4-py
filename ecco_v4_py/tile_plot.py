@@ -17,40 +17,74 @@ import pyresample as pr
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-def plot_tile(tile, cmap='jet', **kwargs):
+def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False, 
+              cbar_label = '', **kwargs):
+    """
 
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # shows a single llc tile.  
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    Plots a single tile of the lat-lon-cap (LLC) grid
     
-    # by default do not show a colorbar 
-    show_colorbar = False
+    Parameters
+    ----------
+    tile
+        a single 2D tile of dimension llc x llc 
 
-    # by default the colorbar has no label
-    show_cbar_label = False
+    cmap
+        a colormap for the figure
+        Default: 'jet'
+
+    show_colorbar
+        boolean, show the colorbar
+        Default: False
+        
+    show_cbar_label
+        boolean, show a label on the colorbar
+        Default: False
+        
+    less_output : boolean
+        A debugging flag.  False = less debugging output
+        Default: False
+        
+    cmin/cmax
+        float(s), the minimum and maximum values to use for the colormap
+        No Default
+        
+    fig_num
+        integer, the figure number to make the plot on.
+        Default: make a new figure
+        
+    Returns
+    -------
+    f
+        a reference to the figure
+        
+        
+    If dimensions nl or nk are singular, they are not included 
+        as dimensions in data_tiles
+
+    """
 
     # by default take the min and max of the values
     cmin = np.nanmin(tile)
     cmax = np.nanmax(tile)
     
+    fig_num = -1
     #%%
     for key in kwargs:
-        if key == "cbar":
-            show_colorbar = kwargs[key]
-        elif key == "cbar_label":
-            cbar_label = kwargs[key]
-            show_cbar_label = True
-        elif key == "cmin":
+        if key == "cmin":
             cmin = kwargs[key]
         elif key == "cmax":
             cmax =  kwargs[key]
+        elif key == 'fig_num':
+            fig_num = kwargs[key]
         else:
             print "unrecognized argument ", key 
     #%%
-       
+
+    if fig_num > 0:
+        f = plt.figure(num = fig_num)
+    else:
+        f = plt.figure()
+        
     plt.imshow(tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                origin='lower')
     
@@ -63,7 +97,7 @@ def plot_tile(tile, cmap='jet', **kwargs):
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    plt.show()
+    return f
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,45 +105,101 @@ def plot_tile(tile, cmap='jet', **kwargs):
     
     
     
-def plot_tiles(tiles,  **kwargs):
+def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
+               Arctic_cap_tile_location = 3,
+               show_colorbar=False,  
+               show_cbar_label=False, show_tile_labels= True,
+               cbar_label = '', fig_size = 9, **kwargs):
+    """
 
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # this routine plots the 13 llc faces in either the original 'llc' layout
-    # or the quasi lat-lon  layout
-    # cmin and cmax are the color minimum and maximum
-    # max.  'tiles' is a DataArray of a single 2D variable
-
-    # layout:
-    #     'llc' : 
-    #     'latlon'
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    # by default use jet colormap
-    user_cmap = 'jet'
+    Plots the 13 tiles of the lat-lon-cap (LLC) grid
     
-    # by default do not show a colorbar 
-    show_colorbar = False
+    Parameters
+    ----------
+    tiles
+        an array of 13 tiles of dimension 13 x llc x llc 
 
-    # by default the colorbar has no label
-    show_cbar_label = False
+    cmap
+        a colormap for the figure
+        Default: 'jet'
 
-    # by default the layout is the original llc 
+    layout
+        string, either 'llc' or 'latlon'.  
+        'llc'    shows the tiles situated on the figure in a fan-like manner
+                 which tries to convey how the tiles are linked together in
+                 the model.  the orientation of the tiles is consistent with
+                 how the model sees the tiles in terms of x and y
+        'latlon' shows the tiles situated on the figure in a more geographically
+                 recognizable manner.  Note, that if the 12 'lat/lon' tiles 
+                 haven't been rotated so that columns are roughly longitude and
+                 rows are roughly latitude, then the orientation of the tiles
+                 will be consisent with how the model see the tiles in terms of
+                 x and y.  
+    rotate_to_latlon
+        boolean, flag to rotate tiles 8-13 so that columns correspond with
+        longitude and rows correspond to latitude.  Note, if the tiles are
+        a vector field, this rotation will not make any physical sense.
+        Default: False
 
-    layout = 'llc' # 
-    
+    Arctic_cap_tile_location
+        integer, which lat-lon tile to place the Arctic tile over. can be 
+        3, 6, 8 or 11.
+        Default: 3
+        
+    show_colorbar
+        boolean, show the colorbar
+        Default: False
+        
+    show_cbar_label
+        boolean, show a label on the colorbar
+        Default: False
+        
+    show_tile_labels 
+        boolean, show tiles numbers as titles
+        Default: True
+        
+    less_output : boolean
+        A debugging flag.  False = less debugging output
+        Default: False
+        
+    cmin/cmax
+        float(s), the minimum and maximum values to use for the colormap
+        No Default
+        
+    fig_size
+        float, size of the figure in inches
+        Default: 9
+        
+    fig_num
+        integer, the figure number to make the plot on.
+        Default: make a new figure
+        
+    Returns
+    -------
+    f
+        a reference to the figure
+        
+        
+    If dimensions nl or nk are singular, they are not included 
+        as dimensions in data_tiles
+
+    """
+
     # by default take the min and max of the values
     cmin = np.nanmin(tiles)
     cmax = np.nanmax(tiles)
     
-    tile_labels = True
-
-    fsize = 9  #figure size in inches (h and w)
-    
-    rotate_to_latlon = False
-    
-    # Which lat-lon tile to plot the Arctic tile over. 
-    # -- can be 3, 6, 8 or 11.
-    aca = 3
+    fig_num = -1
+    #%%
+    for key in kwargs:
+        if key == "cmin":
+            cmin = kwargs[key]
+        elif key == "cmax":
+            cmax =  kwargs[key]
+        elif key == 'fig_num':
+            fig_num = kwargs[key]
+        else:
+            print "unrecognized argument ", key 
 
     # plotting of the tiles happens in a 4x4 grid
     # which tile to plot for any one of the 16 spots is indicated with a list
@@ -117,74 +207,58 @@ def plot_tiles(tiles,  **kwargs):
     # the top row will have the Arctic tile.  You can choose where the 
     # Arctic tile goes.  By default it goes in the second column.
     tile_order_top_row = [-1, 7, -1, -1]
-    
-    if type(tiles) == np.ndarray:
-        pass
-    else:
-        # we were sent a Dataset or DataArray   
-        # if we have defined the attribute 'Arctic_Align' then perhaps
-        # the Arctic cap is algined with another tile and therefore it's location
-        # in the figure may be different changed.
-        if 'Arctic_Align' in tiles.attrs:
-            aca = tiles.attrs['Arctic_Align']
-            #print 'Arctic Cap Alignment match with tile: ', aca
-    
-    for key in kwargs:
-        if key == "cbar":
-            show_colorbar = kwargs[key]
-        elif key == "user_cmap":
-            user_cmap = kwargs[key]
-        elif key == "cbar_label":
-            show_cbar_label = kwargs[key]
-        elif key == "layout":
-            layout = kwargs[key]
-        elif key == "cmin":
-            cmin = kwargs[key]
-        elif key == "cmax":
-            cmax =  kwargs[key]
-        elif key == "tile_labels":
-            tile_labels = kwargs[key]
-        elif key == "fsize":
-            fsize = kwargs[key]
-        elif key == "rotate_to_latlon":
-            rotate_to_latlon = kwargs[key]
-        elif key == 'Arctic_Align':
-            aca = kwargs[key]
-        else:
-            print "unrecognized argument ", key 
 
-    # see if aca is one of four valid values
-    if len(np.intersect1d([3,6,8,11],aca)) > 0:
+
+    if len(np.intersect1d([3,6,8,11],Arctic_cap_tile_location)) > 0:
         # set the location of the Arctic tile.
-        if  aca == 3: # plot in 1st position, column 1
+        if  Arctic_cap_tile_location == 3: # plot in 1st position, column 1
             tile_order_top_row = [7, -1, -1, -1]
-        elif aca == 6:# plot in 2nd position, column 2
+        elif Arctic_cap_tile_location == 6:# plot in 2nd position, column 2
             tile_order_top_row = [-1, 7, -1, -1]
-        elif aca == 8:# plot in 3rd position, column 3
+        elif Arctic_cap_tile_location == 8:# plot in 3rd position, column 3
             tile_order_top_row = [-1, -1, 7, -1]
-        elif aca == 11:# plot in 4th position, column 4
+        elif Arctic_cap_tile_location == 11:# plot in 4th position, column 4
             tile_order_top_row = [-1, -1, -1, 7]
     else:
         # if not, set it to be 6.
         print 'Arctic Cap Alignment is not one of 3, 6, 8, 11, using 3'
-        aca  = 3
+        Arctic_cap_tile_location  = 3
 
 
     #if layout == 'llc' and aca != 6:
     #    print 'Arctic_Align only makes sense with the lat-lon layout'
 
-    if layout == 'llc' and rotate_to_latlon == True:
-        print 'note: rotate_to_latlon only applies when layout="latlon" '
+    fac1 = 1; fac2=1
 
-    if layout == 'latlon':
+    if show_tile_labels and show_colorbar:
+        fac2 = 1.15
 
-        if tile_labels:            
-            f, axarr = plt.subplots(4, 4, figsize=(fsize,fsize))
+    if show_tile_labels==False:
+        if show_colorbar:
+            fac2 =  0.8766666666666666
         else:
-            fac = 1.1194
-            f, axarr = plt.subplots(4, 4, figsize=(fsize*fac,fsize),
-                                    gridspec_kw = {'wspace':0, 'hspace':0})
+            fac2 = 9.06/9
+        
+    if layout == 'llc' :
+        if fig_num > 0:
+            f, axarr = plt.subplots(5, 5, num=fig_num)
+        else:
+            f, axarr = plt.subplots(5, 5)
+            
+        # plotting of the tiles happens in a 5x5 grid
+        # which tile to plot for any one of the 25 spots is indicated with a list
+        # a value of negative one means do not plot anything in that spot.
+        tile_order = np.array([-1, -1, 11, 12, 13, \
+                      -1, 7, 8, 9, 10, \
+                      3, 6, -1, -1, -1, \
+                      2, 5, -1, -1, -1, \
+                      1, 4, -1, -1, -1])
 
+    elif layout == 'latlon':
+        if fig_num > 0:
+            f, axarr = plt.subplots(4, 4, num=fig_num)
+        else:
+            f, axarr = plt.subplots(4, 4)
                   
         # the order of the rest of the tile is fixed.  four columns each with 
         # three rows.
@@ -196,27 +270,16 @@ def plot_tiles(tiles,  **kwargs):
         # you just add them in python (wierd).  If these were numpy arrays 
         # one would use np.concatenate()
         tile_order = tile_order_top_row + tile_order_bottom_rows
-    
-    elif layout == 'llc':
-        if tile_labels:            
-            f, axarr = plt.subplots(5,5, figsize=(fsize,fsize))
-        else:
-            fac = 1.1194
-            f, axarr = plt.subplots(5, 5, figsize=(fsize*fac,fsize),
-                                    gridspec_kw = {'wspace':0, 'hspace':0})
-            
-    
-        # plotting of the tiles happens in a 5x5 grid
-        # which tile to plot for any one of the 25 spots is indicated with a list
-        # a value of negative one means do not plot anything in that spot.
-        tile_order = np.array([-1, -1, 11, 12, 13, \
-                      -1, 7, 8, 9, 10, \
-                      3, 6, -1, -1, -1, \
-                      2, 5, -1, -1, -1, \
-                      1, 4, -1, -1, -1])
-        
 
+    print fac1, fac2
+    f.set_size_inches(fac1*fig_size, fig_size*fac2)
 
+    if show_tile_labels==False:
+        f.subplots_adjust(wspace=0, hspace=0)
+    
+    print f.get_size_inches()
+
+    
     # loop through the axes array and plot tiles where tile_order != -1
     for i, ax in enumerate(axarr.ravel()):
         ax.axis('off')
@@ -240,12 +303,12 @@ def plot_tiles(tiles,  **kwargs):
             
             if have_tile:
                 if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 7):
-                    if aca == 3:
+                    if Arctic_cap_tile_location == 3:
                         cur_tile = np.rot90(cur_tile,-1)
                         print 'here'
-                    elif aca == 8:
+                    elif Arctic_cap_tile_location == 8:
                         cur_tile = np.rot90(cur_tile,-3)
-                    elif aca == 11:
+                    elif Arctic_cap_tile_location == 11:
                         cur_tile = np.rot90(cur_tile,2)
 
                 if (layout == 'latlon' and rotate_to_latlon and 
@@ -253,13 +316,13 @@ def plot_tiles(tiles,  **kwargs):
                     
                     cur_tile = np.rot90(cur_tile)
                 
-                im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=user_cmap, 
+                im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                              origin='lower')
             
     
             ax.set_aspect('equal')
             ax.axis('on')
-            if tile_labels:
+            if show_tile_labels:
                 ax.set_title('Tile ' + str(cur_tile_num))
                 
             ax.get_xaxis().set_visible(False)
@@ -267,7 +330,7 @@ def plot_tiles(tiles,  **kwargs):
 
     # show the colorbar
     if show_colorbar:
-        if tile_labels:
+        if show_tile_labels:
             f.subplots_adjust(left=None, bottom=None, right=0.8)
         else:
             f.subplots_adjust(right=0.8, left=None, bottom=None,
@@ -280,7 +343,7 @@ def plot_tiles(tiles,  **kwargs):
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    #return f
+    return f
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

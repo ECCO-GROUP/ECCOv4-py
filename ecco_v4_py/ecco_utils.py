@@ -39,27 +39,34 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
     """
 
     if subset=='center_points':
-        fname = outDir+'/'+outName+'_Grid_Center_Points/'+outName+'_Grid_Center_Points'
+        
+        fname = outDir +'/' + outName + '_Grid_Center_Points/' + outName + '_Grid_Center_Points'
+        
         w=shapefile.Writer(fname + '.shp')
         w.shapeType = shapefile.POINT
         w.field('id')
+
         counter=0
         for i in range(np.shape(X)[0]):
             for j in range(np.shape(X)[1]):
                 w.point(X[i,j],Y[i,j])
                 w.record(counter)
                 counter+=1
-        w.save(fname + '.shp')
+        w.close()
+
         f=open(fname + '.prj','w')
         f.write('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
         f.close()
 
     elif subset=='boundary_points':
-        filename = outDir + '/' + outName + '_Grid_Boundary_Points/' + outName + '_Grid_Boundary_Points'
+        
+        fname = outDir + '/' + outName + '_Grid_Boundary_Points/' + outName + '_Grid_Boundary_Points'
+        print fname
         w=shapefile.Writer(fname + '.shp')
         w.shapeType = shapefile.POLYLINE
-        counter=0
         w.field('id')
+
+        counter=0
         #create the vertical lines
         for i in range(np.shape(X)[0]):
             lines=[]
@@ -69,6 +76,7 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
             w.line([lines])
             w.record(counter)
             counter+=1
+
         # create the horizontal lines
         XT = X.T
         YT = Y.T
@@ -82,6 +90,7 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
             counter+=1
 
         w.close()
+
         f = open(fname + '.prj', 'w')
         f.write(
             'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
