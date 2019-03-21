@@ -61,7 +61,7 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
     elif subset=='boundary_points':
         
         fname = outDir + '/' + outName + '_Grid_Boundary_Points/' + outName + '_Grid_Boundary_Points'
-        print fname
+        print(fname)
         w=shapefile.Writer(fname + '.shp')
         w.shapeType = shapefile.POLYLINE
         w.field('id')

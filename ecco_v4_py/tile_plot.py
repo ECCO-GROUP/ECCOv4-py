@@ -199,7 +199,7 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
         elif key == 'fig_num':
             fig_num = kwargs[key]
         else:
-            print "unrecognized argument ", key 
+            print("unrecognized argument ", key)
 
     # plotting of the tiles happens in a 4x4 grid
     # which tile to plot for any one of the 16 spots is indicated with a list
@@ -271,13 +271,13 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
         # one would use np.concatenate()
         tile_order = tile_order_top_row + tile_order_bottom_rows
 
-    print fac1, fac2
+    print(fac1, fac2)
     f.set_size_inches(fac1*fig_size, fig_size*fac2)
 
     if show_tile_labels==False:
         f.subplots_adjust(wspace=0, hspace=0)
     
-    print f.get_size_inches()
+    print(f.get_size_inches())
 
     
     # loop through the axes array and plot tiles where tile_order != -1
