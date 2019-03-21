@@ -118,7 +118,7 @@ def minimal_metadata(ds):
     # generate a list of upper case letters in teh alphabet
     myDict= map(chr, range(65, 91))
 
-    for key, value in ds.attrs.iteritems():
+    for key, value in ds.attrs.items():
         if key in myDict: 
             del ds.attrs[key]
          

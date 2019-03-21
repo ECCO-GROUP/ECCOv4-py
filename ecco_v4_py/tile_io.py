@@ -240,7 +240,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     # int64.  Coordinate index variables are discrete [1, 2, ... n] 
     # so integers are more logical than floats.
     # -- loop through all dimensions and change the type to int
-    #for key, value in ds.dims.iteritems():
+    #for key, value in ds.dims.items():
     #    ds[key] = ds[key].astype(np.int)
 
     # second, check to see if we are loading a GRID tile files.  GRID tiles
@@ -457,7 +457,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     # 'grid_layout' = 'original llc' to indicate that the tile has not yet
     # been rotated
 
-    for key, value in ds.variables.iteritems():
+    for key, value in ds.variables.items():
         if key not in ds.coords and len(ds[key].shape) >= 2:
             ds.variables[key].attrs['grid_layout'] = 'original llc'
 
