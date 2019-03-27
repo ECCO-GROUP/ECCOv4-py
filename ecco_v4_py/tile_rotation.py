@@ -5,7 +5,7 @@ Created on Mon Jul  3 16:11:15 2017
 
 @author: ifenty
 """
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import xarray as xr
 from copy import deepcopy
@@ -42,7 +42,7 @@ def reorient_13_tile_GRID_Dataset_to_latlon_layout(gds, **kwargs):
 
     ds_CG_r = reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds_CG, **kwargs)
 
-    for key, value in ds_CG_r.variables.iteritems():
+    for key, value in ds_CG_r.variables.items():
         if key not in ds_CG_r.coords:
             ds_CG_r.variables[key].attrs['Arctic_Align'] = aca
 
@@ -63,7 +63,7 @@ def reorient_13_tile_GRID_Dataset_to_latlon_layout(gds, **kwargs):
     # merge the rotated Datasets on the C, G, U and V points.
     gds_r = xr.merge([ds_CG_r, ds_U_r, ds_V_r])
     
-    for key, value in gds_r.variables.iteritems():
+    for key, value in gds_r.variables.items():
         if key not in gds_r.coords:
             gds_r.variables[key].attrs['Arctic_Align'] = aca
             gds_r.variables[key].attrs['grid_layout'] = 'rotated llc' 
@@ -97,7 +97,7 @@ def reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
     #
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    print "\n>>> REORIENTING DATASET TO LATLON LAYOUT, C OR G POINTS"
+    print("\n>>> REORIENTING DATASET TO LATLON LAYOUT, C OR G POINTS")
     # create an empty array that will contain the tiles after rotation
     ds_all = []
     # save the metadata from the Dataset, we'll use it later.
@@ -142,14 +142,14 @@ def reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
                     cur_ds = rotate_single_tile_Dataset_CG_points(cur_ds, 
                                                                   rot_k =3)
                 elif aca == 6:
-                    print 'keeping Arctic cap alignment with tile 6'
+                    print('keeping Arctic cap alignment with tile 6')
                 elif aca == 8:                
                     cur_ds = rotate_single_tile_Dataset_CG_points(cur_ds)                
                 elif aca == 11:
                     cur_ds = rotate_single_tile_Dataset_CG_points(cur_ds, 
                                                                   rot_k=2)
                 else:
-                    print 'invalid Arctic cap alignment, leaving unchanged'
+                    print('invalid Arctic cap alignment, leaving unchanged')
     
             # Tiles 8-13 are rotated once clockwise
             elif cur_tile > 7:
@@ -162,12 +162,12 @@ def reorient_13_tile_Dataset_to_latlon_layout_CG_points(ds, **kwargs):
                 ds_all = xr.concat([ds_all, cur_ds],'tile')
 
         else:
-            print 'Tile not present in Dataset ', cur_tile
+            print('Tile not present in Dataset ', cur_tile)
             
     # Give the new Dataset the same metadata as the original Dataset.
     ds_all.attrs = attrs
 
-    for key, value in ds_all.variables.iteritems():
+    for key, value in ds_all.variables.items():
         if key not in ds_all.coords:
             ds_all.variables[key].attrs['Arctic_Align'] = aca 
             ds_all.variables[key].attrs['grid_layout'] = 'rotated llc'
@@ -205,12 +205,12 @@ def rotate_single_tile_Dataset_CG_points(ds, **kwargs):
     # different multiples of 90 degrees.
     if 'tile' in ds.coords:
         if ds.tile.size > 1:
-            print 'WARNING: you are passing a Dataset with more than one tile to "rotate_single_tile_Dataset_CG_points"'
+            print('WARNING: you are passing a Dataset with more than one tile to "rotate_single_tile_Dataset_CG_points"')
             
         
     # loop through each variable in the Dataset and select out for rotation 
     # only those variables that are not coordinates
-    for key, value in ds.variables.iteritems():
+    for key, value in ds.variables.items():
         if key not in ds.coords:
             
             # pull out the variable from the Dataset.  A single variable from
@@ -252,7 +252,7 @@ def rotate_single_tile_DataArray_CG_points(da, **kwargs):
     # First a sanity check to see if the Dataset has more than one tile.
     if 'tile' in da.coords:
         if da.tile.size > 1:
-            print 'WARNING: you are passing a DataArray with more than one tile to "rotate_single_tile_DataArray_CG_points"'
+            print('WARNING: you are passing a DataArray with more than one tile to "rotate_single_tile_DataArray_CG_points"')
 
     # by default the array will be rotated clockwise 90 degrees in its 
     # horizontal dimensions rot_k = 1 times.  
@@ -283,9 +283,9 @@ def rotate_single_tile_DataArray_CG_points(da, **kwargs):
         da.values = np.rot90(da.values,  k=rot_k , axes=(2,3))
 
     else:
-        print 'variables must have 2, 3, or 4 dimensions'
-        print da.name + ' has ' + str(num_dims) + ' dimensions\n'
-        print 'so I am returning ' + da.name + ' unchanged.'
+        print('variables must have 2, 3, or 4 dimensions')
+        print(da.name, ' has ', str(num_dims), ' dimensions\n')
+        print('so I am returning ', da.name, ' unchanged.')
         
     # give this variable a new attribute
     da.attrs['grid_layout'] = 'rotated_llc'
@@ -367,7 +367,7 @@ def reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
                                                               cur_ds_V,
                                                               rot_k=3)
                 elif aca == 6:
-                    print 'keeping Arctic cap alignment with tile 6'
+                    print('keeping Arctic cap alignment with tile 6')
                 elif aca == 8:                
                     cur_ds_U, cur_ds_V = \
                         rotate_single_tile_Datasets_UV_points(cur_ds_U, 
@@ -378,7 +378,7 @@ def reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
                                                               cur_ds_V,
                                                               rot_k=2)
                 else:
-                    print 'invalid Arctic cap alignment, leaving unchanged'
+                    print('invalid Arctic cap alignment, leaving unchanged')
     
             # Tiles 8-13 are rotated once clockwise
             elif cur_tile > 7:
@@ -394,19 +394,19 @@ def reorient_13_tile_Dataset_to_latlon_layout_UV_points(ds_U, ds_V, **kwargs):
                 ds_U_all = xr.concat([ds_U_all, cur_ds_U],'tile')
                 ds_V_all = xr.concat([ds_V_all, cur_ds_V],'tile')            
         else:
-            print "Tile not included in Dataset ", cur_tile
+            print("Tile not included in Dataset ", cur_tile)
             
     # Give the new Dataset the same metadata as the original Dataset.
     ds_U_all.attrs = U_attrs
     ds_V_all.attrs = V_attrs 
     #%%
     
-    for key, value in ds_U_all.variables.iteritems():
+    for key, value in ds_U_all.variables.items():
         if key not in ds_U_all.coords:
             ds_U_all.variables[key].attrs['Arctic_Align'] = aca
             ds_U_all.variables[key].attrs['grid_layout'] = 'rotated llc' 
 
-    for key, value in ds_V_all.variables.iteritems():
+    for key, value in ds_V_all.variables.items():
         if key not in ds_V_all.coords:
             ds_V_all.variables[key].attrs['Arctic_Align'] = aca
             ds_V_all.variables[key].attrs['grid_layout'] = 'rotated llc'
@@ -443,17 +443,17 @@ def rotate_single_tile_Datasets_UV_points(ds_U, ds_V, **kwargs):
     # different multiples of 90 degrees.
     if 'tile' in ds_U.coords:
         if ds_U.tile.size > 1:
-            print 'WARNING: you are passing a Dataset with more than one tile'
+            print('WARNING: you are passing a Dataset with more than one tile')
             
         
     # loop through each variable in the Dataset and select out for rotation 
     # only those variables that are not coordinates
     
-    print '\nROTATING TILE ', ds_U.tile.values
+    print('\nROTATING TILE ', ds_U.tile.values)
     
     num_vars = 0
     ki = 0
-    for key, value in ds_U.variables.iteritems():
+    for key, value in ds_U.variables.items():
         ki = ki+1
         if key not in ds_U.coords:
             
@@ -462,7 +462,7 @@ def rotate_single_tile_Datasets_UV_points(ds_U, ds_V, **kwargs):
             cur_V_key = ds_V.variables.keys()[ki-1]
             cur_U_key = ds_U.variables.keys()[ki-1]
 
-            print 'PAIRING ' + cur_U_key + ' with ' + cur_V_key
+            print('PAIRING ', cur_U_key, ' with ', cur_V_key)
             
             da_U = ds_U[cur_U_key]
             da_V = ds_V[cur_V_key]
@@ -551,10 +551,10 @@ def rotate_single_tile_DataArrays_UV_points(da_U, da_V, **kwargs):
 
     #%%
     if flip_U:
-        print "Flipping the sign of the variable on the 'U' point \n"
+        print("Flipping the sign of the variable on the 'U' point \n")
         da_U = da_U * -1
     if flip_V:
-        print "Flipping the sign of the variable on the 'V' point \n"
+        print("Flipping the sign of the variable on the 'V' point \n")
         da_V = da_V * -1
 
     da_U_new = deepcopy(da_U)
@@ -564,7 +564,7 @@ def rotate_single_tile_DataArrays_UV_points(da_U, da_V, **kwargs):
     # then the array dimensions do not change and the rotated version of
     # da_U comes from da_U and the rotated version of da_V comes from da_V
     if np.mod(rot_k, 2) == 0:
-        print "Even number of rotations\n"
+        print("Even number of rotations\n")
         
         da_U_new[:] = np.rot90(da_U, k=rot_k, axes=(-2,-1))
         da_V_new[:] = np.rot90(da_V, k=rot_k, axes=(-2,-1))
@@ -579,8 +579,8 @@ def rotate_single_tile_DataArrays_UV_points(da_U, da_V, **kwargs):
     da_U_new.attrs['grid_layout'] = 'rotated llc' 
     da_V_new.attrs['grid_layout'] = 'rotated llc'
         
-    print da_U_new.attrs
-    print da_V_new.attrs
+    print(da_U_new.attrs)
+    print(da_V_new.attrs)
     
     #%%   
     return da_U_new, da_V_new

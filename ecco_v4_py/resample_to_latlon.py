@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division,print_function
 import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
@@ -21,7 +21,6 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                        nprocs_user=1, radius_of_influence = 100000, 
                        fill_value = None, mapping_method = 'bin_average') :
 
-#    print new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon
     #%%
     if type(orig_lats) == xr.core.dataarray.DataArray:
         orig_lons_1d = orig_lons.values.ravel()
@@ -31,18 +30,16 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         orig_lats_1d = orig_lats.ravel()
         orig_lons_1d = orig_lons.ravel()
     else:
-        print 'orig_lons and orig_lats variable either a DataArray or numpy.ndarray'
-        print 'orig_lons found type ', type(orig_lons)
-        print 'orig_lats found type ', type(orig_lats)
-        return
+        raise TypeError('orig_lons and orig_lats variable either a DataArray or numpy.ndarray. \n'
+                'Found type(orig_lons) = %s and type(orig_lats) = %s' % 
+                (type(orig_lons), type(orig_lats)))
 
     if type(orig_field) == xr.core.dataarray.DataArray:
         orig_field = orig_field.values
     elif type(orig_field) != np.ndarray and \
          type(orig_field) != np.ma.core.MaskedArray :
-        print 'orig_field must be a type of DataArray, ndarray, or MaskedArray. \n'
-        print 'found type ', type(orig_field)
-        return
+        raise TypeError('orig_field must be a type of DataArray, ndarray, or MaskedArray. \n' 
+                'Found type(orig_field) = %s' % type(orig_field))
 
     # prepare for the nearest neighbor mapping
 
@@ -51,7 +48,6 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                                             lats=orig_lats_1d)
 
    # the latitudes to which we will we interpolate
-
     num_lats = (new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat + 1
     num_lons = (new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lat + 1
 
@@ -60,7 +56,6 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=num_lats)
         lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=num_lons)
 
-#        print lon_tmp
         new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
 
         # define the lat lon points of the two parts.
@@ -83,15 +78,12 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                                                 fill_value=None,
                                                 nprocs=nprocs_user)
         else:
-            print ('mapping method must be nearest_neighbor or bin_average')
-            data_latlon_projection = []
+            raise ValueError('mapping_method must be nearest_neighbor or bin_average. \n'
+                    'Found mapping_method = %s ' % mapping_method)
 
     else:
-        print ('The number of lat and lon points to interpolate to must be > 0')
-        print ('num_lats ', num_lats,  '   num_lons ', num_lons)
-        new_grid_lon = []
-        new_grid_lat = []
-        data_latlon_projection = []
+        raise ValueError('Number of lat and lon points to interpolate to must be > 0. \n'
+                'Found num_lats = %d, num lons = %d' % (num_lats,num_lons))
 
     return new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

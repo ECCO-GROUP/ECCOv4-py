@@ -5,7 +5,7 @@ Created on Mon Jul  3 16:11:15 2017
 
 @author: ifenty
 """
-from __future__ import division
+from __future__ import division,print_function
 import numpy as np
 import xarray as xr
 import time
@@ -87,12 +87,12 @@ def load_subset_tiles_from_netcdf(data_dir, var, var_type,
             ds_tile = []
         else:
             if less_output == False:
-                print 'skipping this tile, not on the list ', tile_index
+                print('skipping this tile, not on the list ', tile_index)
                 
     end = time.time()
 
     if less_output == False:
-        print 'total file load and concat time ', end-start, 's'
+        print('total file load and concat time ', end-start, 's')
 
     return ds
 
@@ -145,7 +145,7 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type,
     # By default print messages to the screen when loading tile files
     
     if less_output == False:
-        print "\n>>> LOADING TILES FROM NETCDF\n"
+        print("\n>>> LOADING TILES FROM NETCDF\n")
     
     tile_subset = range(1,14)
 
@@ -186,7 +186,7 @@ def load_all_tiles_from_netcdf(data_dir, var, var_type,
         # reset the metadata on ds.
         ds.attrs = orig_attrs
 
-    print "Finished loading all 13 tiles of " + var        
+    print("Finished loading all 13 tiles of ", var) 
 
     return ds
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -217,7 +217,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     fname = (data_dir + var + '.' + str(tile_index).zfill(4) + '.nc')
 
     if less_output == False:
-        print 'loading ' + fname
+        print('loading ', fname)
 
     # load the netcdf file using xarray.  
     # xarray automatically converts the netcdf file into a Dataset object
@@ -240,7 +240,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     # int64.  Coordinate index variables are discrete [1, 2, ... n] 
     # so integers are more logical than floats.
     # -- loop through all dimensions and change the type to int
-    #for key, value in ds.dims.iteritems():
+    #for key, value in ds.dims.items():
     #    ds[key] = ds[key].astype(np.int)
 
     # second, check to see if we are loading a GRID tile files.  GRID tiles
@@ -285,7 +285,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
                 ds = ds.transpose('time','tile','k','j_g','i')
                 
             else:
-                print 'to give sensible coordinate names \'var_type\' must be one of: c, g, u or v'
+                print('to give sensible coordinate names \'var_type\' must be one of: c, g, u or v')
 
         # give the coordinates more meaningful names depending on where on the
         # Arakawa C-grid the variable is situated.
@@ -307,7 +307,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
                 ds = ds.transpose('time','tile','j_g','i')
                 
             else:
-                print 'to give sensible coordinate names \'var_type\' must be one of: c, g, u or v\n'
+                print('to give sensible coordinate names \'var_type\' must be one of: c, g, u or v\n')
             
         # ECCO v4 Model output on the tile files include four auxillary fields,
         # corresponding with the land mask, area (m^2), longitude, and latitude
@@ -321,7 +321,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
         # By default, we do not keep the redundant land mask and cell area
         # information.
         if keep_landmask_and_area:
-            print 'Keeping land mask and area!\n'
+            print('Keeping land mask and area!\n')
             if 'land' in ds.variables:
                 new_land_name = 'land_' + var_type
                 ds = ds.rename({'land':new_land_name})
@@ -457,7 +457,7 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     # 'grid_layout' = 'original llc' to indicate that the tile has not yet
     # been rotated
 
-    for key, value in ds.variables.iteritems():
+    for key, value in ds.variables.items():
         if key not in ds.coords and len(ds[key].shape) >= 2:
             ds.variables[key].attrs['grid_layout'] = 'original llc'
 

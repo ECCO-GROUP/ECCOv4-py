@@ -8,7 +8,7 @@ This module includes utility routines that operate on the Dataset or DataArray O
    https://github.com/ECCO-GROUP/ECCOv4-py
 """
 
-from __future__ import division
+from __future__ import division,print_function
 import numpy as np
 import xarray as xr
 import datetime
@@ -61,7 +61,7 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
     elif subset=='boundary_points':
         
         fname = outDir + '/' + outName + '_Grid_Boundary_Points/' + outName + '_Grid_Boundary_Points'
-        print fname
+        print(fname)
         w=shapefile.Writer(fname + '.shp')
         w.shapeType = shapefile.POLYLINE
         w.field('id')
@@ -96,7 +96,7 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
             'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
         f.close()
     else:
-        print "subset must be either center_points or boundary_points"
+        print("subset must be either center_points or boundary_points")
 
 
 def minimal_metadata(ds):
@@ -114,11 +114,11 @@ def minimal_metadata(ds):
         
     """
 
-    print 'Removing Dataset Attributes A-Z\n'
+    print('Removing Dataset Attributes A-Z\n')
     # generate a list of upper case letters in teh alphabet
     myDict= map(chr, range(65, 91))
 
-    for key, value in ds.attrs.iteritems():
+    for key, value in ds.attrs.items():
         if key in myDict: 
             del ds.attrs[key]
          

@@ -8,7 +8,7 @@ This module includes utility routines for loading binary files in the llc 13-til
    https://github.com/ECCO-GROUP/ECCOv4-py
 """
 
-from __future__ import division
+from __future__ import division,print_function
 import numpy as np
 import glob
 
@@ -71,7 +71,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     datafile = fdir + '/' + fname
     
     if less_output == False:
-        print 'loading ' + fname
+        print('loading ', fname)
     
     # check to see if file exists.    
     file = glob.glob(datafile)
@@ -86,7 +86,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         f.seek(ni*nj*skip*dt.itemsize)
 
     if (ni <= 0) or (nj <= 0):
-        print ('ni and nj must be > 1')
+        print('ni and nj must be > 1')
         return []
 
     # load all 2D records
@@ -102,7 +102,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         nk = int(length_arr_k / (ni*nj))
 
         if less_output == False:
-            print ('loading all 2D records.  nk =',nk)
+            print('loading all 2D records.  nk =',nk)
         
         # reshape the array to 2D records
         if nk > 1: # we have more than one 2D record, make 3D field
@@ -137,7 +137,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
        
     
     if less_output == False:
-        print ('data shape ', data.shape)
+        print('data shape ', data.shape)
 
     return data
 

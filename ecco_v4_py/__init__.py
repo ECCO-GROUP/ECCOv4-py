@@ -18,7 +18,7 @@ from mds_io import load_llc_compact
 from mds_io import load_llc_compact_to_faces
 from mds_io import load_llc_compact_to_tiles
 
-from resample_to_latlon import resample_to_latlon
+from .resample_to_latlon import resample_to_latlon
 
 from tile_exchange import append_border_to_tile
 from tile_exchange import add_borders_to_DataArray_V_points
