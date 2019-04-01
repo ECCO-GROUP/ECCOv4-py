@@ -211,10 +211,9 @@ def load_tile_from_netcdf(data_dir, var, var_type, tile_index,
     # because the ECCO grid has all of this information.  keeping it around
     # just makes for very messy Datasets
     
-    
     # construct the netcdf file name based on the variable name and the
     # the tile index
-    fname = (data_dir + var + '.' + str(tile_index).zfill(4) + '.nc')
+    fname = (data_dir + '/' + var + '.' + str(tile_index).zfill(4) + '.nc')
 
     if less_output == False:
         print('loading ', fname)
