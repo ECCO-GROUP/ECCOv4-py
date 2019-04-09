@@ -12,12 +12,9 @@ from __future__ import division,print_function
 import numpy as np
 import glob
 
-from llc_array_conversion  import llc_compact_to_tiles
-from llc_array_conversion  import llc_compact_to_faces
-from llc_array_conversion  import llc_faces_to_tiles
-from llc_array_conversion  import llc_faces_to_compact
-from llc_array_conversion  import llc_tiles_to_faces
-from llc_array_conversion  import llc_tiles_to_compact
+from .llc_array_conversion  import llc_compact_to_tiles, \
+    llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
+    llc_tiles_to_faces, llc_tiles_to_compact
 
 #%%
 def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0, 
