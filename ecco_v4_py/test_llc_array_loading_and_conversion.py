@@ -10,18 +10,18 @@ from __future__ import division
 import numpy as np
 import matplotlib.pylab as plt
 
-from llc_array_conversion  import llc_compact_to_tiles
-from llc_array_conversion  import llc_compact_to_faces
-from llc_array_conversion  import llc_faces_to_tiles
-from llc_array_conversion  import llc_faces_to_compact
-from llc_array_conversion  import llc_tiles_to_faces
-from llc_array_conversion  import llc_tiles_to_compact
+from .llc_array_conversion  import llc_compact_to_tiles
+from .llc_array_conversion  import llc_compact_to_faces
+from .llc_array_conversion  import llc_faces_to_tiles
+from .llc_array_conversion  import llc_faces_to_compact
+from .llc_array_conversion  import llc_tiles_to_faces
+from .llc_array_conversion  import llc_tiles_to_compact
 
 
-from mds_io import load_llc_compact
-from mds_io import load_llc_compact_to_faces
-from mds_io import load_llc_compact_to_tiles
-from tile_plot import plot_tiles
+from .mds_io import load_llc_compact
+from .mds_io import load_llc_compact_to_faces
+from .mds_io import load_llc_compact_to_tiles
+from .tile_plot import plot_tiles
 
 
 # Tests the mds_io and llc_array_conversion routines
