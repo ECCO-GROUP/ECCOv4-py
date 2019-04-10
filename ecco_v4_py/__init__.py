@@ -13,10 +13,7 @@ from .llc_array_conversion  import llc_tiles_to_faces
 from .llc_array_conversion  import llc_tiles_to_compact
 
 
-from .mds_io import load_binary_array
-from .mds_io import load_llc_compact
-from .mds_io import load_llc_compact_to_faces
-from .mds_io import load_llc_compact_to_tiles
+from .mds_io import read_bin_to_tiles, read_bin_to_compact, read_bin_to_faces
 
 from .resample_to_latlon import resample_to_latlon
 
