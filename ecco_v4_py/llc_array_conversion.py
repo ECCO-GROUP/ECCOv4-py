@@ -43,8 +43,10 @@ def llc_compact_to_tiles(data_compact, less_output = False):
 
     """
    
-    data_tiles =  llc_faces_to_tiles(llc_compact_to_faces(data_compact), 
-        less_output=less_output)
+    data_tiles =  llc_faces_to_tiles(
+                    llc_compact_to_faces(data_compact,
+                                         less_output=less_output), 
+                    less_output=less_output)
         
     return data_tiles
 
