@@ -12,6 +12,14 @@ This module includes routines for converting arrays between the model
 from __future__ import division,print_function
 import numpy as np
 import xarray as xr
+from xmitgcm.variables import dimensions
+
+# xarray>=0.12.0 compatibility
+try:
+    from xarray.core.pycompat import OrderedDict
+except ImportError:
+    from collections import OrderedDict
+
 
 #%%
 def llc_compact_to_tiles(data_compact, less_output = False):
@@ -707,3 +715,159 @@ def llc_faces_to_compact(F, less_output=True):
         print ('shape of data_compact ', data_compact.shape)
 
     return data_compact
+
+#%%
+def llc_tiles_to_xda(data_tiles, var_type, grid_ds=None, less_output=False):
+    """
+    Convert numpy or dask array in tiled format to xarray DataArray 
+    with minimal coordinates: (time,k,tile,j,i) ; (time,k,tile,j_g,i) etc...
+    unless a DataArray or Dataset is provided to provide more coordinate info
+
+    Array is assumed to have dimensions as in mds_io.read_bin_to_tiles, which
+    has the following dimension order: 
+
+        [N_tiles, N_recs, N_z, N_y, N_x]
+
+    where if either N_z or N_recs =1, then that dimension is collapsed
+    and not present in the returned array.
+
+    Note: N_recs dimension is assumed to be associated with time, and will
+    be read in as such.
+
+    Parameters
+    ----------
+    data_tiles : numpy or dask+numpy array
+        see above for specified dimension order
+    var_type : string
+        specification for where on the grid the variable lives
+        'c' - grid cell center, i.e. tracer point, e.g. XC, THETA, ...
+        'w' - west grid cell edge, e.g. dxG, zonal velocity, ...
+        's' - south grid cell edge, e.g. dyG, meridional velocity, ...
+        'z' - southwest grid cell edge, zeta/vorticity point, e.g. rAz
+    grid_ds : xarray DataArray or Dataset, optional
+        a DataArray or Dataset with the grid coordinates already loaded
+    less_output : boolean, optional
+        A debugging flag.  False = less debugging output
+
+
+    Returns
+    -------
+    da : xarray DataArray
+    """
+
+    # Reshape data to match xmitgcm dimension order
+    # Want it in [N_recs, N_z, N_tiles, N_j, N_i]
+    if len(data_tiles.shape)==5:
+        if not less_output:
+            print('Found 5D array, assuming [N_tiles, N_recs, N_z, N_y, N_x]')
+            print('Swapping dims 0 <-> 1')
+
+        data_tiles = data_tiles.swapaxes(0,1)
+
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+            print('Swapping dims 1 <-> 2')
+
+        data_tiles = data_tiles.swapaxes(1,2)
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+
+    elif len(data_tiles.shape)==4:
+        if not less_output:
+            print('Found 4D array, assuming [N_tiles, N_?, N_y, N_x]')
+            print('Swapping dims 0 <-> 1')
+
+        data_tiles = data_tiles.swapaxes(0,1)
+
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+
+    elif len(data_tiles.shape)==3:
+        if not less_output:
+            print('Found 3D array, assuming [N_tiles, N_y, N_x]')
+            print('No swapping necessary')
+    else:
+        raise TypeError('Found unfamiliar array shape: %d' % data_tiles.shape)
+
+    # If a DataArray or Dataset is given to model after, use this first!
+    if grid_ds is not None:
+        da = xr.DataArray(data=data_tiles,
+                          coords=grid_da.coords.variables,
+                          dims=grid_da.dims,
+                          attrs=grid_da.attrs)
+        return da
+
+    # Otherwise, provide minimal coordinate info
+    i = np.arange(data_tiles.shape[-1])
+    j = np.arange(data_tiles.shape[-2])
+    tiles = np.arange(data_tiles.shape[-3])
+    d_4 = []
+    d_5 = []
+    if len(data_tiles.shape)>3:
+        d_4 = np.arange(data_tiles.shape[-4])
+
+    if len(data_tiles.shape)>4:
+        d_5 = np.arange(data_tiles.shape[-5])
+
+    # Determine how to handle fourth dimension
+    fourthDimIsDepth = True
+    if len(d_4) != 50:
+        fourthDimIsDepth = False
+
+    # We can't say much about tile or time dimension
+    tile_attrs = OrderedDict([('standard_name','face_index')])
+    time_attrs = OrderedDict([('standard_name','time'), 
+                              ('long_name','Time'),('axis','T')])
+
+
+    # Provide dims and coords based on grid location
+    if var_type == 'c':
+
+        dims = ('tile','j','i')
+        coords = OrderedDict()
+        attrs = OrderedDict()
+
+        if len(data_tiles.shape)==5:
+            dims = ('time','k') + dims
+
+            time_da = xr.DataArray(data=d_5, coords={'time': d_5},
+                                   dims=('time',), attrs=time_attrs)
+            k_da = xr.DataArray(data=d_4, coords={'k': d_4},
+                                dims=('k',), attrs=dimensions['k']['attrs'])
+
+            coords['time'] = time_da
+            coords['k'] = k_da
+
+        if len(data_tiles.shape)==4:
+            if fourthDimIsDepth:
+                dims = ('k',) + dims
+                k_da = xr.DataArray(data=d_4, coords={'k': d_4},
+                                    dims=('k',), attrs=dimensions['k']['attrs'])
+                coords['k'] = k_da
+
+            else:
+                dims = ('time',) + dims
+                time_da = xr.DataArray(data=d_4, coords={'time': d_4},
+                                       dims=('time',), attrs=time_attrs)
+                coords['time'] = time_da
+
+        i_da = xr.DataArray(data=i, coords={'i': i}, dims=('i',), 
+                            attrs=dimensions['i']['attrs'])
+        j_da = xr.DataArray(data=j,coords={'j': j},dims=('j',),
+                            attrs=dimensions['j']['attrs'])
+        tile_da = xr.DataArray(data=tiles, coords={'tile': tiles},
+                               dims=('tile',), attrs=tile_attrs)
+
+        coords['tile'] = tile_da
+        coords['j'] = j_da
+        coords['i'] = i_da
+
+    else:
+        raise NotImplementedError(' other variable types not implemented yet ')
+
+    da = xr.DataArray(data=data_tiles,coords=coords,dims=dims)
+
+    return da
