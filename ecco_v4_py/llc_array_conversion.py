@@ -917,6 +917,6 @@ def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False):
 
     coords['tile'] = tile_da
     coords[jVar] = j_da
-    coords[jVar] = i_da
+    coords[iVar] = i_da
 
     return xr.DataArray(data=data_tiles, coords=coords, dims=dims)
