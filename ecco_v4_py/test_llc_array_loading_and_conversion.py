@@ -18,9 +18,7 @@ from .llc_array_conversion  import llc_tiles_to_faces
 from .llc_array_conversion  import llc_tiles_to_compact
 
 
-from .mds_io import load_llc_compact
-from .mds_io import load_llc_compact_to_faces
-from .mds_io import load_llc_compact_to_tiles
+from .mds_io import read_bin_to_compact, read_bin_to_faces, read_bin_to_tiles
 from .tile_plot import plot_tiles
 
 
@@ -78,9 +76,12 @@ def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data',
     # %% ----------- TEST 1: 2D field XC FOM GRID FILE
     
     #%% 1a LOAD COMPACT
-    tmpXC_c = load_llc_compact(llc_grid_dir, llc_lons_fname, llc=llc, nk=-1)
-    tmpXC_f = load_llc_compact_to_faces(llc_grid_dir, llc_lons_fname, llc=llc, nk=-1)
-    tmpXC_t = load_llc_compact_to_tiles(llc_grid_dir, llc_lons_fname, llc=llc, nk=-1)
+    tmpXC_c = read_bin_to_compact(llc_grid_dir, llc_lons_fname, llc=llc,
+                                  filetype=llc_grid_filetype)
+    tmpXC_f = read_bin_to_faces(llc_grid_dir, llc_lons_fname, llc=llc,
+                                filetype=llc_grid_filetype)
+    tmpXC_t = read_bin_to_tiles(llc_grid_dir, llc_lons_fname, llc=llc,
+                                filetype=llc_grid_filetype)
     
     if make_plots:
         #plt.close('all')
@@ -180,9 +181,12 @@ def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data',
     # %% ----------- TEST 2: 3D fields HFACC FOM GRID FILE
     
     #%% 2a LOAD COMPACT
-    tmpHF_c = load_llc_compact(llc_grid_dir, llc_hfacc_fname, llc=llc,nk=-1)
-    tmpHF_f = load_llc_compact_to_faces(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=-1)
-    tmpHF_t = load_llc_compact_to_tiles(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=-1)
+    tmpHF_c = read_bin_to_compact(llc_grid_dir, llc_hfacc_fname, llc=llc,nk=50,
+                                  filetype=llc_grid_filetype)
+    tmpHF_f = read_bin_to_faces(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
+                                  filetype=llc_grid_filetype)
+    tmpHF_t = read_bin_to_tiles(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
+                                  filetype=llc_grid_filetype)
     
     tmpHF_c.shape
     
