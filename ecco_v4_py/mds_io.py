@@ -130,7 +130,6 @@ def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         Default: 0
     nk : int
         number of 2D slices (or records) to load in the third dimension.  
-        if nk = -1, load all 2D slices
         Default: 1 [singleton]
     nl : int
         number of 2D slices (or records) to load in the fourth dimension.  
@@ -193,7 +192,6 @@ def read_bin_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         vertical levels of a 3D field, or different 2D fields, or both.
     nk : int
         number of 2D slices (or records) to load in the third dimension.  
-        if nk = -1, load all 2D slices
         Default: 1 [singleton]
     nl : int
         number of 2D slices (or records) to load in the fourth dimension.  
