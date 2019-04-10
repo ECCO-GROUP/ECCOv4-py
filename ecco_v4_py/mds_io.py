@@ -78,10 +78,6 @@ def read_bin_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
                                                 nrecs=nrecs, dtype=filetype)
 
-    print('---')
-    print(np.shape(data_tiles))
-    print('---')
-
     # Handle cases of single or multiple records, and skip>0
     # Also, swap so that Ntiles dim is ALWAYS first 
     # for ecco_v4_py convention
