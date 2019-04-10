@@ -863,6 +863,11 @@ def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False):
     fourthDimIsDepth = True
     if len(d_4) != 50:
         fourthDimIsDepth = False
+        if not less_output:
+            print('Assuming fourth dimension is time because len(data[-4]) != 50')
+    else:
+        if not less_output:
+            print('Assuming fourth dimension is depth because len(data[-4]) = 50')
 
     # We can't say much about tile or time dimension
     tile_attrs = OrderedDict([('standard_name','face_index')])
