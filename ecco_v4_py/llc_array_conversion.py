@@ -717,7 +717,7 @@ def llc_faces_to_compact(F, less_output=True):
     return data_compact
 
 #%%
-def llc_tiles_to_xda(data_tiles, var_type, grid_ds=None, less_output=False):
+def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False):
     """
     Convert numpy or dask array in tiled format to xarray DataArray 
     with minimal coordinates: (time,k,tile,j,i) ; (time,k,tile,j_g,i) etc...
@@ -738,13 +738,14 @@ def llc_tiles_to_xda(data_tiles, var_type, grid_ds=None, less_output=False):
     ----------
     data_tiles : numpy or dask+numpy array
         see above for specified dimension order
-    var_type : string
+    var_type : string, optional
+        Note: only optional if grid_da is provided! 
         specification for where on the grid the variable lives
         'c' - grid cell center, i.e. tracer point, e.g. XC, THETA, ...
         'w' - west grid cell edge, e.g. dxG, zonal velocity, ...
         's' - south grid cell edge, e.g. dyG, meridional velocity, ...
         'z' - southwest grid cell edge, zeta/vorticity point, e.g. rAz
-    grid_ds : xarray DataArray or Dataset, optional
+    grid_da : xarray DataArray, optional
         a DataArray or Dataset with the grid coordinates already loaded
     less_output : boolean, optional
         A debugging flag.  False = less debugging output
@@ -754,6 +755,9 @@ def llc_tiles_to_xda(data_tiles, var_type, grid_ds=None, less_output=False):
     -------
     da : xarray DataArray
     """
+
+    if var_type is None and grid_da is None:
+        raise TypeError('Must specify var_type="c","w","s", or "z" if grid_da is not provided')
 
     # Reshape data to match xmitgcm dimension order
     # Want it in [N_recs, N_z, N_tiles, N_j, N_i]
@@ -793,7 +797,7 @@ def llc_tiles_to_xda(data_tiles, var_type, grid_ds=None, less_output=False):
         raise TypeError('Found unfamiliar array shape: %d' % data_tiles.shape)
 
     # If a DataArray or Dataset is given to model after, use this first!
-    if grid_ds is not None:
+    if grid_da is not None:
         da = xr.DataArray(data=data_tiles,
                           coords=grid_da.coords.variables,
                           dims=grid_da.dims,
