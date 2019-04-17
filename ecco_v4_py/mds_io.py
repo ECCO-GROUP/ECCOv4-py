@@ -27,7 +27,7 @@ def read_bin_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
     Array is returned with the following dimension order:
 
-        [N_tiles, N_recs, N_z, N_y, N_x]
+        [N_tiles, N_recs, N_z, llc, llc]
 
     where if either N_z or N_recs =1, then that dimension is collapsed
     and not present in the returned array.
@@ -74,7 +74,7 @@ def read_bin_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     nrecs += skip_3d
 
     # Reads data into dask array as numpy memmap 
-    # [Nrecs x Nz x Ntiles x Ny x Nx]
+    # [Nrecs x Nz x Ntiles x llc x llc]
     data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
                                                 nrecs=nrecs, dtype=filetype)
 
@@ -109,7 +109,7 @@ def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
     Array is returned with the following dimension order:
 
-        [N_recs, N_z, N_y, N_x]
+        [N_recs, N_z, N_tiles*llc, llc]
 
     where if either N_z or N_recs =1, then that dimension is collapsed 
     and not present in the returned array.
@@ -145,7 +145,7 @@ def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     Returns
     -------
     data_compact
-        a numpy array of dimension nl x nk x llc x llc 
+        a numpy array of dimension nl x nk x 13*llc x llc 
 
     """
 
@@ -205,10 +205,10 @@ def read_bin_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         
     Returns
     -------
-    F : a dictionary containing the five lat-lon-cap faces
-        F[n] is a numpy array of face n, n in [1..5]
+    data_faces : a dictionary containing the five lat-lon-cap faces
+        data_faces[n] is a numpy array of face n, n in [1..5]
 
-    - dimensions of each 2D slice of F
+    - dimensions of each 2D slice of data_faces
         f1,f2: 3*llc x llc
            f3: llc x llc
         f4,f5: llc x 3*llc  
