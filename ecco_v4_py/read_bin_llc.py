@@ -18,7 +18,7 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_tiles_to_faces, llc_tiles_to_compact
 
 #%%
-def read_bin_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
+def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
                       filetype = '>f'):
     """
 
@@ -100,7 +100,7 @@ def read_bin_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     return data_tiles
 
 #%%
-def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
+def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
             filetype = '>f', less_output = False ):
     """
 
@@ -149,7 +149,7 @@ def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
     """
 
-    data_tiles = read_bin_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
+    data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
                                    filetype=filetype)
 
     data_compact = llc_tiles_to_compact(data_tiles,less_output=less_output)
@@ -160,7 +160,7 @@ def read_bin_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
 
 #%%
-def read_bin_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
+def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         filetype = '>f', less_output = False):
     """
 
@@ -215,7 +215,7 @@ def read_bin_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         
     """
     
-    data_tiles = read_bin_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
+    data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
                                    filetype=filetype)
 
     data_faces = llc_tiles_to_faces(data_tiles, less_output = less_output)
