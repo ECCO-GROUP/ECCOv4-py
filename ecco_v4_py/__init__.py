@@ -14,6 +14,7 @@ from .llc_array_conversion  import llc_tiles_to_compact
 
 
 from .read_bin_llc import read_llc_to_tiles, read_llc_to_compact, read_llc_to_faces
+from .read_bin_gen import read_binary_array
 
 from .resample_to_latlon import resample_to_latlon
 
