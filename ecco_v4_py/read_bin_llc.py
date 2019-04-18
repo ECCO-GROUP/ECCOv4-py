@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""ECCO v4 Python: mds_io
+"""ECCO v4 Python: read_bin_llc
 
-This module includes utility routines for loading binary files in the llc 13-tile native flat binary layout.  This layout is the default for MITgcm input and output for global setups using lat-lon-cap (llc) layout.  The llc layout is used for ECCO v4. 
+This module includes utility routines for loading binary files in the 
+llc 13-tile native flat binary layout.  This layout is the default for 
+MITgcm input and output for global setups using lat-lon-cap (llc) layout. 
+The llc layout is used for ECCO v4. 
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
 """
 
 from __future__ import division,print_function
-import numpy as np
-import glob
 import xmitgcm
 
 from .llc_array_conversion  import llc_compact_to_tiles, \
@@ -21,7 +20,6 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
                       filetype = '>f'):
     """
-
     Loads an MITgcm binary file in the 'tiled' format of the 
     lat-lon-cap (LLC) grids via xmitgcm.  
 
