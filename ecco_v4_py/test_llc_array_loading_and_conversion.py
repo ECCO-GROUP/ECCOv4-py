@@ -18,23 +18,23 @@ from .llc_array_conversion  import llc_tiles_to_faces
 from .llc_array_conversion  import llc_tiles_to_compact
 
 
-from .mds_io import read_bin_to_compact, read_bin_to_faces, read_bin_to_tiles
+from .read_bin_llc import read_llc_to_compact, read_llc_to_faces, read_llc_to_tiles
 from .tile_plot import plot_tiles
 
 
-# Tests the mds_io and llc_array_conversion routines
+# Tests the read_bin_llc and llc_array_conversion routines
 # %%
 ### Load model grid coordinates (longitude, latitude)
 
 
-def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data', 
-                                   llc_hfacc_fname='hFacC.data', llc=90, 
-                                   llc_grid_filetype = '>f', 
-                                   make_plots=False):
+def run_read_bin_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data', 
+                                         llc_hfacc_fname='hFacC.data', llc=90, 
+                                         llc_grid_filetype = '>f', 
+                                         make_plots=False):
 
     """
 
-    Runs test on the mds_io and llc_conversion routines
+    Runs test on the read_bin_llc and llc_conversion routines
 
 
     Parameters
@@ -76,11 +76,11 @@ def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data',
     # %% ----------- TEST 1: 2D field XC FOM GRID FILE
     
     #%% 1a LOAD COMPACT
-    tmpXC_c = read_bin_to_compact(llc_grid_dir, llc_lons_fname, llc=llc,
+    tmpXC_c = read_llc_to_compact(llc_grid_dir, llc_lons_fname, llc=llc,
                                   filetype=llc_grid_filetype)
-    tmpXC_f = read_bin_to_faces(llc_grid_dir, llc_lons_fname, llc=llc,
+    tmpXC_f = read_llc_to_faces(llc_grid_dir, llc_lons_fname, llc=llc,
                                 filetype=llc_grid_filetype)
-    tmpXC_t = read_bin_to_tiles(llc_grid_dir, llc_lons_fname, llc=llc,
+    tmpXC_t = read_llc_to_tiles(llc_grid_dir, llc_lons_fname, llc=llc,
                                 filetype=llc_grid_filetype)
     
     if make_plots:
@@ -181,11 +181,11 @@ def run_mds_io_and_llc_conversion_test(llc_grid_dir, llc_lons_fname='XC.data',
     # %% ----------- TEST 2: 3D fields HFACC FOM GRID FILE
     
     #%% 2a LOAD COMPACT
-    tmpHF_c = read_bin_to_compact(llc_grid_dir, llc_hfacc_fname, llc=llc,nk=50,
+    tmpHF_c = read_llc_to_compact(llc_grid_dir, llc_hfacc_fname, llc=llc,nk=50,
                                   filetype=llc_grid_filetype)
-    tmpHF_f = read_bin_to_faces(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
+    tmpHF_f = read_llc_to_faces(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
                                   filetype=llc_grid_filetype)
-    tmpHF_t = read_bin_to_tiles(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
+    tmpHF_t = read_llc_to_tiles(llc_grid_dir, llc_hfacc_fname, llc=llc, nk=50,
                                   filetype=llc_grid_filetype)
     
     tmpHF_c.shape
@@ -322,7 +322,7 @@ if __name__== "__main__":
     llc_grid_filetype = '>f', 
     make_plots=False
     #%%
-    TEST_RESULT = ecco.run_mds_io_and_llc_conversion_test(llc_grid_dir, make_plots=True)
+    TEST_RESULT = ecco.run_read_bin_and_llc_conversion_test(llc_grid_dir, make_plots=True)
 
     print(TEST_RESULT)
 

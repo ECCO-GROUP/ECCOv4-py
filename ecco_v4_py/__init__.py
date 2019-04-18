@@ -14,7 +14,7 @@ from .llc_array_conversion  import llc_tiles_to_compact
 
 
 from .read_bin_llc import read_llc_to_tiles, read_llc_to_compact, read_llc_to_faces
-from .read_bin_gen import read_binary_array
+from .read_bin_gen import load_binary_array
 
 from .resample_to_latlon import resample_to_latlon
 
@@ -46,9 +46,10 @@ from .tile_rotation import reorient_13_tile_Dataset_to_latlon_layout_UV_points
 from .tile_rotation import rotate_single_tile_Datasets_UV_points
 from .tile_rotation import rotate_single_tile_DataArrays_UV_points
 
-from .test_llc_array_loading_and_conversion import run_mds_io_and_llc_conversion_test
+from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
 
 __all__ = ['extract_grid_fields_from_mitgrid_files', 'dataset_utils',
-           'llc_array_conversion', 'mds_io', 'resample_to_latlon', 
+           'llc_array_conversion', 'read_bin_llc','read_bin_gen', 
+           'resample_to_latlon', 
            'tile_exchange', 'tile_io', 'tile_plot','tile_plot_proj', 
-           'tile_rotation', 'test_mds_io_and_conversion']
+           'tile_rotation', 'test_read_bin_and_conversion']

@@ -10,6 +10,8 @@ not necessarily in the lat-lon-cap layout. For LLC type data, see read_bin_llc.
 from __future__ import division,print_function
 import numpy as np
 import glob
+
+
 #%%
 def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0, 
                       filetype = '>f', less_output = False ):
@@ -134,4 +136,3 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         print('data shape ', data.shape)
 
     return data
-
