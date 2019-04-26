@@ -759,7 +759,7 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
     dim3 : string, optional
         Specify the third dimension, either 'depth' or 'time'
     dim4 : string, optional
-        Specify the third dimension, either 'depth' or 'time'
+        Specify the fourth dimension, either 'depth' or 'time'
 
 
     Returns
