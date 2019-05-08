@@ -18,7 +18,7 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
 
 #%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-                      filetype = '>f'):
+                      filetype = '>f4'):
     """
     Loads an MITgcm binary file in the 'tiled' format of the 
     lat-lon-cap (LLC) grids via xmitgcm.  
@@ -49,7 +49,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         number of 2D slices (or records) to load in the "record" dimension.  
         Default: 1 [singleton] 
     filetype: string
-        the file type, default is big endian (>) 32 bit float (f)
+        the file type, default is big endian (>) 32 bit float (f4)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
         
     Returns
@@ -99,7 +99,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
 #%%
 def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-            filetype = '>f', less_output = False ):
+            filetype = '>f4', less_output = False ):
     """
 
     Loads an MITgcm binary file in the 'tiled' format of the 
@@ -159,7 +159,7 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
 #%%
 def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
-        filetype = '>f', less_output = False):
+        filetype = '>f4', less_output = False):
     """
 
     Loads an MITgcm binary file in the 'compact' format of the 

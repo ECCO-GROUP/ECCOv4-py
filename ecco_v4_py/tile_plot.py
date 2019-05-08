@@ -11,7 +11,8 @@ import matplotlib.pylab as plt
 import xarray as xr
 from distutils.util import strtobool
 import pyresample as pr
-
+import xmitgcm
+import dask
 
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,11 +106,15 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     
     
     
-def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
+def plot_tiles(tiles, cmap='jet', 
+               layout='llc', rotate_to_latlon=False,
                Arctic_cap_tile_location = 3,
                show_colorbar=False,  
-               show_cbar_label=False, show_tile_labels= True,
-               cbar_label = '', fig_size = 9, **kwargs):
+               show_cbar_label=False, 
+               show_tile_labels= True,
+               cbar_label = '', 
+               tile_start_index = -1, 
+               fig_size = 9,  **kwargs):
     """
 
     Plots the 13 tiles of the lat-lon-cap (LLC) grid
@@ -157,6 +162,15 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
     show_tile_labels 
         boolean, show tiles numbers as titles
         Default: True
+        
+    cbar_label 
+        string, the default label for the colorbar
+        Default: empty
+        
+    tile_start_index
+        integer, the starting number for the tiles (used when tiles are passed
+        as xarray objects)
+        Default: -1 (program will guess)
         
     less_output : boolean
         A debugging flag.  False = less debugging output
@@ -279,6 +293,24 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
     
     print(f.get_size_inches())
 
+    if tile_start_index == -1 and type(tiles) == xr.core.dataarray.DataArray:
+        min_tile_num = np.min(tiles.tile.values)
+        max_tile_num = np.max(tiles.tile.values)
+
+        print (min_tile_num, max_tile_num)
+        
+        if min_tile_num == 0 and max_tile_num == 12:
+            tile_start_index = 0
+        elif min_tile_num == 1 and max_tile_num == 13:
+            tile_start_index = 1
+        else:
+            print ('I cannot guess which index you use for the first tile, 0')
+            print ('or 1, using 0')
+            tile_start_index = 0
+        
+        print ('ts1 = ',  tile_start_index)
+
+    
     
     # loop through the axes array and plot tiles where tile_order != -1
     for i, ax in enumerate(axarr.ravel()):
@@ -295,12 +327,18 @@ def plot_tiles(tiles, cmap='jet', layout='llc', rotate_to_latlon=False,
                     have_tile = True
                     cur_tile = tiles[cur_tile_num -1]
                     
-            else:
-                # make sure we have this tile in the array
-                if cur_tile_num in tiles.tile.values:
+            elif type(tiles) ==  dask.array.core.Array:
+                if tiles.shape[0] >= cur_tile_num -1:
+                    have_tile = True
+                    cur_tile = tiles[cur_tile_num -1]
+            elif type(tiles) == xr.core.dataarray.DataArray:
+                if tile_start_index == 0 and cur_tile_num-1 in tiles.tile:
+                    have_tile = True
+                    cur_tile = tiles.sel(tile=cur_tile_num-1)
+                elif tile_start_index == 1 and cur_tile_num in tiles.tile:
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
-            
+                    
             if have_tile:
                 if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 7):
                     if Arctic_cap_tile_location == 3:
