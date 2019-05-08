@@ -141,7 +141,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
         new_grid_lon, new_grid_lat, data_latlon_projection = \
             resample_to_latlon(lons, lats, data, 
-                               -89.5, 89.5, dy,
+                               -90+dy, 90-dy, dy,
                                lon_tmp[0], lon_tmp[1], dx, 
                                mapping_method='nearest_neighbor')
             
