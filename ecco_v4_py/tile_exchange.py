@@ -18,34 +18,73 @@ from copy import deepcopy
 def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
     """
 
-    This routine takes an array corresponding to an llc tile (the reference array) and appends one of three possible partial "halos":
+    This routine takes an array corresponding to an llc tile (the reference
+    array) and appends one of three possible partial "halos":
     1) a new row along the "top" of the array (new 'v' points) 
     2) a new column to the "right" of the array (new 'u' points)
     3) a new single value in a "corner (g) point" of the array (new 'g' point).
     
-    After the routine the new array will have dimension depending on where the variable is on the Arakawa-C grid
+    After the routine the new array will have dimension depending on where
+    the variable is on the Arakawa-C grid
     1) (nx, ny+1) for appending values from variables on 'v' points 
     2) (nx+1, ny) for appending values from variables on 'u' points  
     3) (nx+1, ny+1) for appending values from variables on 'g' points
     
-    Appending new values from adjacent neighbors is only permitted for tiles that connect to the "top", "right", and/or "corner (g) point" of the reference tile based on the default llc tile layout. 
+    Appending new values from adjacent neighbors is only permitted for tiles 
+    that connect to the "top", "right", and/or "corner (g) point" of the 
+    reference tile based on the default llc tile layout. 
 
-    For example, the tile to the "top" of tile 3 is tile 7 because tile 7 connects to the "top" of tile 3.  Tile 9 is the the "right" of tile 5 because tile 5 connects to the "right" of tile 5. Some tiles have are no adjacent neighbors to the right or top, or in the corner: e.g., tiles 10 and 13 has no tile to the right
+    For example, the tile to the "top" of tile index 2 is tile 6 because tile 6 
+    connects to the "top" of tile 2.  Tile 8 is the the "right" of tile 4
+    because tile 4 connects to the "right" of tile 4. Some tiles have are no 
+    adjacent neighbors to the right or top, or in the corner: e.g., tiles 9 
+    and 12 have no tile to their right
     
-    One use of this routine is to complete a `grid` tile so that it contains all of the parameters that describe the location and distances associated  with the (ni, nj) tracer grid cells associated with the same tile. These include the (ni+1, nj+1) XG and YG coordinates that define the corners of its tracer grid cells.
+    One use of this routine is to complete a `grid` tile so that it 
+    contains all of the parameters that describe the location and distances 
+    associated  with the (ni, nj) tracer grid cells associated with the same 
+    tile. These include the (ni+1, nj+1) XG and YG coordinates that define the
+    corners of its tracer grid cells.
     
-    In the ECCO v4 netcdf tile files indexing of variables begins with the leftmost and bottommost points.  For variables on:
-    'u' points : X[0,0] is at the bottom leftmost 'u' point to the  left of the center of the bottom leftmost tracer cell.
-    'v' points : V[0,0] is at the bottom leftmost 'v' point below the center of the bottom leftmost tracer cell.
-    'g' points : G[0,0] is at the bottom leftmost 'g' point at the   bottom left corner of the bottom leftmost tracer cell 'c' points : C[0,0] is in the middle of the bottom leftmost tracer cell
+    In the ECCO v4 netcdf tile files indexing of variables begins with the 
+    leftmost and bottommost points.  For variables on:
+        
+    'u' points : X[0,0] is at the bottom leftmost 'u' point to the 
+    left of the center of the bottom leftmost tracer cell.
+   
+    'v' points : V[0,0] is at the bottom leftmost 'v' point below
+    the center of the bottom leftmost tracer cell.
+  
+    'g' points : G[0,0] is at the bottom leftmost 'g' point at the  
+    bottom left corner of the bottom leftmost tracer cell 
+    
+    'c' points : C[0,0] is in the middle of the bottom leftmost tracer cell
     
     Note
     ---- 
-        The values in the "halo" are taken from adjacent tiles that are passed in kwargs.  The orientation of the reference tile and the adjacent tiles must be in the original 13-tile llc layout (i.e., this routine must be called prior to any rotation or reorientation).
+        The values in the "halo" are taken from adjacent tiles that are 
+        passed in kwargs.  The orientation of the reference tile and the 
+        adjacent tiles must be in the original 13-tile llc layout (i.e., this
+        routine must be called prior to any rotation or reorientation).
 
     Note
     ----  
-        In the MITgcm the meaning of 'u' and 'v' is not east-west (zonal) and north-south (meridional) in a geographical sense.  Instead 'u' and 'v' are the direction of flow in the 'x' and 'y' directions for the arbitrary local orientation a tracer grid cell.  For the llc grid, the tracer cells in tiles 1-6 are oriented such that their 'x' and 'y' directions are approximately east-west and north-south, respectively.  However, tiles 8-13 are rotated by 90 degrees relatively to tiles 1-7 (the 'x' direction in tiles 8-13 is the negative 'y' direction of tiles 1-6 and the 'y' directin in tiles 8-13 is the positive 'x' direction in tiles 1-6.  The polar cap tile 7 is a special case.  There is no rotation of tile 7 that will align its 'x' and 'y' grid to be approximately zonal or meridional in a geographical sense.
+        In the MITgcm the meaning of 'u' and 'v' is not east-west (zonal) 
+        and north-south (meridional) in a geographical sense.  Instead 'u'
+        and 'v' are the direction of flow in the 'x' and 'y' directions for 
+        the local orientation a tracer grid cell.  
+        
+        For the llc grid, the tracer cells in tile index 0-5 are oriented 
+        such that their 'x' and 'y'
+        directions are approximately east-west and north-south, respectively.  
+        However, tiles 7-12 are rotated by 90 degrees relatively to tiles 0-6
+        The 'x' direction in tiles 7-12 is the negative 'y' direction of 
+        tiles 0-5 and the 'y' directin in tiles 7-12 is the positive 'x' 
+        direction in tiles 0-5  
+        
+        The polar cap tile 6 is a special case. There is no rotation of 
+        tile 6 that will align its 'x' and 'y' grid 
+        to be zonal or meridional in a geographical sense.
     
     
     Parameters
@@ -64,19 +103,19 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
     **kwargs
         right : ndarray
             the unrotated tile along the "right" edge. for 'g' and 'u' points
-            for tile 2, tile 5
-            for tile 9, tile 10
+            for tile 0, tile 3
             for tile 7, tile 8
+            for tile 5, tile 7
         top : ndarray
             the unrotated tile along the "top" edge. for 'g' and 'v' points
-            for tile 2, tile 3
-            for tile 9, tile 12
-            for tile 7, tile 11 (rotated)
+            for tile 0, tile 1
+            for tile 7, tile 10
+            for tile 5, tile 6 (rotated)
         corner : ndarray
             the unrotated tile in the "top right corner" for 'g' points
-            for tile 2, tile 6
-            for tile 9, tile 13
-            for tile 7, there is none
+            for tile 0, tile 4
+            for tile 7, tile 11
+            for tile 5, tile 7
 
     Returns
     -------
@@ -122,7 +161,7 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
                 top_arr = kwargs[key]
         elif key == "corner" :
             if isinstance(kwargs[key], xr.core.dataarray.DataArray):
-                add_corner = False
+                add_corner = True
                 corner_arr = kwargs[key]
 
     if add_right == False and add_top == False and add_corner == False:
@@ -132,6 +171,7 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
     ni = llcN
     nj = llcN
     
+    print ('ar, at, ac ', add_right, add_top, add_corner)
     #print ni, nj, llcN
     
     new_arr = np.copy(ref_arr)
@@ -147,7 +187,6 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
           and one at the end of the j dimension
              pad_width=((0,0), (1,0), (0,1))
     """
-    num_dims = new_arr.ndim
 
     if point_type == 'g':            
         pad_i = 1 # add one row (y)
@@ -162,104 +201,147 @@ def append_border_to_tile(ref_arr, tile_index, point_type, llcN, **kwargs):
     # print 'num dims ', num_dims
 
 
-    if num_dims == 2:
-        new_arr=np.pad(new_arr, 
-            pad_width=((0,pad_i), (0,pad_j)), 
-            mode='constant', constant_values = np.nan)
+    #if num_dims == 2:
+    new_arr=np.pad(new_arr, 
+        pad_width=((0,pad_i), (0,pad_j)), 
+        mode='constant', constant_values = np.nan)
 
-    elif num_dims == 3:
-        new_arr=np.pad(new_arr, 
-            pad_width=((0,0),(0,pad_i), (0,pad_j)),
-            mode='constant', constant_values = np.nan)
+    #elif num_dims == 3:
+    #    new_arr=np.pad(new_arr, 
+    #        pad_width=((0,0),(0,pad_i), (0,pad_j)),
+    #        mode='constant', constant_values = np.nan)
 
-    elif num_dims == 4:
-        new_arr = np.pad(new_arr, 
-            pad_width=((0,0),(0,0),(0,pad_i), (0,pad_j)), 
-            mode='constant', constant_values = np.nan)
+    #elif num_dims == 4:
+    #    new_arr = np.pad(new_arr, 
+    #        pad_width=((0,0),(0,0),(0,pad_i), (0,pad_j)), 
+    #        mode='constant', constant_values = np.nan)
 
-    else:
-        raise ValueError('appending rows or columns in this routine requires \
-                         2,3, or 4D arrays')
+    #else:
+    #    raise ValueError('appending rows or columns in this routine requires \
+    #                     2,3, or 4D arrays')
     
     
-    if (tile_index == 1 or tile_index ==  2 or tile_index == 8 or 
-        tile_index == 9 or tile_index == 10):
-        
-        if add_right:
-            new_arr[...,0:nj,-1] = right_arr[...,:,0]
-
-        if add_top :
-            new_arr[...,-1,0:ni] = top_arr[..., 0,:]
-
-        if add_corner :
-            new_arr[...,-1,-1]   = corner_arr[..., 0,0]
-     
-    elif tile_index == 3:
-        if add_right:
-            new_arr[...,0:nj,-1] = right_arr[..., :,0]
-
-        if add_top:
-            # tricky because tile 7 is rotated relative to 3
-            if point_type == 'g':            
-                new_arr[...,-1,1:ni+1] = top_arr[..., ::-1,0]                    
-            elif point_type == 'v':
-                new_arr[...,-1,:] = top_arr[..., :,0]
-                
-    elif (tile_index == 4 or tile_index == 5):
-        if add_right:
-            if point_type == 'g':
-                new_arr[...,1:nj+1,-1] = right_arr[..., 0,::-1]
-                
-            elif point_type == 'u':
-                new_arr[...,-1] = right_arr[..., 0,::-1]
-                
-        if add_top:
-            new_arr[...,-1,0:ni] = top_arr[...,0,:]
-                
-    elif tile_index == 6:
-        if add_right:
-            if point_type == 'g':
-                new_arr[...,1:nj+1,-1] = right_arr[...,0,::-1]
-                
-            elif point_type == 'u':
-                new_arr[...,-1] = right_arr[...,0,::-1]
-                
-        if add_top:
-            new_arr[...,-1,0:ni] = top_arr[...,0,:]
-                
-    elif tile_index == 7:
-        if add_right:
-            new_arr[...,0:nj,-1] = right_arr[...,:,0]
-
-        if add_top:
-            if point_type == 'g':
-                # tricky because tile 11 is rotated relative to 7
-                new_arr[...,-1,1:ni+1] = top_arr[...,::-1,0]
-
-            elif point_type == 'v':
-                new_arr[...,-1,:] = top_arr[...,::-1,0]
-    
-    elif (tile_index == 11 or tile_index == 12 or 
-          tile_index == 13):
-        if add_right:
-            new_arr[...,0:ni,-1] = right_arr[...,:,0]
+    # add right
+    if add_right:
+        if tile_index in (0,1,2,6,7,8,10,11):
+            new_arr[0:nj,-1] = right_arr[0:nj,0] ## verified
+        elif tile_index in (3,4,5):
+            tmp = right_arr[0, :nj]
             
-        if add_top:
             if point_type == 'g':
-                new_arr[...,-1,1:nj+1] = top_arr[...,::-1,0]
-
+                new_arr[1:nj+1,-1] = tmp[::-1]  ## verified
+            elif point_type == 'u':
+                new_arr[0:nj,-1] = tmp[::-1]  ## not yet verified
+                
+        elif tile_index in (9,12): # nothing to the right
+            new_arr[:,-1] = np.nan
+        else:
+            print ('error, tile_index add_right')
+            
+    if add_top:
+        if tile_index in (0,1,3,4,5,7,8,9):
+            new_arr[-1,0:ni] = top_arr[0,0:ni] ## verified
+        elif tile_index in (2, 6, 10,11,12):
+            tmp = top_arr[:,0]
+            if point_type == 'g':
+                new_arr[-1,1:ni+1] = tmp[::-1] ## verified
             elif point_type == 'v':
-                new_arr[...,-1,:] = top_arr[...,::-1,0]
-
-        if add_corner :
-            """             
-            for tiles 12 and 13 the 'corner g point' is
-            in the top left point, unlike tiles 1-6 for which the 
-            'corner' g point is the top right point.  tile 11 does not
-            have a top left point because of the orientation of tile 7.
-            """                
-            new_arr[...,-1,0] = corner_arr[...,0,0]
-        
+                new_arr[-1,0:ni] = tmp[::-1]  ## not yet verified
+        else:
+            print ('error, tile index add_top')
+  
+    if add_corner:
+        if tile_index in (0,1,2,6,7,8,10):
+            new_arr[-1,-1] = corner_arr[0,0]
+            print ('tile_index, corner_arr ', tile_index, corner_arr[0,0])
+        elif tile_index in (11,12):
+            new_arr[-1,0] = corner_arr[0,0] # top left corner is missing.
+        elif tile_index == 3:
+            new_arr[-1,-1] = corner_arr[0,0] # no bottom right corner
+        elif tile_index in (4,5): # bottom right corner
+            new_arr[0,-1] = corner_arr[0,0]
+        elif tile_index in (9):  # no top right corner.  no bottom right corner
+            new_arr[-1,-1] = np.nan
+        else:
+            print ('error, tile index add corner')
+#    if (tile_index == 1 or tile_index ==  2 or tile_index == 8 or 
+#        tile_index == 9 or tile_index == 10):
+#        
+#        if add_right:
+#            new_arr[...,0:nj,-1] = right_arr[...,:,0]
+#
+#        if add_top :
+#            new_arr[...,-1,0:ni] = top_arr[..., 0,:]
+#
+#        if add_corner :
+#            new_arr[...,-1,-1]   = corner_arr[..., 0,0]
+#     
+#    elif tile_index == 3:
+#        if add_right:
+#            new_arr[...,0:nj,-1] = right_arr[..., :,0]
+#
+#        if add_top:
+#            # tricky because tile 7 is rotated relative to 3
+#            if point_type == 'g':            
+#                new_arr[...,-1,1:ni+1] = top_arr[..., ::-1,0]                    
+#            elif point_type == 'v':
+#                new_arr[...,-1,:] = top_arr[..., :,0]
+#                
+#    elif (tile_index == 4 or tile_index == 5):
+#        if add_right:
+#            if point_type == 'g':
+#                new_arr[...,1:nj+1,-1] = right_arr[..., 0,::-1]
+#                
+#            elif point_type == 'u':
+#                new_arr[...,-1] = right_arr[..., 0,::-1]
+#                
+#        if add_top:
+#            new_arr[...,-1,0:ni] = top_arr[...,0,:]
+#                
+#    elif tile_index == 6:
+#        if add_right:
+#            if point_type == 'g':
+#                new_arr[...,1:nj+1,-1] = right_arr[...,0,::-1]
+#                
+#            elif point_type == 'u':
+#                new_arr[...,-1] = right_arr[...,0,::-1]
+#                
+#        if add_top:
+#            new_arr[...,-1,0:ni] = top_arr[...,0,:]
+#                
+#    elif tile_index == 7:
+#        if add_right:
+#            new_arr[...,0:nj,-1] = right_arr[...,:,0]
+#
+#        if add_top:
+#            if point_type == 'g':
+#                # tricky because tile 11 is rotated relative to 7
+#                new_arr[...,-1,1:ni+1] = top_arr[...,::-1,0]
+#
+#            elif point_type == 'v':
+#                new_arr[...,-1,:] = top_arr[...,::-1,0]
+#    
+#    elif (tile_index == 11 or tile_index == 12 or 
+#          tile_index == 13):
+#        if add_right:
+#            new_arr[...,0:ni,-1] = right_arr[...,:,0]
+#            
+#        if add_top:
+#            if point_type == 'g':
+#                new_arr[...,-1,1:nj+1] = top_arr[...,::-1,0]
+#
+#            elif point_type == 'v':
+#                new_arr[...,-1,:] = top_arr[...,::-1,0]
+#
+#        if add_corner :
+#            """             
+#            for tiles 12 and 13 the 'corner g point' is
+#            in the top left point, unlike tiles 1-6 for which the 
+#            'corner' g point is the top right point.  tile 11 does not
+#            have a top left point because of the orientation of tile 7.
+#            """                
+#            new_arr[...,-1,0] = corner_arr[...,0,0]
+#        
     #%%
     return new_arr
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -756,6 +838,7 @@ def add_borders_to_DataArray_G_points(da_g):
         right_tile_index, top_tile_index, corner_tile_index = \
             get_llc_tile_border_mapping(tile_index)
         
+        print ('ti: ', tile_index, ' rti, tti, cti', right_tile_index, top_tile_index, corner_tile_index)
         ref_arr = deepcopy(da_g.sel(tile=tile_index))
 
         # the append_border flag will be true if we have a tile to the top.
@@ -788,6 +871,10 @@ def add_borders_to_DataArray_G_points(da_g):
             corner_arr = da_g.sel(tile=corner_tile_index)
             append_border_corner = True
 
+        print ('abr, abt, abc ', append_border_right, append_border_top, append_border_corner)
+        
+        print (type(top_arr), type(right_arr), type(corner_arr))
+        
         if append_border_top or append_border_right or append_border_corner:
             new_arr=append_border_to_tile(ref_arr, tile_index,
                                           'g', llcN,
@@ -857,74 +944,80 @@ def get_llc_tile_border_mapping(tile_index):
     
     Note
     ----
-        In some cases there is no tile in the adjacent location.  For example, there is no tile to the "right" of tile 13 in the original llc tile layout.
-
-    
+        In some cases there is no tile in the adjacent location. 
+        For example, there is no tile to the "right" of tile index 12 
+        in the original llc tile layout.
+        
+        Also, uses tile index (0..12) not tile name (which could be 1..13 or 
+        0..12) or something else 
+        
     Parameters
     ----------
     tile_index : int
-        the index of the reference tile [1-13].
+        the index of the reference tile [0-12].
     
 
     Returns
     -------
     right_tile_index, top_tile_index, corner_tile_index : ints
-        the indices of the tiles to the right, top, and top right corner of `tile_index`.  If there is no tile in the location, -1 is returned.
+        the indices of the tiles to the right, top, and top or bottom right 
+        corner of `tile_index` (bottom right for tiles 4 and 5).  
+        If there is no tile in the location, -1 is returned.
         
 
     """
-    if tile_index == 1:
+    if tile_index == 0:
+        right_tile_index = 3
+        top_tile_index = 1
+        corner_tile_index= 4
+    elif tile_index == 1:
         right_tile_index = 4
         top_tile_index = 2
-        corner_tile_index= 5
+        corner_tile_index = 5
     elif tile_index == 2:
         right_tile_index = 5
-        top_tile_index = 3
-        corner_tile_index = 6
+        top_tile_index = 6
+        corner_tile_index = 6 
     elif tile_index == 3:
-        right_tile_index = 6
-        top_tile_index = 7
-        corner_tile_index = -1 # does not exist 
-    elif tile_index == 4:
-        right_tile_index = 10
-        top_tile_index = 5
-        corner_tile_index = -1 # does not exist 
-    elif tile_index == 5:
         right_tile_index = 9
-        top_tile_index = 6  
-        corner_tile_index = -1 # does not exist 
-    elif tile_index == 6:
+        top_tile_index = 4
+        corner_tile_index = 9 
+    elif tile_index == 4:
         right_tile_index = 8
-        top_tile_index = 7
-        corner_tile_index = -1 # does not exist 
+        top_tile_index = 5
+        corner_tile_index = 9 # bottom right ccorner
+    elif tile_index == 5:
+        right_tile_index = 7
+        top_tile_index = 6
+        corner_tile_index = 8  # bottom right corner
+    elif tile_index == 6:
+        right_tile_index = 7
+        top_tile_index = 10
+        corner_tile_index = 10 
     elif tile_index == 7:
         right_tile_index = 8
-        top_tile_index = 11
-        corner_tile_index = -1 # does not exist 
+        top_tile_index = 10
+        corner_tile_index = 11
     elif tile_index == 8:
         right_tile_index = 9
         top_tile_index = 11
         corner_tile_index = 12
     elif tile_index == 9:
-        right_tile_index = 10
-        top_tile_index = 12
-        corner_tile_index = 13
-    elif tile_index == 10:
         right_tile_index = -1 # does not exist 
-        top_tile_index = 13
+        top_tile_index = 12
         corner_tile_index = -1 # does not exist 
+    elif tile_index == 10:
+        right_tile_index = 11
+        top_tile_index = 2
+        corner_tile_index = -1 # does not exist.
     elif tile_index == 11:
         right_tile_index = 12
-        top_tile_index = 3
-        corner_tile_index = -1 # does not exist 
-    elif tile_index == 12:
-        right_tile_index = 13
-        top_tile_index = 2
-        corner_tile_index = 3 # yes, corner is "top left"
-    elif tile_index == 13:
-        right_tile_index = -1 # does not exist 
         top_tile_index = 1
         corner_tile_index = 2 # yes, corner is "top left"
+    elif tile_index == 12:
+        right_tile_index = -1 # does not exist 
+        top_tile_index = 0
+        corner_tile_index = 1 # yes, corner is "top left"
     
     return right_tile_index, top_tile_index, corner_tile_index   
  

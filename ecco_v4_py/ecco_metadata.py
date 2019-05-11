@@ -55,18 +55,15 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
 
     """ 
     if ecco_dataset.time.size == 1:
-        
         if isinstance(ecco_dataset.time.values, np.ndarray):
             time_tmp = ecco_dataset.time.values[0]
         else:
             time_tmp = ecco_dataset.time.values
-       
         time_bnds, center_times = \
             make_time_bounds_from_ds64(time_tmp,\
                                        output_freq_code)
-
-        time_bnds=np.expand_dims(time_bnds,0)
-
+        time_bnds=np.expand_dims(time_bnds,1)
+        time_bnds = time_bnds.T
     else:
         time_start = []
         time_end  = []
@@ -90,14 +87,9 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
     if 'time' not in ecco_dataset.dims.keys():
          ecco_dataset = ecco_dataset.expand_dims(dim='time')
          
-    #print ('-- tb shape ', time_bnds.shape)
-    #print ('-- tb type  ', type(time_bnds))
     time_bnds_ds = xr.Dataset({'time_bnds': (['time','nv'], time_bnds)},
-                             coords={'time':ecco_dataset.time}) #,
+                             coords={'time':ecco_dataset.time})#,
                                      #'nv':range(2)})
-    
-    #print ('tbds ' , time_bnds_ds.time_bnds.shape)
-    #print ('tbds ', time_bnds_ds.time_bnds.shape)
     
     return time_bnds_ds, center_times
 
@@ -167,7 +159,7 @@ def make_time_bounds_from_ds64(rec_avg_end, output_freq_code):
         print ('output_freq_code must be: AVG_MON, AVG_DAY, AVG_WEEK, OR AVG_YEAR')
         print ('you provided ' + str(output_freq_code))
         return [],[]   
-    
+ 
 #%%
 def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
     """
@@ -410,26 +402,18 @@ def load_ecco_vars_from_mds(mds_var_dir,
     # if vars_to_load is an empty list, keep all variables.  otherwise,
     # only keep those variables in the vars_to_load list.
     
-    vars_ignored = []
-    vars_loaded = []
-    
-    print ('\n')
     if len(vars_to_load) > 0:
         print ('loading subset of variables: ', vars_to_load)
         # remove variables that are not on the vars_to_load_list
         for ecco_var in ecco_dataset.keys():
+            print (ecco_var)
             
             if ecco_var not in vars_to_load:
-                vars_ignored.append(ecco_var)
+                print ( ecco_var + ' not in vars to load')
                 ecco_dataset = ecco_dataset.drop(ecco_var)
             else:
-                vars_loaded.append(ecco_var)
-
-        print ('loaded  : ', vars_loaded)
-        print ('ignored : ', vars_ignored)
-    else:
-        print ('loaded  : ', ecco_dataset.keys())
-        
+                print ( ecco_var + ' in vars to load')
+            
     # only keep those tiles in the 'tiles_to_load' list.
     if isinstance(tiles_to_load, (tuple,list)) and len(tiles_to_load) > 0:
         tiles_to_load = list(tiles_to_load)
@@ -490,6 +474,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
     if 'k' in ecco_dataset.dims.keys() and \
         'ecco-v4-global-3D' in meta_common:
         ecco_dataset.attrs.update(meta_common['ecco-v4-global-3D'])
+    
    
     ecco_dataset.attrs['date_created'] = time.ctime()
     

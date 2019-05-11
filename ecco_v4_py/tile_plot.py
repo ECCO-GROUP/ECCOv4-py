@@ -108,7 +108,7 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     
 def plot_tiles(tiles, cmap='jet', 
                layout='llc', rotate_to_latlon=False,
-               Arctic_cap_tile_location = 3,
+               Arctic_cap_tile_location = 2,
                show_colorbar=False,  
                show_cbar_label=False, 
                show_tile_labels= True,
@@ -141,15 +141,15 @@ def plot_tiles(tiles, cmap='jet',
                  will be consisent with how the model see the tiles in terms of
                  x and y.  
     rotate_to_latlon
-        boolean, flag to rotate tiles 8-13 so that columns correspond with
+        boolean, flag to rotate tiles 7-12 so that columns correspond with
         longitude and rows correspond to latitude.  Note, if the tiles are
         a vector field, this rotation will not make any physical sense.
         Default: False
 
     Arctic_cap_tile_location
         integer, which lat-lon tile to place the Arctic tile over. can be 
-        3, 6, 8 or 11.
-        Default: 3
+        2, 5, 7 or 10.
+        Default: 2
         
     show_colorbar
         boolean, show the colorbar
@@ -200,9 +200,18 @@ def plot_tiles(tiles, cmap='jet',
     """
 
     # by default take the min and max of the values
-    cmin = np.nanmin(tiles)
-    cmax = np.nanmax(tiles)
-    
+#    cmin = np.nanmin(tiles)
+#    cmax = np.nanmax(tiles)
+    if type(tiles) == np.ndarray:
+        cmin = np.nanmin(tiles)
+        cmax = np.nanmax(tiles)
+                    
+    elif isinstance(tiles, dask.array.core.Array) or \
+         isinstance(tiles, xr.core.dataarray.DataArray):
+        cmin = np.nanmin(tiles.values)
+        cmax = np.nanmax(tiles.values)
+        
+             
     fig_num = -1
     #%%
     for key in kwargs:
@@ -215,28 +224,7 @@ def plot_tiles(tiles, cmap='jet',
         else:
             print("unrecognized argument ", key)
 
-    # plotting of the tiles happens in a 4x4 grid
-    # which tile to plot for any one of the 16 spots is indicated with a list
-    # a value of negative one means do not plot anything in that spot.
-    # the top row will have the Arctic tile.  You can choose where the 
-    # Arctic tile goes.  By default it goes in the second column.
-    tile_order_top_row = [-1, 7, -1, -1]
-
-
-    if len(np.intersect1d([3,6,8,11],Arctic_cap_tile_location)) > 0:
-        # set the location of the Arctic tile.
-        if  Arctic_cap_tile_location == 3: # plot in 1st position, column 1
-            tile_order_top_row = [7, -1, -1, -1]
-        elif Arctic_cap_tile_location == 6:# plot in 2nd position, column 2
-            tile_order_top_row = [-1, 7, -1, -1]
-        elif Arctic_cap_tile_location == 8:# plot in 3rd position, column 3
-            tile_order_top_row = [-1, -1, 7, -1]
-        elif Arctic_cap_tile_location == 11:# plot in 4th position, column 4
-            tile_order_top_row = [-1, -1, -1, 7]
-    else:
-        # if not, set it to be 6.
-        print('Arctic Cap Alignment is not one of 3, 6, 8, 11, using 3')
-        Arctic_cap_tile_location  = 3
+    
 
 
     #if layout == 'llc' and aca != 6:
@@ -262,11 +250,11 @@ def plot_tiles(tiles, cmap='jet',
         # plotting of the tiles happens in a 5x5 grid
         # which tile to plot for any one of the 25 spots is indicated with a list
         # a value of negative one means do not plot anything in that spot.
-        tile_order = np.array([-1, -1, 11, 12, 13, \
-                      -1, 7, 8, 9, 10, \
-                      3, 6, -1, -1, -1, \
-                      2, 5, -1, -1, -1, \
-                      1, 4, -1, -1, -1])
+        tile_order = np.array([-1, -1, 10, 11, 12, \
+                               -1,  6,  7,  8,  9, \
+                                2,  5, -1, -1, -1, \
+                                1,  4, -1, -1, -1, \
+                                0,  3, -1, -1, -1])
 
     elif layout == 'latlon':
         if fig_num > 0:
@@ -274,41 +262,61 @@ def plot_tiles(tiles, cmap='jet',
         else:
             f, axarr = plt.subplots(4, 4)
                   
+        # plotting of the tiles happens in a 4x4 grid
+        # which tile to plot for any one of the 16 spots is indicated with a list
+        # a value of negative one means do not plot anything in that spot.
+        # the top row will have the Arctic tile.  You can choose where the 
+        # Arctic tile goes.  By default it goes in the second column.
+
+        if Arctic_cap_tile_location not in [2,5,7,10]:
+            print('Arctic Cap Alignment is not one of 2,5,7,10, using 2')
+            Arctic_cap_tile_location  = 2    
+            
+        if  Arctic_cap_tile_location == 2: # plot in 1st position, column 1
+            tile_order_top_row = [6, -1, -1, -1]
+        elif Arctic_cap_tile_location == 5:
+            tile_order_top_row = [-1, 6, -1, -1]
+        elif Arctic_cap_tile_location == 7:# plot in 3rd position, column 3
+            tile_order_top_row = [-1, -1, 6, -1]
+        elif Arctic_cap_tile_location == 10:# plot in 4th position, column 4
+            tile_order_top_row = [-1, -1, -1, 6]
+            
         # the order of the rest of the tile is fixed.  four columns each with 
         # three rows.
-        tile_order_bottom_rows =[3, 6, 8, 11,
-                          2, 5, 9, 12, \
-                          1, 4, 10, 13]
+        tile_order_bottom_rows =[2, 5, 7, 10, \
+                                 1, 4, 8, 11, \
+                                 0, 3, 9, 12]
         
         # these are lists so to combine tile_orde_first and tile_order_rest 
         # you just add them in python (wierd).  If these were numpy arrays 
         # one would use np.concatenate()
         tile_order = tile_order_top_row + tile_order_bottom_rows
 
-    print(fac1, fac2)
+    #%%
+    #print(fac1, fac2)
     f.set_size_inches(fac1*fig_size, fig_size*fac2)
 
     if show_tile_labels==False:
         f.subplots_adjust(wspace=0, hspace=0)
     
-    print(f.get_size_inches())
+    #print(f.get_size_inches())
 
-    if tile_start_index == -1 and type(tiles) == xr.core.dataarray.DataArray:
-        min_tile_num = np.min(tiles.tile.values)
-        max_tile_num = np.max(tiles.tile.values)
+    #if tile_start_index == -1 and type(tiles) == xr.core.dataarray.DataArray:
+    #    min_tile_num = np.min(tiles.tile.values)
+    #    max_tile_num = np.max(tiles.tile.values)
 
-        print (min_tile_num, max_tile_num)
+    #    print (min_tile_num, max_tile_num)
         
-        if min_tile_num == 0 and max_tile_num == 12:
-            tile_start_index = 0
-        elif min_tile_num == 1 and max_tile_num == 13:
-            tile_start_index = 1
-        else:
-            print ('I cannot guess which index you use for the first tile, 0')
-            print ('or 1, using 0')
-            tile_start_index = 0
+        #if min_tile_num == 0 and max_tile_num == 12:
+        #    tile_start_index = 0
+        #elif min_tile_num == 1 and max_tile_num == 13:
+        #    tile_start_index = 1
+        #else:
+        #    print ('I cannot guess which index you use for the first tile, 0')
+        #    print ('or 1, using 0')
+        #    tile_start_index = 0
         
-        print ('ts1 = ',  tile_start_index)
+    #    print ('ts1 = ',  tile_start_index)
 
     
     
@@ -320,40 +328,33 @@ def plot_tiles(tiles, cmap='jet',
         
         have_tile = False
         #print i, cur_tile_num
-        if cur_tile_num > 0:
+        if cur_tile_num >= 0:
             if type(tiles) == np.ndarray:
-                # make sure we have this tile in the array
-                if tiles.shape[0] >= cur_tile_num -1:
-                    have_tile = True
-                    cur_tile = tiles[cur_tile_num -1]
+                have_tile = True
+                cur_tile = tiles[cur_tile_num ]
                     
-            elif type(tiles) ==  dask.array.core.Array:
-                if tiles.shape[0] >= cur_tile_num -1:
-                    have_tile = True
-                    cur_tile = tiles[cur_tile_num -1]
-            elif type(tiles) == xr.core.dataarray.DataArray:
-                if tile_start_index == 0 and cur_tile_num-1 in tiles.tile:
-                    have_tile = True
-                    cur_tile = tiles.sel(tile=cur_tile_num-1)
-                elif tile_start_index == 1 and cur_tile_num in tiles.tile:
+            elif isinstance(tiles, dask.array.core.Array) or \
+                 isinstance(tiles, xr.core.dataarray.DataArray):
+                
+                if cur_tile_num in tiles.tile :
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
-                    
+                
             if have_tile:
-                if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 7):
-                    if Arctic_cap_tile_location == 3:
+                if (layout == 'latlon' and rotate_to_latlon and cur_tile_num == 6):
+                    if Arctic_cap_tile_location == 2:
                         cur_tile = np.rot90(cur_tile,-1)
-                        print('here')
-                    elif Arctic_cap_tile_location == 8:
+                    elif Arctic_cap_tile_location == 7:
                         cur_tile = np.rot90(cur_tile,-3)
-                    elif Arctic_cap_tile_location == 11:
+                    elif Arctic_cap_tile_location == 10:
                         cur_tile = np.rot90(cur_tile,2)
 
                 if (layout == 'latlon' and rotate_to_latlon and 
-                    cur_tile_num > 7):
+                    cur_tile_num > 6):
                     
                     cur_tile = np.rot90(cur_tile)
                 
+                    
                 im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                              origin='lower')
             
