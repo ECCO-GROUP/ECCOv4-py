@@ -13,7 +13,6 @@ from __future__ import division, print_function
 import numpy as np
 import xarray as xr
 import datetime
-import shapefile
 import time
 import xmitgcm as xm
 import dateutil
@@ -96,12 +95,22 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      meta_common = dict(),
                                                      mds_datatype = '>f4'):
 
-    # force mds_files_to_load to be a list (in case a single string is passed)
+    # force mds_files_to_load to be a list (if str is passed)
     if isinstance(mds_files_to_load, str):
         mds_files_to_load = [mds_files_to_load]
-      
+
+    # force time_steps_to_load to be a list (if int is passed)
+    if isinstance(time_steps_to_load, int):
+        time_steps_to_load = [time_steps_to_load]
+
+    # for ce tiles_to_load to be a list (if int is passed)
+    if isinstance(tiles_to_load, int):
+        tiles_to_load = [tiles_to_load]
+        
+    # loop through each mds file in mds_files_to_load
     for mds_file in mds_files_to_load:
         
+        # if time steps to load is empty, load all time steps
         if len(time_steps_to_load ) == 0:
             # go through each file, pull out the time step, add the time step to a list,
             # and determine the start and end time of each record.
@@ -126,13 +135,12 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
             str(time_steps_to_load[0]).zfill(10) + '.meta'    
 
        
-        # get metadata for the first file
-        #print (tmp_files[0])
+        # get metadata for the first file and determine which variables
+        # are present
         meta = xm.utils.parse_meta_file(mds_var_dir + '/' + first_meta_fname)
         vars_here =  meta['fldList']
         
-        #print (vars_here)
-        
+        # verify that at least one of the vars_to_load is present in vars_here
         if len(vars_to_load) > 0:
             num_vars_matching = len(np.intersect1d(vars_to_load, vars_here))
         else:
@@ -163,18 +171,21 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                         meta_common=meta_common,
                                         mds_datatype=mds_datatype)
                                         #ignore_unknown_vars)
-    
+            
+            # pull out the associated time
             year, mon, day, hh, mm, ss  = \
                  extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(ecco_dataset.time.values)
                         
             print(year,mon,day)
             
+            # if the field comes from an average, 
             # extract the time bounds -- we'll use it before we save
             # the variable
             
-            tb = ecco_dataset.time_bnds
-            tb.name = 'tb'
-            
+            if 'AVG' in output_freq_code:
+                tb = ecco_dataset.time_bnds
+                tb.name = 'tb'
+                
             # loop through each variable in this dataset, 
             for var in ecco_dataset.keys():
                 print ('    ' + var)                
@@ -199,14 +210,14 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                 for key in var_ds.coords.keys():
                     if 'CS' in key or 'SN' in key or 'Depth' in key:
                         var_ds = var_ds.drop(key)
-    
+                    
+                # save each tile separately
                 for tile_i in range(13):
                 
+                    # pull out the tile
                     tmp = var_ds.isel(tile=tile_i)
                     
-                    year, mon, day, hh, mm, ss  = \
-                        extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(tmp.time.values)
-                    
+                    # create the new file path name
                     if 'MON' in output_freq_code:
 
                         fname = var + '_' + \
@@ -260,16 +271,23 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                     if not os.path.exists(newpath):
                         os.makedirs(newpath)
                  
+                    # convert the data array to a dataset.
                     tmp = tmp.to_dataset()
-                    tmp = xr.merge((tmp, tb))
-                    tmp = tmp.drop('tb')
+
+                    # add the time bounds field back in if we have an 
+                    # average field
+                    if 'AVG' in output_freq_code:
+                        tmp = xr.merge((tmp, tb))
+                        tmp = tmp.drop('tb')
     
+                    # put the metadata back in
                     tmp.attrs = ecco_dataset.attrs
+                    
+                    # update the temporal and geospatial metadata
                     tmp = update_ecco_dataset_geospatial_metadata(tmp)
                     tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
-                    #time_here = str(year) + '-' + str(mon).zfill(2) + '-' + str(day).zfill(2))
-                    #print (newpath, fname, tmp.tile.values)
-                        
+                    
+                    # save to netcdf.  it's that simple.
                     tmp.to_netcdf(newpath + '/' + fname)
                     
     return ecco_dataset, tmp
