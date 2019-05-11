@@ -8,7 +8,7 @@ setup(
   version = '0.3',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty',
-  author_email = 'ian.fenty@jpl.nasa.gov'
+  author_email = 'ian.fenty@jpl.nasa.gov',
   url = 'https://github.com/ECCO-GROUP/ECCOv4-py',
   keywords = ['ecco','climate','mitgcm','estimate','circulation','climate'],
   install_requires=[
