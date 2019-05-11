@@ -1,10 +1,16 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 """
-Created on Mon Jul  3 16:11:15 2017
+ECCO v4 Python: tile_plot
 
-@author: ifenty
+This module includes utility routines for plotting fields in the 
+llc 13-tile native flat binary layout.  This layout is the default for 
+MITgcm input and output for global setups using lat-lon-cap (llc) layout. 
+The llc layout is used for ECCO v4. 
+
+.. _ecco_v4_py Documentation :
+   https://github.com/ECCO-GROUP/ECCOv4-py
+
 """
+
 from __future__ import division, print_function
 import numpy as np
 import matplotlib.pylab as plt
@@ -13,10 +19,6 @@ from distutils.util import strtobool
 import pyresample as pr
 import xmitgcm
 import dask
-
-#
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False, 
               cbar_label = '', **kwargs):
@@ -56,11 +58,7 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     Returns
     -------
     f
-        a reference to the figure
-        
-        
-    If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_tiles
+        a handle to the figure
 
     """
 
@@ -99,11 +97,6 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
             cbar.set_label(cbar_label)
 
     return f
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    
     
     
 def plot_tiles(tiles, cmap='jet', 
@@ -113,7 +106,6 @@ def plot_tiles(tiles, cmap='jet',
                show_cbar_label=False, 
                show_tile_labels= True,
                cbar_label = '', 
-               tile_start_index = -1, 
                fig_size = 9,  **kwargs):
     """
 
@@ -121,87 +113,68 @@ def plot_tiles(tiles, cmap='jet',
     
     Parameters
     ----------
-    tiles
-        an array of 13 tiles of dimension 13 x llc x llc 
+    tiles : numpy.ndarray or dask.array.core.Array or xarray.core.dataarray.DataArray
+        an array of n=1..13 tiles of dimension n x llc x llc 
 
-    cmap
+            - If *xarray DataArray* or *dask Array* tiles are accessed via *tiles.sel(tile=n)*
+            - If *numpy ndarray* tiles are acceed via [tile,:,:] and thus n must be 13.
+
+    cmap : matplotlib.colors.Colormap, optional, default: jet
         a colormap for the figure
-        Default: 'jet'
 
-    layout
-        string, either 'llc' or 'latlon'.  
-        'llc'    shows the tiles situated on the figure in a fan-like manner
-                 which tries to convey how the tiles are linked together in
-                 the model.  the orientation of the tiles is consistent with
-                 how the model sees the tiles in terms of x and y
-        'latlon' shows the tiles situated on the figure in a more geographically
-                 recognizable manner.  Note, that if the 12 'lat/lon' tiles 
-                 haven't been rotated so that columns are roughly longitude and
-                 rows are roughly latitude, then the orientation of the tiles
-                 will be consisent with how the model see the tiles in terms of
-                 x and y.  
-    rotate_to_latlon
-        boolean, flag to rotate tiles 7-12 so that columns correspond with
-        longitude and rows correspond to latitude.  Note, if the tiles are
-        a vector field, this rotation will not make any physical sense.
-        Default: False
+    layout : string, optional, default 'llc'
+        a code indicating the layout of the tiles
 
-    Arctic_cap_tile_location
+        :llc:    situates tiles in a fan-like manner which conveys how the tiles 
+                 are oriented in the model in terms of x an y
+    
+        :latlon: situates tiles in a more geographically recognizable manner.  
+                 Note, this does not rotate tiles 7..12, it just places tiles 
+                 7..12 adjacent to tiles 0..5.  To rotate tiles 7..12 
+                 specifiy *rotate_to_latlon* as True
+                     
+    rotate_to_latlon : boolean, default False
+        rotate tiles 7..12 so that columns correspond with
+        longitude and rows correspond to latitude.  Note, this rotates
+        vector fields (vectors positive in x in tiles 7..12 will be -y 
+        after rotation).  
+
+    Arctic_cap_tile_location : int, default 2
         integer, which lat-lon tile to place the Arctic tile over. can be 
         2, 5, 7 or 10.
-        Default: 2
         
-    show_colorbar
-        boolean, show the colorbar
-        Default: False
+    show_colorbar : boolean, default False
+        add a colorbar
         
-    show_cbar_label
-        boolean, show a label on the colorbar
-        Default: False
+    show_cbar_label : boolean, default False
+        add a label on the colorbar
         
-    show_tile_labels 
-        boolean, show tiles numbers as titles
-        Default: True
+    show_tile_labels : boolean, default True
+        show tiles numbers in subplot titles
         
-    cbar_label 
-        string, the default label for the colorbar
-        Default: empty
-        
-    tile_start_index
-        integer, the starting number for the tiles (used when tiles are passed
-        as xarray objects)
-        Default: -1 (program will guess)
-        
-    less_output : boolean
+    cbar_label : str, default empty
+        the label to use for the colorbar
+      
+    less_output : boolean, default False
         A debugging flag.  False = less debugging output
-        Default: False
+                
+    cmin/cmax : floats, optional, default calculate using the min/max of the data
+        the minimum and maximum values to use for the colormap
         
-    cmin/cmax
-        float(s), the minimum and maximum values to use for the colormap
-        No Default
+    fig_size : float, optional, default 9 inches
+        size of the figure in inches
         
-    fig_size
-        float, size of the figure in inches
-        Default: 9
-        
-    fig_num
-        integer, the figure number to make the plot on.
-        Default: make a new figure
+    fig_num : int, default none
+        the figure number to make the plot in.  By default make a new figure.
         
     Returns
     -------
-    f
-        a reference to the figure
+    f : Figure
         
-        
-    If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_tiles
 
     """
 
     # by default take the min and max of the values
-#    cmin = np.nanmin(tiles)
-#    cmax = np.nanmax(tiles)
     if type(tiles) == np.ndarray:
         cmin = np.nanmin(tiles)
         cmax = np.nanmax(tiles)
@@ -224,11 +197,6 @@ def plot_tiles(tiles, cmap='jet',
         else:
             print("unrecognized argument ", key)
 
-    
-
-
-    #if layout == 'llc' and aca != 6:
-    #    print 'Arctic_Align only makes sense with the lat-lon layout'
 
     fac1 = 1; fac2=1
 
@@ -387,11 +355,27 @@ def plot_tiles(tiles, cmap='jet',
 
 
     
-def unique_color(n):
+def unique_color(n=1):
+    """
+
+    Returns one of 14 unique colors.  
+    see https://xkcd.com/color/rgb/
+    and https://matplotlib.org/tutorials/colors/colors.html
     
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # returns one of 13 unique colors.
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Parameters
+    ----------
+    n : int, optional, default 1
+        which unique color do you want [1..13]
+        if n is not in 1..13, return mint
+        
+    Returns
+    -------
+    c : matplotlib.colors.Colormap
+        one of 13 unique colors
+        
+ 
+    """
+ 
     if n == 1:
         c='xkcd:red'
     elif n== 2:
@@ -422,4 +406,3 @@ def unique_color(n):
         c='xkcd:mint'
 
     return c
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    

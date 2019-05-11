@@ -1,4 +1,5 @@
-"""ECCO v4 Python: read_bin_llc
+"""
+ECCO v4 Python: read_bin_llc
 
 This module includes utility routines for loading binary files in the 
 llc 13-tile native flat binary layout.  This layout is the default for 
@@ -7,6 +8,7 @@ The llc layout is used for ECCO v4.
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
+
 """
 
 from __future__ import division,print_function
@@ -16,7 +18,6 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
     llc_tiles_to_faces, llc_tiles_to_compact
 
-#%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
                       filetype = '>f4'):
     """

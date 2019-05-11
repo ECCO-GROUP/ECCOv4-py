@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""ECCO v4 Python: Dataset Utililites
+"""
+ECCO v4 Python: Dataset Utililites
 
 This module includes utility routines that operate on the Dataset or DataArray Objects 
 
@@ -38,22 +39,24 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
     The routine also creates an array of times corresponding to the 'middle'
     of each averaging period.
     
-    Input
+    Parameters
     ----------    
-    ecco_dataset : an xarray dataset with 'time' variables representing 
-    the times at the 'end' of an averaging periods
+    ecco_dataset : xarray Dataset
+        an xarray dataset with 'time' variables representing the times at 
+        the 'end' of an averaging periods
 
 
-    Output: 
-    ----------    
-    time_bnds  :  a 2xn numpy array of type datetime64 that has the averaging
-    period start and end times.
+    Returns
+    -------
+    time_bnds : np.array(dtype=np.datetime64)
+        a datetime64 with the start and end time(s) of the averaging periods
     
-    center_times : a datetime64 object representing the middle of the 
-    averaging period
+    center_times :np.array(dtype=np.datetime64)
+        a numpy array containing the 'center' time of the averaging period(s)
     
 
     """ 
+ 
     if ecco_dataset.time.size == 1:
         
         if isinstance(ecco_dataset.time.values, np.ndarray):
@@ -113,21 +116,24 @@ def make_time_bounds_from_ds64(rec_avg_end, output_freq_code):
     for the averaging period end.  Also find the middle time between the
     two..
     
-    Input
+    Parameters
     ----------    
-    rec_avg_end : a datetime64 object representing the time at the 'end'
-    of an averaging period
+    rec_avg_end : numpy.datetime64 
+        the time at the end of an averaging period
+
+    output_freq_code : str 
+        code indicating the time period of the averaging period
+        - AVG_DAY, AVG_MON, AVG_WEEK, or AVG_YEAR
 
 
-    Output: 
-    ----------    
-    time_bnds  :  a 2x1 numpy array of type datetime64 that has the averaging
-    period start and end time.
+    Returns
+    -------
+    time_bnds : numpy.array(dtype=numpy.datetime64)
+        a datetime64 array with the start and end time of the averaging periods
     
-    rec_avg_middle : a datetime64 object representing the middle of the 
-    averaging period
+    center_times : numpy.datetime64
+        the 'center' of the averaging period
     
-
     """ 
     
     if  output_freq_code in ('AVG_MON','AVG_DAY','AVG_WEEK','AVG_YEAR'):
@@ -175,14 +181,15 @@ def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
     Extract separate fields for year, monday, day, hour, min, sec from
     a datetime64 object
     
-    Input
+    Parameters
     ----------    
-    dt64      : a datetime64 object 
+    dt64 : numpy.datetime64 
+        a datetime64 object
 
+    Returns 
+    -------    
+    year, mon, day, hh, mm, ss : int
 
-    Output: 
-    ----------    
-    year, mon, day, hh, mm, ss : self-explanatory
     """
     
     s = str(dt64)
@@ -205,18 +212,26 @@ def createShapefileFromXY(outDir, outName, X,Y,subset):
     1: polylines shapefile that trace the cell boundaries  (subset = 'boundary_points')
     2: point shapefile with a point in the cell centers    (subset = 'center points') 
 
-    # This routine was originally written by Michael Wood.
-    # This version was modified by Fenty, 2/28/2019 to handle a newer version of pyshp (2.1.0)
+    #Note This routine was originally written by Michael Wood. This version was modified by Fenty, 2/28/2019 to handle a newer version of pyshp (2.1.0)
 
     Parameters
     ----------
-    outDir    : directory into which shapefile and accessory files will be written
-    outName   : base of the filename (4 files will be created, 
-    X,Y       : array of points in X and Y (must be lat/lon)
-    subset    : either 'boundary_points' to create polyline shapefile
-                 or 'points' to create point shapefile
+    outDir    : str
+        directory into which shapefile and accessory files will be written
+    
+    outName   : str
+        base of the filename (4 files will be created, 
+    
+    X,Y       : numpy.ndarray
+        arrays of lat/lon locations
+    
+    subset    : str
+        
+        - 'boundary_points'to create polyline shapefile 
+        - 'points' for to create point shapefile
 
     """
+
 
     if subset=='center_points':
         
@@ -287,10 +302,9 @@ def minimal_metadata(ds):
 
     Parameters
     ----------
-    ds : Dataset
+    ds : xarray Dataset
         An `xarray` Dataset object that was created by loading an 
         ECCO v4 tile netcdf file
-
     
         
     """
@@ -307,18 +321,31 @@ def minimal_metadata(ds):
 
 #%%
 def months2days(nmon=288, baseyear=1992, basemon=1):
-    
     """ 
 
-    This rouine converts the mid-month time to days from January 1st of a particular year.
+    This routine converts the mid-month time to days from January 1st of a particular year.
     
-    Input:  nmon:           number of months (dtype=integer) 
-            baseyear:       year of time of origin (dtype=integer)
-            basemon:        month of time of origin (dtype=integer)
-    Output: time_days:      the middle time of each month in days
-                                from 01/01/baseyear (numpy array [nmon], dtype=double)
-            time_days_bnds: time bounds (numpy array [nmon, 2], dtype=double)
-            ansi_date:      ANSI date 
+    Parameters
+    ----------
+    nmon : dtype=integer
+        number of months 
+
+    baseyear : dtype=integer
+        year of time of origin
+        
+    basemon : dtype=integer
+        month of time of origin 
+    
+    Returns
+    -------
+        time_days : ndarray
+            the middle time of each month in days from Jan 1 baseyear (numpy array [nmon], dtype=double)
+        
+        time_days_bnds : ndarray
+            time bounds (numpy array [nmon, 2], dtype=double)
+
+        ansi_date : ndarray
+            array of ANSI date strings
 
     """
     
