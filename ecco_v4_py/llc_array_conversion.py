@@ -26,14 +26,10 @@ def llc_compact_to_tiles(data_compact, less_output = False):
     data_compact : ndarray
         a numpy array of dimension nl x nk x 13*llc x llc 
 
-    Note
-    ----
-    If dimensions nl or nk are singular, they are not included 
-    as dimensions in data_compact
-
     less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        
+    
+    
     Returns
     -------
     data_tiles : ndarray
@@ -68,11 +64,8 @@ def llc_tiles_to_compact(data_tiles, less_output = False):
         a numpy array organized by, at most, 
         13 tiles x nl x nk x llc x llc
     
-    Note
-    ----    
-    If dimensions nl or nk are singular, they are not included 
-    as dimensions in data_tiles
-
+        where dimensions 'nl' and 'nk' are optional.
+        
     less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
         
