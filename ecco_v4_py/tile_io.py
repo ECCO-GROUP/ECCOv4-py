@@ -1,9 +1,11 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 """
-Created on Mon Jul  3 16:11:15 2017
+ECCO v4 Python: tile_io
 
-@author: ifenty
+This module provides routines for loading ECCO netcdf files.
+
+.. _ecco_v4_py Documentation :
+   https://github.com/ECCO-GROUP/ECCOv4-py
+
 """
 from __future__ import division,print_function
 import numpy as np

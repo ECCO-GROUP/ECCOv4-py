@@ -1,11 +1,12 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""ECCO v4 Python: tile_exchange.py
+"""
+ECCO v4 Python: tile_exchange
 
-This module includes utility routines adding halos to individual llc tiles arrays. 
+This module includes routines for adding values to the edges of the
+the 13 tiles from neighboring tiles.
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
+
 """
 from __future__ import division,print_function
 import numpy as np

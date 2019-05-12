@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-ECCO v4 Python: Dataset Utililites
+ECCO v4 Python: Utililites
 
 This module includes utility routines that operate on the Dataset or DataArray Objects 
 
@@ -15,7 +15,6 @@ import xarray as xr
 import datetime
 import shapefile
 import time
-import xmitgcm as xm
 import dateutil
 import glob
 import os
@@ -374,156 +373,3 @@ def months2days(nmon=288, baseyear=1992, basemon=1):
 
 #%%
 
-
-def load_ecco_vars_from_mds(mds_var_dir, 
-                            mds_files, 
-                            mds_grid_dir,
-                            vars_to_load=[], 
-                            tiles_to_load = range(13),
-                            iters_to_load = [],
-                            output_freq_code='', 
-                            meta_variable_specific=dict(),
-                            meta_common=dict(),
-                            mds_datatype = '>f4'):
-                                 
-    
-    #%%
-    #ECCO v4 r3 starts 1992/1/1 12:00:00
-    ecco_v4_start_year = 1992
-    ecco_v4_start_mon  = 1
-    ecco_v4_start_day  = 1
-    ecco_v4_start_hour = 12
-    ecco_v4_start_min  = 0
-    ecco_v4_start_sec  = 0
-    
-    # ECCO v4 r3 has 1 hour (3600 s) time steps    
-    delta_t = 3600
-    
-    # define reference date for xmitgcm
-    ref_date = str(ecco_v4_start_year) + '-' + str(ecco_v4_start_mon)  + '-' + \
-        str(ecco_v4_start_day)  + ' ' +  str(ecco_v4_start_hour) + ':' +  \
-        str(ecco_v4_start_min)  + ':' + str(ecco_v4_start_sec)
-
-    # if iters_to_load is empty list, load all files 
-    if len(iters_to_load) > 0:
-        ecco_dataset = xm.open_mdsdataset(data_dir = mds_var_dir, 
-                                          grid_dir = mds_grid_dir,
-                                          read_grid = True,
-                                          prefix = mds_files,
-                                          geometry = 'llc', 
-                                          iters = iters_to_load,
-                                          ref_date = ref_date, 
-                                          delta_t  = delta_t,
-                                          default_dtype = np.dtype(mds_datatype),
-                                          grid_vars_to_coords=True)
-    
-    else:
-        ecco_dataset = xm.open_mdsdataset(data_dir = mds_var_dir, 
-                                          grid_dir = mds_grid_dir,
-                                          read_grid = True,
-                                          prefix = mds_files, 
-                                          geometry = 'llc', 
-                                          ref_date = ref_date, 
-                                          delta_t = delta_t,
-                                          default_dtype = np.dtype(mds_datatype),
-                                          grid_vars_to_coords=True)
-   
-    
-    # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
-    if 'face' in ecco_dataset.coords.keys():
-        ecco_dataset = ecco_dataset.rename({'face': 'tile'})
-        ecco_dataset.tile.attrs['standard_name'] = 'tile_index'
-       
-    # if vars_to_load is an empty list, keep all variables.  otherwise,
-    # only keep those variables in the vars_to_load list.
-    
-    vars_ignored = []
-    vars_loaded = []
-    
-    print ('\n')
-    if len(vars_to_load) > 0:
-        print ('loading subset of variables: ', vars_to_load)
-        # remove variables that are not on the vars_to_load_list
-        for ecco_var in ecco_dataset.keys():
-            
-            if ecco_var not in vars_to_load:
-                vars_ignored.append(ecco_var)
-                ecco_dataset = ecco_dataset.drop(ecco_var)
-            else:
-                vars_loaded.append(ecco_var)
-
-        print ('loaded  : ', vars_loaded)
-        print ('ignored : ', vars_ignored)
-    else:
-        print ('loaded  : ', ecco_dataset.keys())
-        
-    # only keep those tiles in the 'tiles_to_load' list.
-    if isinstance(tiles_to_load, (tuple,list)) and len(tiles_to_load) > 0:
-        tiles_to_load = list(tiles_to_load)
-        ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
-    
-    #ecco_dataset = ecco_dataset.isel(time=0)
-    if 'AVG' in output_freq_code and \
-        'time_bnds' not in ecco_dataset.keys():
-
-        time_bnds_ds, center_times = \
-            make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset,\
-                                                                output_freq_code)
-        
-        if isinstance(ecco_dataset.time.values, np.datetime64):
-            ecco_dataset.time.values = center_times
-        elif isinstance(center_times, np.datetime64):
-            center_times = np.array(center_times)
-            ecco_dataset.time.values[:] = center_times
-        
-        if 'ecco-v4-time-average-center-no-units' in meta_common:
-            ecco_dataset.time.attrs = \
-                meta_common['ecco-v4-time-average-center-no-units']
-          
-        ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
-        
-        if 'time_bnds-no-units' in meta_common:
-            ecco_dataset.time_bnds.attrs=meta_common['time_bnds-no-units']
-      
-        ecco_dataset = ecco_dataset.set_coords('time_bnds')
-        
-    elif  'SNAPSHOT' in output_freq_code:
-         if 'ecco-v4-time-snapshot-no-units' in meta_common:
-            ecco_dataset.time.attrs = \
-                meta_common['ecco-v4-time-snapshot-no-units']
-       
-
-    #%% DROP SOME EXTRA FIELDS THAT DO NOT NEED TO BE IN THE DATASET
-    if 'maskCtrlS' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlS')
-    if 'maskCtrlW' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlW')
-    if 'maskCtrlC' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlC')
-        
-    # UPDATE THE VARIABLE SPECIFIC METADATA USING THE 'META_VARSPECIFIC' DICT.
-    # if it exists
-    for ecco_var in ecco_dataset.variables.keys():
-        if ecco_var in meta_variable_specific.keys():
-            ecco_dataset[ecco_var].attrs = meta_variable_specific[ecco_var]
-
-
-    #%% UPDATE THE GLOBAL METADATA USING THE 'META_COMMON' DICT, if it exists
-    ecco_dataset.attrs = dict()
-
-    if 'ecco-v4-global' in meta_common:
-        ecco_dataset.attrs.update(meta_common['ecco-v4-global'])
-
-    if 'k' in ecco_dataset.dims.keys() and \
-        'ecco-v4-global-3D' in meta_common:
-        ecco_dataset.attrs.update(meta_common['ecco-v4-global-3D'])
-   
-    ecco_dataset.attrs['date_created'] = time.ctime()
-    
-    # give it a hug?
-    ecco_dataset = ecco_dataset.squeeze()
-
-    return ecco_dataset
-
-
-#%%

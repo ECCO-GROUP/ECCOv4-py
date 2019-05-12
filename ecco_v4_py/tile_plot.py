@@ -28,36 +28,32 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     
     Parameters
     ----------
-    tile
+    tile : ndarray
         a single 2D tile of dimension llc x llc 
 
-    cmap
+    cmap : colormap, optional, default jet
         a colormap for the figure
-        Default: 'jet'
-
-    show_colorbar
-        boolean, show the colorbar
-        Default: False
+  
+    show_colorbar : boolean, optional, default False
+        add a colorbar
         
-    show_cbar_label
+    show_cbar_label, boolean, 
         boolean, show a label on the colorbar
         Default: False
         
-    less_output : boolean
+    less_output : boolean, default False
         A debugging flag.  False = less debugging output
-        Default: False
+                
+    cmin/cmax : floats, optional, default calculate using the min/max of the data
+        the minimum and maximum values to use for the colormap
         
-    cmin/cmax
-        float(s), the minimum and maximum values to use for the colormap
-        No Default
-        
-    fig_num
+    fig_num : int, optiona, default -1 (make new figure)
         integer, the figure number to make the plot on.
         Default: make a new figure
         
     Returns
     -------
-    f
+    f : Figure
         a handle to the figure
 
     """
@@ -143,19 +139,19 @@ def plot_tiles(tiles, cmap='jet',
         integer, which lat-lon tile to place the Arctic tile over. can be 
         2, 5, 7 or 10.
         
-    show_colorbar : boolean, default False
+    show_colorbar : boolean, optional, default False
         add a colorbar
         
-    show_cbar_label : boolean, default False
+    show_cbar_label : boolean, optional, default False
         add a label on the colorbar
         
-    show_tile_labels : boolean, default True
+    show_tile_labels : boolean, optional, default True
         show tiles numbers in subplot titles
         
-    cbar_label : str, default empty
+    cbar_label : str, optional, default '' (empty string)
         the label to use for the colorbar
       
-    less_output : boolean, default False
+    less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
                 
     cmin/cmax : floats, optional, default calculate using the min/max of the data
@@ -164,7 +160,7 @@ def plot_tiles(tiles, cmap='jet',
     fig_size : float, optional, default 9 inches
         size of the figure in inches
         
-    fig_num : int, default none
+    fig_num : int, optional, default none
         the figure number to make the plot in.  By default make a new figure.
         
     Returns

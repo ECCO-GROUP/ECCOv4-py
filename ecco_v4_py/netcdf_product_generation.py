@@ -20,7 +20,7 @@ import glob
 import os
 
 
-from .ecco_utils import load_ecco_vars_from_mds
+from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
 
 #%%    

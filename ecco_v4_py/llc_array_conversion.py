@@ -1,12 +1,13 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""ECCO v4 Python: llc_array_conversion
+"""
+ECCO v4 Python: llc_array_conversion
 
+This module includes routines for converting arrays between the model
+'compact' format, the 13 tile llc format, and the 5 'face' llc format.
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
-"""
 
+"""
 
 from __future__ import division,print_function
 import numpy as np
@@ -22,24 +23,27 @@ def llc_compact_to_tiles(data_compact, less_output = False):
 
     Parameters
     ----------
-    data_compact
+    data_compact : ndarray
         a numpy array of dimension nl x nk x 13*llc x llc 
 
+    Note
+    ----
     If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_compact
+    as dimensions in data_compact
 
-    less_output : boolean
+    less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        Default: False
         
     Returns
     -------
-    data_tiles
+    data_tiles : ndarray
         a numpy array organized by, at most, 
         13 tiles x nl x nk x llc x llc
         
+    Note
+    ----
     If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_tiles
+    as dimensions in data_tiles
 
     """
    
@@ -60,24 +64,27 @@ def llc_tiles_to_compact(data_tiles, less_output = False):
 
     Parameters
     ----------
-    data_tiles
+    data_tiles : ndarray
         a numpy array organized by, at most, 
         13 tiles x nl x nk x llc x llc
-        
+    
+    Note
+    ----    
     If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_tiles
+    as dimensions in data_tiles
 
-    less_output : boolean
+    less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        Default: False
         
     Returns
     -------
-    data_compact
+    data_compact : ndarray
         a numpy array of dimension nl x nk x 13*llc x llc 
 
+    Note
+    ----
     If dimensions nl or nk are singular, they are not included 
-        as dimensions in data_compact
+    as dimensions in data_compact
 
     """
    
@@ -99,25 +106,30 @@ def llc_compact_to_faces(data_compact, less_output = False):
 
     Parameters
     ----------
-    data_compact : 
+    data_compact : ndarray
         An 2D array of dimension  nl x nk x 13*llc x llc 
         
-        If dimensions nl or nk are singular, they are not included 
-        as dimensions of data_compact
-
-    less_output : boolean
+    less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        Default: False
+        
 
     Returns
     -------
-    F : a dictionary containing the five lat-lon-cap faces
+    F : dict
+        a dictionary containing the five lat-lon-cap faces
+
         F[n] is a numpy array of face n, n in [1..5]
 
-    - dimensions of each 2D slice of F
-        f1,f2: 3*llc x llc
-           f3: llc x llc
-        f4,f5: llc x 3*llc 
+        dimensions of each 2D slice of F
+
+        - f1,f2: 3*llc x llc
+        -    f3: llc x llc
+        - f4,f5: llc x 3*llc 
+
+    Note
+    ----
+    If dimensions nl or nk are singular, they are not included 
+    as dimensions of data_compact
         
     """
 
@@ -278,7 +290,7 @@ def llc_compact_to_faces(data_compact, less_output = False):
 
 
 #%%
-def llc_faces_to_tiles(F, less_output=False, location_on_model_grid = 'C'):
+def llc_faces_to_tiles(F, less_output=False):
     """
 
     Converts a dictionary, F, containing 5 lat-lon-cap faces into 13 tiles
@@ -289,30 +301,25 @@ def llc_faces_to_tiles(F, less_output=False, location_on_model_grid = 'C'):
     
     Parameters
     ----------
-    F : a dictionary containing the five lat-lon-cap faces
-        F[n] is a numpy array of face n, n in [1..5]
-    location_on_model_grid = one of 'C','U','V','G'
-        corresponding to traCer point, U velocity point, V velocity point or 
-        edGe or (corner) point.
+    F : dict
+        a dictionary containing the five lat-lon-cap faces
         
-        'C' points: XC,YC, RAC, are [llc, llc]
-        'G' points: XG,YG, DYU, DXV, RAZ: [llc+1, llc+1]
-        'U' points: DXC, RAW [llc, llc+1]
-        'V' points: DYC, RAS [llc+1, llc]
+        F[n] is a numpy array of face n, n in [1..5]
 
-    less_output : boolean
+    less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        Default: False
         
     Returns
     -------
-    data_tiles :
+    data_tiles : ndarray
         an array of dimension 13 x nl x nk x llc x llc, 
         
         Each 2D slice is dimension 13 x llc x llc
 
-        If dimensions nl or nk are singular, they are not included 
-        as dimensions of data_tiles
+    Note
+    ----
+    If dimensions nl or nk are singular, they are not included 
+    as dimensions of data_tiles
 
 
     """
@@ -439,13 +446,16 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
     
     Returns
     -------
-    F : a dictionary containing the five lat-lon-cap faces
+    F : dict
+        a dictionary containing the five lat-lon-cap faces
+        
         F[n] is a numpy array of face n, n in [1..5]
 
-    - dimensions of each 2D slice of F
-        f1,f2: 3*llc x llc
-           f3: llc x llc
-        f4,f5: llc x 3*llc  
+        dimensions of each 2D slice of F
+        
+        - f1,f2: 3*llc x llc
+        -    f3: llc x llc
+        - f4,f5: llc x 3*llc  
     
     """
     
@@ -581,25 +591,31 @@ def llc_faces_to_compact(F, less_output=True):
 
     Parameters
     ----------
-    F : a dictionary containing the five lat-lon-cap faces
+    F : dict
+        a dictionary containing the five lat-lon-cap faces
+        
         F[n] is a numpy array of face n, n in [1..5]
 
-    - dimensions of each 2D slice of F
-        f1,f2: 3*llc x llc
-           f3: llc x llc
-        f4,f5: llc x 3*llc  
-    
-    less_output : boolean
-        A debugging flag.  False = less debugging output
-        Default: False
+        dimensions of each 2D slice of F
 
+        - f1,f2: 3*llc x llc
+        -    f3: llc x llc
+        - f4,f5: llc x 3*llc  
+    
+    less_output : boolean, optional, default False
+        A debugging flag.  False = less debugging output
+        
     Returns
     -------
-    data_compact : an array of dimension nl x nk x nj x ni 
-        the data in F in the llc compact format.
+    data_compact : ndarray
+        an array of dimension nl x nk x nj x ni 
+        
+        F is in the llc compact format.
 
-        If dimensions nl or nk are singular, they are not included 
-        as dimensions of data_compact
+    Note
+    ----
+    If dimensions nl or nk are singular, they are not included 
+    as dimensions of data_compact
 
     """
 

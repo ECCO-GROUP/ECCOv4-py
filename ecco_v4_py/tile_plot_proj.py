@@ -1,10 +1,14 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 """
-Created on Mon Jul  3 16:11:15 2017
+ECCO v4 Python: tile_plot_proj
 
-@author: ifenty
+This module includes routines for plotting arrays in different
+projections.
+
+.. _ecco_v4_py Documentation :
+   https://github.com/ECCO-GROUP/ECCOv4-py
+
 """
+
 from __future__ import division,print_function
 import numpy as np
 import matplotlib.pylab as plt
@@ -137,6 +141,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     # loop through different parts of the map to plot (if they exist), 
     # do interpolation and plot
     f = plt.gcf()
+    
     print(len(lon_tmp_d))
     for key, lon_tmp in lon_tmp_d.items():
 
