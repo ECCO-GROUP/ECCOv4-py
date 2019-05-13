@@ -36,7 +36,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             meta_variable_specific=dict(),
                             meta_common=dict(),
                             mds_datatype = '>f4',
-                            llc_method = 'bigchunks'):
+                            llc_method = 'bigchunks',
+                            less_output=True):
                                  
     """
 
@@ -114,6 +115,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     llc_method : string, optional, default 'big_chunks'
         refer to the xmitgcm documentation.
+    
+    less_output : logical, optional
+        if True (default), omit additional print statements
 
     Returns
     =======
@@ -190,10 +194,12 @@ def load_ecco_vars_from_mds(mds_var_dir,
     if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
 
-    print ('vars to load ', vars_to_load)
+    if not less_output:
+        print ('vars to load ', vars_to_load)
     
     if 'all' not in vars_to_load:
-        print ('loading subset of variables: ', vars_to_load)
+        if not less_output:
+            print ('loading subset of variables: ', vars_to_load)
     
         # remove variables that are not on the vars_to_load_list
         for ecco_var in ecco_dataset.keys():
@@ -205,11 +211,13 @@ def load_ecco_vars_from_mds(mds_var_dir,
             else:
                 vars_loaded.append(ecco_var)
 
-        print ('loaded  : ', vars_loaded)
-        print ('ignored : ', vars_ignored)
+        if not less_output:
+            print ('loaded  : ', vars_loaded)
+            print ('ignored : ', vars_ignored)
     
     else:
-        print ('loaded all variables  : ', ecco_dataset.keys())
+        if not less_output:
+            print ('loaded all variables  : ', ecco_dataset.keys())
         
     # keep tiles in the 'tiles_to_load' list.
     if not isinstance(tiles_to_load, list):
