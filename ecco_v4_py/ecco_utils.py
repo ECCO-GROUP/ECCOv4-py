@@ -13,7 +13,6 @@ from __future__ import division, print_function
 import numpy as np
 import xarray as xr
 import datetime
-import pyshp
 import time
 import dateutil
 import glob
@@ -201,96 +200,6 @@ def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
     
     #print year, mon, day, hh, mm, ss
     return year,mon,day,hh,mm,ss 
-
-#%%
-def createShapefileFromXY(outDir, outName, X,Y,subset):
-    """
-
-    This routine takes an X,Y array of grid points (e.g., XC, YC or XG, YG)) 
-    and creates one of two types of shapefiles.
-    1: polylines shapefile that trace the cell boundaries  (subset = 'boundary_points')
-    2: point shapefile with a point in the cell centers    (subset = 'center points') 
-
-    #Note This routine was originally written by Michael Wood. This version was modified by Fenty, 2/28/2019 to handle a newer version of pyshp (2.1.0)
-
-    Parameters
-    ----------
-    outDir    : str
-        directory into which shapefile and accessory files will be written
-    
-    outName   : str
-        base of the filename (4 files will be created, 
-    
-    X,Y       : numpy.ndarray
-        arrays of lat/lon locations
-    
-    subset    : str
-        
-        - 'boundary_points'to create polyline shapefile 
-        - 'points' for to create point shapefile
-
-    """
-
-
-    if subset=='center_points':
-        
-        fname = outDir +'/' + outName + '_Grid_Center_Points/' + outName + '_Grid_Center_Points'
-        
-        w=shapefile.Writer(fname + '.shp')
-        w.shapeType = shapefile.POINT
-        w.field('id')
-
-        counter=0
-        for i in range(np.shape(X)[0]):
-            for j in range(np.shape(X)[1]):
-                w.point(X[i,j],Y[i,j])
-                w.record(counter)
-                counter+=1
-        w.close()
-
-        f=open(fname + '.prj','w')
-        f.write('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
-        f.close()
-
-    elif subset=='boundary_points':
-        
-        fname = outDir + '/' + outName + '_Grid_Boundary_Points/' + outName + '_Grid_Boundary_Points'
-        print(fname)
-        w=shapefile.Writer(fname + '.shp')
-        w.shapeType = shapefile.POLYLINE
-        w.field('id')
-
-        counter=0
-        #create the vertical lines
-        for i in range(np.shape(X)[0]):
-            lines=[]
-            for j in range(np.shape(X)[1]):
-                lines.append( [ X[i,j], Y[i,j] ])
-
-            w.line([lines])
-            w.record(counter)
-            counter+=1
-
-        # create the horizontal lines
-        XT = X.T
-        YT = Y.T
-        for i in range(np.shape(XT)[0]):
-            lines=[]
-            for j in range(np.shape(XT)[1]):
-                lines.append( [ XT[i,j], YT[i,j] ])
-
-            w.line([lines])
-            w.record(counter)
-            counter+=1
-
-        w.close()
-
-        f = open(fname + '.prj', 'w')
-        f.write(
-            'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
-        f.close()
-    else:
-        print("subset must be either center_points or boundary_points")
 
 
 #%%

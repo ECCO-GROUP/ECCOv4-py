@@ -12,7 +12,12 @@ The llc layout is used for ECCO v4.
 """
 
 from __future__ import division,print_function
+from xmitgcm import open_mdsdataset
+import xmitgcm as xm
 import xmitgcm
+import numpy as np
+import xarray as xr
+import time
 
 from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
@@ -30,7 +35,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             output_freq_code = '', 
                             meta_variable_specific=dict(),
                             meta_common=dict(),
-                            mds_datatype = '>f4'):
+                            mds_datatype = '>f4',
+                            llc_method = 'bigchunks'):
                                  
     """
 
@@ -106,6 +112,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
         determine the format from the .meta file.  '>f4' means big endian
         32 bit float.
 
+    llc_method : string, optional, default 'big_chunks'
+        refer to the xmitgcm documentation.
 
     Returns
     =======
@@ -144,7 +152,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        ref_date = ref_date, 
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
-                                       grid_vars_to_coords=True)
+                                       grid_vars_to_coords=True,
+                                       llc_method = llc_method)
     
     else:
         if isinstance(model_time_steps_to_load, int):
@@ -160,7 +169,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            ref_date = ref_date, 
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
-                                           grid_vars_to_coords=True)
+                                           grid_vars_to_coords=True,
+                                           llc_method=llc_method)
         else:
             print ('not a valid iters_to_load.  must be "all", an "int", or a list of "int"')
             return []
@@ -177,13 +187,12 @@ def load_ecco_vars_from_mds(mds_var_dir,
     vars_ignored = []
     vars_loaded = []
     
-    if not instance(vars_to_load, list):
+    if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
 
-    if vars_to_load != 'all':
-        if isinstance(vars_to_load, str):
-            vars_to_load = [vars_to_load]
-
+    print ('vars to load ', vars_to_load)
+    
+    if 'all' not in vars_to_load:
         print ('loading subset of variables: ', vars_to_load)
     
         # remove variables that are not on the vars_to_load_list
@@ -203,7 +212,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
         print ('loaded all variables  : ', ecco_dataset.keys())
         
     # keep tiles in the 'tiles_to_load' list.
-    if not instance(tiles_to_load, list):
+    if not isinstance(tiles_to_load, list):
         tiles_to_load = [tiles_to_load]
 
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)

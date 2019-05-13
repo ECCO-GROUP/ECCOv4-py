@@ -1,7 +1,7 @@
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
-from .ecco_utils import createShapefileFromXY
+
 from .ecco_utils import minimal_metadata
 from .ecco_utils import months2days
 

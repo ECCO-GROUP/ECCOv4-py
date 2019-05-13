@@ -88,7 +88,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      mds_grid_dir,
                                                      output_dir,
                                                      output_freq_code,
-                                                     vars_to_load = [],
+                                                     vars_to_load = 'all',
                                                      tiles_to_load = range(13),
                                                      time_steps_to_load = [],
                                                      meta_variable_specific = dict(),
@@ -140,17 +140,22 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
         meta = xm.utils.parse_meta_file(mds_var_dir + '/' + first_meta_fname)
         vars_here =  meta['fldList']
         
-        # verify that at least one of the vars_to_load is present in vars_here
-        if len(vars_to_load) > 0:
-            num_vars_matching = len(np.intersect1d(vars_to_load, vars_here))
-        else:
-            num_vars_matching = 1
+        if not isinstance(vars_to_load, list):
+            vars_to_load = [vars_to_load]
         
-        # only proceed if we are sure that the variable we want is in this
-        # mds file
-        if num_vars_matching == 0:
-            print ('none of the variables you want are in ', mds_file)
-            break
+        if 'all' not in vars_to_load:
+            num_vars_matching = len(np.intersect1d(vars_to_load, vars_here))
+            
+            print ('num vars matching ', num_vars_matching)
+                    
+            # only proceed if we are sure that the variable we want is in this
+            # mds file
+            if num_vars_matching == 0:
+                print ('none of the variables you want are in ', mds_file)
+                print (vars_to_load)
+                print (vars_here)
+                
+                break
         
         # loop through time steps
         for time_step in time_steps_to_load:
@@ -163,14 +168,14 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                         mds_grid_dir,
                                         vars_to_load = vars_to_load,
                                         tiles_to_load=tiles_to_load,
-                                        iters_to_load=[time_step],
+                                        model_time_steps_to_load=[time_step],
                                         output_freq_code = \
                                               output_freq_code, 
                                         meta_variable_specific = \
                                               meta_variable_specific,
                                         meta_common=meta_common,
-                                        mds_datatype=mds_datatype)
-                                        #ignore_unknown_vars)
+                                        mds_datatype=mds_datatype,
+                                        llc_method = 'bigchunks')
             
             # pull out the associated time
             year, mon, day, hh, mm, ss  = \
