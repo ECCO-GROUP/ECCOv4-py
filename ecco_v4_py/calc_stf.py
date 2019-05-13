@@ -5,7 +5,7 @@ TBD: add barotropic streamfunction
 
 import numpy as np
 
-from .utils import get_llc_grid
+from .ecco_utils import get_llc_grid
 from .calc_meridional_trsp import meridional_trsp_at_depth
 
 # Define constants
