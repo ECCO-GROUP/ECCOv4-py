@@ -31,13 +31,14 @@ def get_basin_mask(basin_name,mask):
         arct, barents
 
     mask : xarray DataArray
-        2D mask for open ocean
+        2D or 3D mask for open ocean
         Note: can be at centers, west, or south face
 
     Returns
     -------
     basin_mask : xarray DataArray
-        2D mask with values at cell centers, 1's for denoted ocean basin
+        mask with values at cell centers, 1's for denoted ocean basin
+        dimensions are the same as input field
     """
 
     if type(basin_name) is not list:
@@ -53,20 +54,31 @@ def get_basin_mask(basin_name,mask):
     bin_dir = os.path.join(package_directory,'../bin')
     all_basins = read_llc_to_tiles(bin_dir,'basins.data')
 
-    #   # Convert to xda
-    #   all_basins = ^
-    #                                  coords=mask.coords.variables,
-    #                                  dims=mask.dims)
+    # Handle vertical coordinate
+    # If input mask is 3D in space, first get mask on top level
+    if 'k' in mask.dims:
+        mask_2d = mask.isel(k=0)
+    elif 'k_u' in mask.dims:
+        mask_2d = mask.isel(k_u=0)
+    elif 'k_l' in mask.dims:
+        mask_2d = mask.isel(k_l=0)
+    elif 'k_p1' in mask.dims:
+        mask_2d = mask.isel(k_p1=0)
+    else:
+        mask_2d = mask
 
-    basin_mask = 0*mask
+    basin_mask = 0*mask_2d
 
     for name in basin_name:
         if name in available_names:
-            basin_mask = basin_mask + mask.where(all_basins == (available_names.index(name)+1),0)
+            basin_mask = basin_mask + mask_2d.where(all_basins == (available_names.index(name)+1),0)
         else:
             warnings.warn('\nIgnoring %s, not an available basin mask.\n '
                           'Available basin mask names are: %s' % (name,available_names))
 
+    # Now multiply by original mask to get vertical coordinate back
+    # (xarray multiplication implies union of dimensions)
+    basin_mask = basin_mask * mask
 
     return basin_mask
 
