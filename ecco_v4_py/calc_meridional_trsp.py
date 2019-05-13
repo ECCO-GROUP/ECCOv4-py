@@ -46,11 +46,11 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
         with dimensions 'time' (if in given dataset) and 'lat' 
     """
 
-    u_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
-    v_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
+    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
+    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp = meridional_trsp_at_depth(u_vol,v_vol,
+    vol_trsp = meridional_trsp_at_depth(x_vol,y_vol,
                                        cds=ds.coords.to_dataset(),
                                        lat_vals=lat_vals,
                                        basin_name=basin_name,
@@ -83,11 +83,11 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
         with dimensions 'time' (if in given dataset) and 'lat' 
     """
 
-    u_heat = ds['ADVx_TH'] + ds['DFxE_TH']
-    v_heat = ds['ADVy_TH'] + ds['DFyE_TH']
+    x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
+    y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
 
     # Computes heat transport in degC * m^3/s at each depth level
-    heat_trsp = meridional_trsp_at_depth(u_heat,v_heat,
+    heat_trsp = meridional_trsp_at_depth(x_heat,y_heat,
                                          cds=ds.coords.to_dataset(),
                                          lat_vals=lat_vals,
                                          basin_name=basin_name,
@@ -120,11 +120,11 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
         with dimensions 'time' (if in given dataset) and 'lat' 
     """
 
-    u_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
-    v_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
+    x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
+    y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp = meridional_trsp_at_depth(u_salt,v_salt,
+    salt_trsp = meridional_trsp_at_depth(x_salt,y_salt,
                                          cds=ds.coords.to_dataset(),
                                          lat_vals=lat_vals,
                                          basin_name=basin_name,
@@ -141,7 +141,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 
 # ---------------------------------------------------------------------
 
-def meridional_trsp_at_depth(ufld, vfld, lat_vals, cds, 
+def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds, 
                              basin_name=None, grid=None):
     """
     Compute transport of vector quantity at each depth level 
@@ -149,7 +149,7 @@ def meridional_trsp_at_depth(ufld, vfld, lat_vals, cds,
 
     Parameters
     ----------
-    ufld, vfld : xarray DataArray
+    xfld, yfld : xarray DataArray
         3D spatial (+ time, optional) field at west and south grid cell edges
     lat_vals : float or list
         latitude value(s) specifying where to compute transport
@@ -194,8 +194,8 @@ def meridional_trsp_at_depth(ufld, vfld, lat_vals, cds,
         lat_maskW, lat_maskS = get_latitude_masks(lat, cds['YC'], grid)
 
         # Sum horizontally
-        lat_trsp_x = (ufld * lat_maskW * basin_maskW).sum(dim=['i_g','j','tile'])
-        lat_trsp_y = (vfld * lat_maskS * basin_maskS).sum(dim=['i','j_g','tile'])
+        lat_trsp_x = (xfld * lat_maskW * basin_maskW).sum(dim=['i_g','j','tile'])
+        lat_trsp_y = (yfld * lat_maskS * basin_maskS).sum(dim=['i','j_g','tile'])
 
         lat_trsp.loc[{'lat':lat}] = lat_trsp_x + lat_trsp_y
 
