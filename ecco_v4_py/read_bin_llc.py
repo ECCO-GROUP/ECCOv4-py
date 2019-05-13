@@ -220,7 +220,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
             print ('loaded all variables  : ', ecco_dataset.keys())
         
     # keep tiles in the 'tiles_to_load' list.
-    if not isinstance(tiles_to_load, list):
+    if not isinstance(tiles_to_load, list) and not isinstance(tiles_to_load,range):
         tiles_to_load = [tiles_to_load]
 
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
