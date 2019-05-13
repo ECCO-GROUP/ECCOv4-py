@@ -4,7 +4,7 @@ generic functions for scalar valued (cell centered) quantities
 
 import xarray as xr
 
-def get_latitude_masks(lat_val,yc,grid):
+def get_latitude_mask(lat_val,yc,grid):
     """Compute maskCedge which grabs the grid cell center points along 
     the desired latitude
 
