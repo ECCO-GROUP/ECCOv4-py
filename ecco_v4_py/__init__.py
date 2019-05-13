@@ -1,6 +1,8 @@
-from .calc_meridional_trsp import calc_meridonal_vol_trsp, \
+from .calc_meridional_trsp import calc_meridional_vol_trsp, \
         calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
         meridional_trsp_at_depth
+
+from .calc_stf import calc_meridional_stf
 
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
