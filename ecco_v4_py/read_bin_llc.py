@@ -178,7 +178,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            grid_vars_to_coords=True,
                                            llc_method=llc_method)
         else:
-            raise TypeError('not a valid iters_to_load.  must be "all", an "int", or a list of "int"')
+            raise TypeError('not a valid iters_to_load.  must be "all", an "int", or a list of "int"'
 
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
