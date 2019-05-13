@@ -68,6 +68,8 @@ from .tile_rotation import rotate_single_tile_DataArrays_UV_points
 
 from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
 
+from . import vector_calc
+
 __all__ = ['ecco_utils', 
            'llc_array_conversion', 
            'netcdf_product_generation',
