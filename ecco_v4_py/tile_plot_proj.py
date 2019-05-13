@@ -37,22 +37,36 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     Parameters
     ----------
-    lons    : 
-    lats    :
-    data    : 
+    lons, lats, data : xarray DataArray    : 
+        give the longitude, latitude values of the grid, and the 2D field to 
+        be plotted
+    projection_type : string, optional
+        denote the type of projection, options include
+            'robin' - Robinson 
+            'PlateCaree' - flat 2D projection
+            'Mercator'
+            'cyl' - Lambert Cylindrical
+            'ortho' - Orthographic
+            'stereo' - polar stereographic projection, see lat_lim for choosing
+                North or South
+    user_lon_0 : int, optional
+        denote central longitude
+    lat_lim : int, optional
+        for stereographic projection, denote the Southern (Northern) bounds for 
+        North (South) polar projection
+    levels : int, optional
+        number of contours to plot
+    cmap : string or colormap object, optional
+        denotes to colormap
+    dx, dy : float, optional
+        latitude, longitude spacing for grid resampling
+    show_colorbar : logical, optional
 
+    show_grid_lines : logical, optional
+        True only possible for Mercator or PlateCarree projections
+    cmin, cmax : float, optional
+        minimum and maximum values for colorbar, default is min/max of data
     """
-    
-    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # default projection type = robinson
-    # default central longitude = 60W
-    # default no colorbar, no grid labels, no grid lines.
-    # default color limits take the min and max of the values
-    # default plot_type is pcolormesh.
-    # default lat/lon spacing in lat/lon grid is 0.25 degrees
-    # default number of levels for contourf is 20 (levels)
-    # default latitude limit for polar stereographic plots is 50N (lat_lim)
-    # default colormap is 'jet'
 
     #%%    
     cmin = np.nanmin(data)
