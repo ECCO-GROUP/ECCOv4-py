@@ -52,13 +52,15 @@ def UEVNfromUXVY(xfld,yfld,coords,grid=None):
 
 
 def get_latitude_masks(lat_val,yc,grid):
-    """Compute mskW/S edge for specific latitude value
-    See gcmfaces/gcmfaces_calc/gcmfaces_lines_zonal.m
+    """Compute maskW/S which grabs vector field grid cells along specified latitude
+    band and corrects the sign associated with X-Y LLC grid
+
+    This mirrors the MATLAB function gcmfaces/gcmfaces_calc/gcmfaces_lines_zonal.m
 
     Parameters
     ----------
 
-    lat_val : integer
+    lat_val : int
         latitude at which to compute mask 
     yc : xarray DataArray
         Contains latitude values at cell centers
