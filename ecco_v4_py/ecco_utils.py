@@ -13,11 +13,7 @@ from __future__ import division, print_function
 import numpy as np
 import xarray as xr
 import datetime
-import time
 import dateutil
-import glob
-import os
-
 
 
 #%%

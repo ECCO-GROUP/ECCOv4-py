@@ -171,6 +171,11 @@ def plot_tiles(tiles, cmap='jet',
     """
 
     # by default take the min and max of the values
+    
+    if isinstance(tiles, dask.array.core.Array):
+        tiles = np.asarray(tiles.squeeze())
+        
+    
     if type(tiles) == np.ndarray:
         cmin = np.nanmin(tiles)
         cmax = np.nanmax(tiles)

@@ -283,9 +283,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
 
 
-
+#%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-                      filetype = '>f4'):
+                      filetype = '>f4', less_output = True):
     """
     Loads an MITgcm binary file in the 'tiled' format of the 
     lat-lon-cap (LLC) grids via xmitgcm.  
@@ -324,17 +324,29 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     filetype: string, default '>f4'
         the file type, default is big endian (>) 32 bit float (f4)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
+            
+    less_output : boolean, optional, default False
+        A debugging flag.  False = less debugging output
+           
         
     Returns
     -------
-    data_tiles : ndarray
-        a numpy array of dimension 13 x nl x nk x llc x llc, one llc x llc array 
+    data_tiles : dask Array
+        a dask array of dimension nk 13 x nl x nk x llc x llc, one llc x llc array 
         for each of the 13 tiles and nl and nk levels.  
 
+    Note
+    ----
+        The dask array can be converted to a numpy array via
+        data = np.asarray(data_tiles)
+        
     """
 
     full_filename = '%s/%s' % (fdir,fname)
 
+    if not less_output:
+        print (full_filename)
+    
     # Handle "skipped" records by reading up until that record, and
     # dropping preceding records afterward
     #
