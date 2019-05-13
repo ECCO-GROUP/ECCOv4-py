@@ -12,6 +12,14 @@ This module includes routines for converting arrays between the model
 from __future__ import division,print_function
 import numpy as np
 import xarray as xr
+from xmitgcm.variables import dimensions
+
+# xarray>=0.12.0 compatibility
+try:
+    from xarray.core.pycompat import OrderedDict
+except ImportError:
+    from collections import OrderedDict
+
 
 #%%
 def llc_compact_to_tiles(data_compact, less_output = False):
@@ -707,3 +715,241 @@ def llc_faces_to_compact(F, less_output=True):
         print ('shape of data_compact ', data_compact.shape)
 
     return data_compact
+
+#%%
+def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
+                     dim3=None,dim4=None):
+    """
+    Convert numpy or dask array in tiled format to xarray DataArray 
+    with minimal coordinates: (time,k,tile,j,i) ; (time,k,tile,j_g,i) etc...
+    unless a DataArray or Dataset is provided to provide more coordinate info
+
+    4D Example: 
+    A 4D field (3D in space and 4D in time) living on tracer points with 
+    dimension order resulting from mds_io.read_bin_to_tiles: 
+
+       >> array.shape
+       [N_tiles, N_recs, N_z, N_y, N_x]
+
+    We would read this in as follows:
+
+        >> xda = llc_tiles_to_xda(data_tiles=array, var_type='c', 
+                                  dim3='depth', dim4='time')
+
+    Note: 
+    1. for the 3D case, dim4 is not necessary, and dim3 can be either
+    'time' or 'depth'
+    2. for the 2D case, dim3 and dim4 are not necessary
+
+    Parameters
+    ----------
+    data_tiles : numpy or dask+numpy array
+        see above for specified dimension order
+    var_type : string, optional
+        Note: only optional if grid_da is provided! 
+        specification for where on the grid the variable lives
+        'c' - grid cell center, i.e. tracer point, e.g. XC, THETA, ...
+        'w' - west grid cell edge, e.g. dxG, zonal velocity, ...
+        's' - south grid cell edge, e.g. dyG, meridional velocity, ...
+        'z' - southwest grid cell edge, zeta/vorticity point, e.g. rAz
+    grid_da : xarray DataArray, optional
+        a DataArray or Dataset with the grid coordinates already loaded
+    less_output : boolean, optional
+        A debugging flag.  False = less debugging output
+    dim3 : string, optional
+        Specify the third dimension, either 'depth' or 'time'
+    dim4 : string, optional
+        Specify the fourth dimension, either 'depth' or 'time'
+
+
+    Returns
+    -------
+    da : xarray DataArray
+    """
+
+    if var_type is None and grid_da is None:
+        raise TypeError('Must specify var_type="c","w","s", or "z" if grid_da is not provided')
+
+    # Reshape data to match xmitgcm dimension order
+    # Want it in [N_recs, N_z, N_tiles, N_j, N_i]
+    if len(data_tiles.shape)==5:
+        if not less_output:
+            print('Found 5D array, assuming [N_tiles, N_recs, N_z, N_y, N_x]')
+            print('Swapping dims 0 <-> 1')
+
+        data_tiles = data_tiles.swapaxes(0,1)
+
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+            print('Swapping dims 1 <-> 2')
+
+        data_tiles = data_tiles.swapaxes(1,2)
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+
+    elif len(data_tiles.shape)==4:
+        if not less_output:
+            print('Found 4D array, assuming [N_tiles, N_?, N_y, N_x]')
+            print('Swapping dims 0 <-> 1')
+
+        data_tiles = data_tiles.swapaxes(0,1)
+
+        if not less_output:
+            print('Array shape is now:')
+            print(data_tiles.shape)
+
+    elif len(data_tiles.shape)==3:
+        if not less_output:
+            print('Found 3D array, assuming [N_tiles, N_y, N_x]')
+            print('No swapping necessary')
+    else:
+        raise TypeError('Found unfamiliar array shape: %d' % data_tiles.shape)
+
+    # If a DataArray or Dataset is given to model after, use this first!
+    if grid_da is not None:
+        da = xr.DataArray(data=data_tiles,
+                          coords=grid_da.coords.variables,
+                          dims=grid_da.dims,
+                          attrs=grid_da.attrs)
+        return da
+
+    # Provide dims and coords based on grid location
+    if var_type == 'c':
+        da = _make_data_array(data_tiles,'i','j','k',less_output,dim3,dim4)
+
+    elif var_type == 'w':
+        da = _make_data_array(data_tiles,'i_g','j','k',less_output,dim3,dim4)
+
+    elif var_type == 's':
+        da = _make_data_array(data_tiles,'i','j_g','k',less_output,dim3,dim4)
+
+    elif var_type == 'z':
+        da = _make_data_array(data_tiles,'i_g','j_g','k',less_output,dim3,dim4)
+
+    else:
+        raise NotImplementedError("Can only take 'c', 'w', 's', or 'z', other types not implemented.")
+
+    return da
+
+#%%
+def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False,dim3=None,dim4=None):
+    """Non user facing function to make a data array from tiled numpy/dask array 
+    and strings denoting grid location
+
+    Note that here, I'm including the "tiles" dimension... 
+    so dim3 refers to index vector d_4, and dim4 refers to index d_5
+    No user should have to deal with this though
+
+    Parameters
+    ----------
+    data_tiles : numpy/dask array
+        Probably loaded from binary via mds_io.read_bin_to_tiles and rearranged
+        in llc_tiles_to_xda
+    iVar : string
+        denote x grid location, 'i' or 'i_g'
+    jVar : string
+        denote y grid location, 'j' or 'j_g'
+    kVar : string
+        denote x grid location, 'k' only implemented for now. 
+        possible to implement 'k_u' for e.g. vertical velocity ... at some point
+    less_output : boolean, optional
+        debugging flag, False => print more
+    dim3 : string, optional
+        Specify the third dimension, either 'depth' or 'time'
+    dim4 : string, optional
+        Specify the third dimension, either 'depth' or 'time'
+
+    Returns
+    -------
+    da : xarray DataArray
+    """
+
+    # Save shape and num dimensions for below
+    data_shape = data_tiles.shape
+    Ndims = len(data_shape)
+
+    # Create minimal coordinate information
+    i = np.arange(data_shape[-1])
+    j = np.arange(data_shape[-2])
+    tiles = np.arange(data_shape[-3])
+    d_4 = []
+    d_5 = []
+    if len(data_shape)>3:
+        if dim3 is None:
+            raise TypeError("Please specify 3rd dimension as dim3='depth' or dim3='time'")
+        d_4 = np.arange(data_shape[-4])
+
+    if len(data_shape)>4:
+        if dim4 is None:
+            raise TypeError("Please specify 3rd dimension as dim4='depth' or dim4='time'")
+        d_5 = np.arange(data_shape[-5])
+
+    # Determine how to handle fourth dimension
+    if dim3 == 'depth':
+        fourthDimIsDepth = True
+    if len(d_4) != 50:
+        fourthDimIsDepth = False
+        if not less_output:
+            print('Assuming fourth dimension is time because len(data[-4]) != 50')
+    else:
+        if not less_output:
+            print('Assuming fourth dimension is depth because len(data[-4]) = 50')
+
+    # We can't say much about tile or time dimension
+    tile_attrs = OrderedDict([('standard_name','face_index')])
+    time_attrs = OrderedDict([('standard_name','time'), 
+                              ('long_name','Time'),('axis','T')])
+
+    # Create dims tuple, which will at least have
+    # e.g. ('tile','j','i') for a 'c' variable
+    dims = ('tile',jVar,iVar)
+
+    # Coordinates will be a dictionary of 1 dimensional xarray DataArrays
+    # each with their own set of attributes
+    coords = OrderedDict()
+    
+    if Ndims>3:
+        if fourthDimIsDepth:
+            # Only add depth
+            dims = (kVar,) + dims
+            k_da = xr.DataArray(data=d_4, coords={kVar: d_4},
+                                dims=(kVar,), attrs=dimensions[kVar]['attrs'])
+            coords[kVar] = k_da
+    
+        else:
+            # Only add time
+            dims = ('time',) + dims
+            time_da = xr.DataArray(data=d_4, coords={'time': d_4},
+                                   dims=('time',), attrs=time_attrs)
+            coords['time'] = time_da
+
+    if Ndims>4: 
+        if fourthDimIsDepth:
+            # Now add time
+            dims = ('time',) + dims
+            time_da = xr.DataArray(data=d_4, coords={'time': d_4},
+                                   dims=('time',), attrs=time_attrs)
+            coords['time'] = time_da
+    
+        else:
+            # Now add depth
+            dims = (kVar,) + dims
+            k_da = xr.DataArray(data=d_4, coords={kVar: d_4},
+                                dims=(kVar,), attrs=dimensions[kVar]['attrs'])
+            coords[kVar] = k_da
+    
+    # Now add the standard coordinates
+    tile_da = xr.DataArray(data=tiles, coords={'tile': tiles},
+                           dims=('tile',), attrs=tile_attrs)
+    j_da = xr.DataArray(data=j,coords={jVar: j},dims=(jVar,),
+                        attrs=dimensions[jVar]['attrs'])
+    i_da = xr.DataArray(data=i, coords={iVar: i}, dims=(iVar,), 
+                        attrs=dimensions[iVar]['attrs'])
+
+    coords['tile'] = tile_da
+    coords[jVar] = j_da
+    coords[iVar] = i_da
+
+    return xr.DataArray(data=data_tiles, coords=coords, dims=dims)
