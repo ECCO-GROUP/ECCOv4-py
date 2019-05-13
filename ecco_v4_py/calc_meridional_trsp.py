@@ -15,6 +15,7 @@ from .ecco_utils import get_llc_grid
 from .vector_calc import get_latitude_masks
 
 # Define constants
+# These are chosen (for now) to match gcmfaces
 METERS_CUBED_TO_SVERDRUPS = 10**-6
 WATTS_TO_PETAWATTS = 10**-15
 RHO_CONST = 1000
@@ -34,7 +35,9 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
         If not specified, compute global quantity
         see get_basin.get_available_basin_names for options
     grid : xgcm Grid object, optional
-        denotes LLC90 operations for xgcm, see utils.get_llc_grid
+        denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
+        see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
+
 
     Returns
     -------
@@ -158,7 +161,7 @@ def meridional_trsp_at_depth(ufld, vfld, lat_vals, cds,
         see get_basin.get_available_basin_names for options
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
-        see also xgcm.Grid
+        see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
 
     Returns
     -------

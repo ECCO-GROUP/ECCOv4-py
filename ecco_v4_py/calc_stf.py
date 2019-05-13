@@ -19,7 +19,7 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
     ----------
     ds : xarray DataSet
         must contain UVELMASS,VVELMASS, drF, dyG, dxG
-    lat_vals : int or array_like of ints
+    lat_vals : float or list
         latitude value(s) rounded to the nearest degree
         specifying where to compute overturning streamfunction
     doFlip : logical, optional
@@ -30,7 +30,8 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
         If not specified, compute global quantity
         see utils.get_available_basin_names for options
     grid : xgcm Grid object, optional
-        denotes LLC90 operations for xgcm, see utils.get_llc_grid
+        denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
+        see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
 
     Returns
     -------
