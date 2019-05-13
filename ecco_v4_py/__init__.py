@@ -8,7 +8,6 @@ from .ecco_utils import get_llc_grid
 
 from .get_basin import get_basin_mask, get_available_basin_names
 
-from . import vector_calc
 
 #from extract_grid_fields_from_mitgrid_files import extract_U_point_grid_fields_from_mitgrid_as_tiles
 #from extract_grid_fields_from_mitgrid_files import extract_G_point_grid_fields_from_mitgrid_as_tiles
@@ -69,7 +68,6 @@ from .tile_rotation import rotate_single_tile_DataArrays_UV_points
 
 from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
 
-
 __all__ = ['ecco_utils', 
            'llc_array_conversion', 
            'netcdf_product_generation',
@@ -81,4 +79,5 @@ __all__ = ['ecco_utils',
            'tile_plot',
            'tile_plot_proj', 
            'tile_rotation', 
-           'test_llc_array_loading_and_conversion']
+           'test_llc_array_loading_and_conversion',
+           'vector_calc']
