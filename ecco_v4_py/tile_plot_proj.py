@@ -48,6 +48,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             'cyl' - Lambert Cylindrical
             'ortho' - Orthographic
             'stereo' - polar stereographic projection, see lat_lim for choosing
+            'InterruptedGoodeHomolosine'
                 North or South
     user_lon_0 : int, optional
         denote central longitude
@@ -79,8 +80,6 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             cmax =  kwargs[key]
         else:
             print("unrecognized argument ", key)
-
-
 
     #%%
     # To avoid plotting problems around the date line, lon=180E, -180W 
@@ -303,26 +302,15 @@ def plot_global(xx,yy, data,
 
 def _create_projection_axis(projection_type,user_lon_0,lat_lim):
     """Set appropriate axis for projection type
-
-    Parameters
-    ----------
-    projection_type :   string
-                        user specified projection
-
-    user_lon_0      :   double
-                        center longitude value
-
-    lat_lim         :   double
-                        limiting latitude value
-
+    See plot_proj_to_latlon_grid for input parameter definitions.
 
     Returns
     -------
-    ax              :   matplotlib axis object
-
-    show_grid_labels:   logical
-                        True = show the grid labels, only currently
-                        supported for PlateCarree and Mercator projections
+    ax :  matplotlib axis object
+        defined with the correct projection
+    show_grid_labels : logical
+        True = show the grid labels, only currently
+        supported for PlateCarree and Mercator projections
     """
         
 
@@ -359,7 +347,7 @@ def _create_projection_axis(projection_type,user_lon_0,lat_lim):
         show_grid_labels = False
         
     else:
-        raise ValueError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", or "stereo"')
+        raise NotImplementedError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
 
     #print ('projection type ', projection_type)
     return (ax,show_grid_labels)
