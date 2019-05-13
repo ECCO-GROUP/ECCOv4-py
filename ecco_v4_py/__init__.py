@@ -1,3 +1,7 @@
+from .calc_meridional_trsp import calc_meridonal_vol_trsp, \
+        calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
+        meridional_trsp_at_depth
+
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -70,7 +74,9 @@ from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversi
 
 from . import vector_calc
 
-__all__ = ['ecco_utils', 
+__all__ = ['calc_meridional_trsp',
+           'calc_stf',
+           'ecco_utils', 
            'llc_array_conversion', 
            'netcdf_product_generation',
            'read_bin_llc',
