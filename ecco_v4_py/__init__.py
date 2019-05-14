@@ -1,9 +1,19 @@
+from .calc_meridional_trsp import calc_meridional_vol_trsp, \
+        calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
+        meridional_trsp_at_depth
+
+from .calc_stf import calc_meridional_stf
+
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
 
 from .ecco_utils import minimal_metadata
 from .ecco_utils import months2days
+from .ecco_utils import get_llc_grid
+
+from .get_basin import get_basin_mask, get_available_basin_names
+
 
 #from extract_grid_fields_from_mitgrid_files import extract_U_point_grid_fields_from_mitgrid_as_tiles
 #from extract_grid_fields_from_mitgrid_files import extract_G_point_grid_fields_from_mitgrid_as_tiles
@@ -30,6 +40,8 @@ from .read_bin_llc import load_ecco_vars_from_mds
 from .read_bin_gen import load_binary_array
 
 from .resample_to_latlon import resample_to_latlon
+
+from . import scalar_calc
 
 from .tile_exchange import append_border_to_tile
 from .tile_exchange import add_borders_to_DataArray_V_points
@@ -64,16 +76,21 @@ from .tile_rotation import rotate_single_tile_DataArrays_UV_points
 
 from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
 
+from . import vector_calc
 
-__all__ = ['ecco_utils', 
+__all__ = ['calc_meridional_trsp',
+           'calc_stf',
+           'ecco_utils', 
            'llc_array_conversion', 
            'netcdf_product_generation',
            'read_bin_llc',
            'read_bin_gen', 
            'resample_to_latlon', 
+           'scalar_calc',
            'tile_exchange', 
            'tile_io', 
            'tile_plot',
            'tile_plot_proj', 
            'tile_rotation', 
-           'test_llc_array_loading_and_conversion']
+           'test_llc_array_loading_and_conversion',
+           'vector_calc']
