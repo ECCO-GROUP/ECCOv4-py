@@ -181,7 +181,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
             year, mon, day, hh, mm, ss  = \
                  extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(ecco_dataset.time.values)
                         
-            print(year,mon,day)
+            print(year, mon, day)
             
             # if the field comes from an average, 
             # extract the time bounds -- we'll use it before we save
@@ -293,6 +293,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                     tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
                     
                     # save to netcdf.  it's that simple.
+                    print ('saving to %s' % newpath + '/' + fname)
                     tmp.to_netcdf(newpath + '/' + fname)
                     
     return ecco_dataset, tmp

@@ -38,12 +38,12 @@ from .tile_exchange import add_borders_to_DataArray_G_points
 from .tile_exchange import get_llc_tile_border_mapping
 from .tile_exchange import add_borders_to_GRID_tiles
 
-#from .tile_io import load_all_tiles_from_netcdf
-#from .tile_io import load_tile_from_netcdf
-#from .tile_io import load_subset_tiles_from_netcdf
-from .tile_io import load_ecco_grid_tiles_from_nc
-from .tile_io import recursive_load_ecco_var_tiles_from_nc
-from .tile_io import load_ecco_var_tiles_from_nc
+
+from .tile_io import load_ecco_grid_from_tiles_nc
+from .tile_io import load_ecco_var_from_tiles_nc
+from .tile_io import recursive_load_ecco_var_from_tiles_nc
+from .tile_io import load_ecco_var_from_years_nc
+from .tile_io import recursive_load_ecco_var_from_years_nc
 
 from .tile_plot import plot_tile
 from .tile_plot import plot_tiles
