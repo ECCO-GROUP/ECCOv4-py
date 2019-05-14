@@ -31,6 +31,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False, 
                              show_grid_lines = True,
                              show_grid_labels = True,
+                             less_output=True,
                              **kwargs):
     """Generate a plot of llc data, resampled to lat/lon grid, on specified 
     projection.
@@ -42,7 +43,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         be plotted
     projection_type : string, optional
         denote the type of projection, options include
-            'robin' - Robinson 
+            'robin' - Robinson
             'PlateCaree' - flat 2D projection
             'Mercator'
             'cyl' - Lambert Cylindrical
@@ -67,6 +68,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         True only possible for Mercator or PlateCarree projections
     cmin, cmax : float, optional
         minimum and maximum values for colorbar, default is min/max of data
+    less_output : string, optional
+        debugging flag, don't print if True
     """
 
     #%%    
@@ -118,14 +121,15 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     # Make projection axis
     (ax,show_grid_labels) = _create_projection_axis(
-            projection_type,user_lon_0,lat_lim)
+            projection_type,user_lon_0,lat_lim,less_output)
     
 
     #%%
     # loop through different parts of the map to plot (if they exist), 
     # do interpolation and plot
     f = plt.gcf()
-    #print(len(lon_tmp_d))
+    if not less_output:
+        print('len(lon_tmp_d): ',len(lon_tmp_d))
     for key, lon_tmp in lon_tmp_d.items():
 
         new_grid_lon, new_grid_lat, data_latlon_projection = \
@@ -146,7 +150,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar=False, 
                              circle_boundary=True,
                              cmap=cmap, 
-                             show_grid_lines=False)
+                             show_grid_lines=False,
+                             less_output=less_output)
 
         else: # not polar stereo
             p, gl, cbar = \
@@ -194,19 +199,23 @@ def plot_pstereo(xx,yy, data,
                  circle_boundary = False, 
                  cmap='jet', 
                  show_grid_lines=False,
-                 levels = 20):
+                 levels = 20,
+                 less_output=True):
 
                             
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
         ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
-        print('north')
+        if not less_output:
+            print('North Polar Projection')
     elif isinstance(ax.projection, ccrs.SouthPolarStereo):
         ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
-        print('south')
+        if not less_output:
+            print('South Polar Projection')
     else:
         raise ValueError('ax must be either ccrs.NorthPolarStereo or ccrs.SouthPolarStereo')
 
-    print(lat_lim)
+    if not less_output:
+        print('lat_lim: ',lat_lim)
     
     if circle_boundary:
         theta = np.linspace(0, 2*np.pi, 100)
@@ -300,7 +309,7 @@ def plot_global(xx,yy, data,
 
 # -----------------------------------------------------------------------------
 
-def _create_projection_axis(projection_type,user_lon_0,lat_lim):
+def _create_projection_axis(projection_type,user_lon_0,lat_lim,less_output):
     """Set appropriate axis for projection type
     See plot_proj_to_latlon_grid for input parameter definitions.
 
@@ -349,5 +358,7 @@ def _create_projection_axis(projection_type,user_lon_0,lat_lim):
     else:
         raise NotImplementedError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
 
-    #print ('projection type ', projection_type)
+    if not less_output:
+        print('Projection type: ', projection_type)
+
     return (ax,show_grid_labels)
