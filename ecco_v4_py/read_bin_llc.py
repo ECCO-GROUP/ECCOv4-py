@@ -1,4 +1,4 @@
-    """
+"""
 ECCO v4 Python: read_bin_llc
 
 This module includes utility routines for loading binary files in the 
