@@ -27,7 +27,8 @@ setup(
 	'pyyaml',
 	'pyproj',
 	'pykdtree',
-	'cartopy'],
+	'cartopy',
+  	'xgcm'],
   classifiers=[
       'Development Status :: 3 - Alpha',
       'Intended Audience :: Science/Research', 
