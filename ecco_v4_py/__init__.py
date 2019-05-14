@@ -41,6 +41,8 @@ from .read_bin_gen import load_binary_array
 
 from .resample_to_latlon import resample_to_latlon
 
+from . import scalar_calc
+
 from .tile_exchange import append_border_to_tile
 from .tile_exchange import add_borders_to_DataArray_V_points
 from .tile_exchange import add_borders_to_DataArray_U_points
@@ -84,6 +86,7 @@ __all__ = ['calc_meridional_trsp',
            'read_bin_llc',
            'read_bin_gen', 
            'resample_to_latlon', 
+           'scalar_calc',
            'tile_exchange', 
            'tile_io', 
            'tile_plot',
