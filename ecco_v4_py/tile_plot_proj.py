@@ -31,6 +31,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False, 
                              show_grid_lines = True,
                              show_grid_labels = True,
+                             subplot_grid=None,
                              less_output=True,
                              **kwargs):
     """Generate a plot of llc data, resampled to lat/lon grid, on specified 
@@ -68,6 +69,18 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         True only possible for Mercator or PlateCarree projections
     cmin, cmax : float, optional
         minimum and maximum values for colorbar, default is min/max of data
+    subplot_grid : dict or list, optional
+        specifying placement on subplot as
+            dict:
+                {'nrows': rows_val, 'ncols': cols_val, 'index': index_val}
+
+            list:
+                [nrows_val, ncols_val, index_val]
+
+            equates to
+
+                matplotlib.pyplot.subplot(
+                    row=nrows_val, col=ncols_val,index=index_val)
     less_output : string, optional
         debugging flag, don't print if True
     """
@@ -121,7 +134,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     # Make projection axis
     (ax,show_grid_labels) = _create_projection_axis(
-            projection_type,user_lon_0,lat_lim,less_output)
+            projection_type, user_lon_0, lat_lim, subplot_grid, less_output)
     
 
     #%%
@@ -309,7 +322,8 @@ def plot_global(xx,yy, data,
 
 # -----------------------------------------------------------------------------
 
-def _create_projection_axis(projection_type,user_lon_0,lat_lim,less_output):
+def _create_projection_axis(projection_type, user_lon_0, lat_lim, subplot_grid,
+                            less_output):
     """Set appropriate axis for projection type
     See plot_proj_to_latlon_grid for input parameter definitions.
 
@@ -321,38 +335,88 @@ def _create_projection_axis(projection_type,user_lon_0,lat_lim,less_output):
         True = show the grid labels, only currently
         supported for PlateCarree and Mercator projections
     """
-        
+
+    # initialize (optional) subplot variables
+    row = []
+    col = []
+    ind = []
+
+    if subplot_grid is not None:
+
+        if type(subplot_grid) is dict:
+            row = subplot_grid['nrows']
+            col = subplot_grid['ncols']
+            ind = subplot_grid['index']
+
+        elif type(subplot_grid) is list:
+            row = subplot_grid[0]
+            col = subplot_grid[1]
+            ind = subplot_grid[2]
+
+        else:
+            raise TypeError('Unexpected subplot_grid type: ',type(subplot_grid))
+
 
     if projection_type == 'Mercator':
-        ax = plt.axes(projection =  ccrs.Mercator(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.Mercator(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.Mercator(central_longitude=user_lon_0))
         show_grid_labels = True
 
     elif projection_type == 'PlateCaree':
-        ax = plt.axes(projection = ccrs.PlateCarree(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.PlateCarree(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=user_lon_0))
         show_grid_labels = True
 
     elif projection_type == 'cyl':
-        ax = plt.axes(projection = ccrs.LambertCylindrical(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.LambertCylindrical(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.LambertCylindrical(central_longitude=user_lon_0))
         show_grid_labels = False
 
     elif projection_type == 'robin':    
-        ax = plt.axes(projection = ccrs.Robinson(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.Robinson(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.Robinson(central_longitude=user_lon_0))
         show_grid_labels = False
 
     elif projection_type == 'ortho':
-        ax = plt.axes(projection =  ccrs.Orthographic(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.Orthographic(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.Orthographic(central_longitude=user_lon_0))
         show_grid_labels = False
 
     elif projection_type == 'stereo':    
         if lat_lim > 0:
-            ax = plt.axes(projection =ccrs.NorthPolarStereo())
+            stereo_proj = ccrs.NorthPolarStereo()
         else:
-            ax = plt.axes(projection =ccrs.SouthPolarStereo())
+            stereo_proj = ccrs.SouthPolarStereo()
+
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=stereo_proj)
+        else:
+            ax = plt.axes(projection=stereo_proj)
 
         show_grid_labels = False
 
     elif projection_type == 'InterruptedGoodeHomolosine':
-        ax = plt.axes(projection = ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
         show_grid_labels = False
         
     else:
