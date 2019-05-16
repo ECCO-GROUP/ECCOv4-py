@@ -2,6 +2,11 @@ from .calc_meridional_trsp import calc_meridional_vol_trsp, \
         calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
         meridional_trsp_at_depth
 
+from .calc_section_trsp import calc_section_vol_trsp, \
+        calc_section_heat_trsp, calc_section_salt_trsp, \
+        section_trsp_at_depth, get_section_endpoints, \
+        get_available_sections, get_section_line_masks
+
 from .calc_stf import calc_meridional_stf
 
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
@@ -79,6 +84,7 @@ from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversi
 from . import vector_calc
 
 __all__ = ['calc_meridional_trsp',
+           'calc_section_trsp',
            'calc_stf',
            'ecco_utils', 
            'llc_array_conversion', 
