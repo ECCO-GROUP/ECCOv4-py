@@ -722,7 +722,8 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
     """
     Convert numpy or dask array in tiled format to xarray DataArray 
     with minimal coordinates: (time,k,tile,j,i) ; (time,k,tile,j_g,i) etc...
-    unless a DataArray or Dataset is provided to provide more coordinate info
+    unless a DataArray or Dataset is provided as a template 
+    to provide more coordinate info
 
     4D Example: 
     A 4D field (3D in space and 4D in time) living on tracer points with 
@@ -736,10 +737,16 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
         >> xda = llc_tiles_to_xda(data_tiles=array, var_type='c', 
                                   dim3='depth', dim4='time')
 
-    Note: 
+    Note:
     1. for the 3D case, dim4 is not necessary, and dim3 can be either
     'time' or 'depth'
     2. for the 2D case, dim3 and dim4 are not necessary
+
+    Special case!
+    data_tiles can also be a 1D array ONLY if the user provides
+    grid_da as a template for how to shape it back to a numpy array, then
+    to DataArray.
+    See calc_section_trsp._rotate_the_grid for an example usage.
 
     Parameters
     ----------
@@ -804,11 +811,25 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
         if not less_output:
             print('Found 3D array, assuming [N_tiles, N_y, N_x]')
             print('No swapping necessary')
+    elif len(data_tiles.shape)==1:
+        if grid_da is None:
+            raise TypeError('If converting 1D array, must specify grid_da as template')
+
+        if not less_output:
+            print('Found 1D array, will use grid_da input to shape it')
+
     else:
         raise TypeError('Found unfamiliar array shape: %d' % data_tiles.shape)
 
     # If a DataArray or Dataset is given to model after, use this first!
     if grid_da is not None:
+
+        # Add case for 1D array
+        # This is like the gcmfaces routine convert2gcmfaces or convert2array
+        # except it's practically two lines of code
+        if len(data_tiles.shape)==1:
+            data_tiles = np.reshape(data_tiles, np.shape(grid_da.values))
+
         da = xr.DataArray(data=data_tiles,
                           coords=grid_da.coords.variables,
                           dims=grid_da.dims,
