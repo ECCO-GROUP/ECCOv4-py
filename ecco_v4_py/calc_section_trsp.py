@@ -554,9 +554,9 @@ def _rotate_the_grid(lon, lat, rot_1, rot_2, rot_3):
     xg, yg, zg = _apply_rotation_matrix(rot_3, (xg,yg,zg))
 
     # Remake into LLC xarray DataArray
-    xg = llc_tiles_to_xda(xg,grid_da=lon)
-    yg = llc_tiles_to_xda(yg,grid_da=lat)
-    zg = llc_tiles_to_xda(zg,grid_da=lon)
+    xg = llc_tiles_to_xda(xg, grid_da=lon, less_output=True)
+    yg = llc_tiles_to_xda(yg, grid_da=lat, less_output=True)
+    zg = llc_tiles_to_xda(zg, grid_da=lon, less_output=True)
 
     return xg, yg, zg
 
