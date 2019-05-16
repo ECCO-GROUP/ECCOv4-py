@@ -4,8 +4,7 @@ from .calc_meridional_trsp import calc_meridional_vol_trsp, \
 
 from .calc_section_trsp import calc_section_vol_trsp, \
         calc_section_heat_trsp, calc_section_salt_trsp, \
-        section_trsp_at_depth, get_section_endpoints, \
-        get_available_sections, get_section_line_masks
+        section_trsp_at_depth
 
 from .calc_stf import calc_meridional_stf, calc_section_stf
 
@@ -19,6 +18,8 @@ from .ecco_utils import get_llc_grid
 
 from .get_basin import get_basin_mask, get_available_basin_names
 
+from .get_section_masks import get_section_endpoints, \
+        get_available_sections, get_section_line_masks
 
 #from extract_grid_fields_from_mitgrid_files import extract_U_point_grid_fields_from_mitgrid_as_tiles
 #from extract_grid_fields_from_mitgrid_files import extract_G_point_grid_fields_from_mitgrid_as_tiles
@@ -87,6 +88,7 @@ __all__ = ['calc_meridional_trsp',
            'calc_section_trsp',
            'calc_stf',
            'ecco_utils', 
+           'get_section_masks',
            'llc_array_conversion', 
            'netcdf_product_generation',
            'read_bin_llc',
