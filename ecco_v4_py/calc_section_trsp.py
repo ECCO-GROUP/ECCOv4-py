@@ -11,7 +11,8 @@ try:
 except ImportError:
     from collections import OrderedDict
 
-from .utils import get_llc_grid, remake_llc_xda
+from .ecco_utils import get_llc_grid
+from .llc_array_conversion import llc_tiles_to_xda
 from . import scalar_calc
 
 # -------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ def calc_section_vol_trsp(ds,
     ----------
     ds : xarray Dataset
         must contain UVELMASS,VVELMASS, drF, dyG, dxG
-    pt1, pt2 : array_like or tuple with two floats, optional
+    pt1, pt2 : list or tuple with two floats, optional
         end points for section line as [lon lat] or (lon, lat)
     maskW, maskS : xarray DataArray, optional
         masks denoting the section, created by get_section_line_masks
@@ -69,7 +70,8 @@ def calc_section_vol_trsp(ds,
         via get_section_endpoints
         otherwise, adds name to returned DataArray
     grid : xgcm Grid object, optional
-        denotes LLC90 operations for xgcm, see utils.get_llc_grid
+        denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
+        see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
 
     Returns
     -------
@@ -86,11 +88,11 @@ def calc_section_vol_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define volumetric transport
-    u_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG'] 
-    v_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG'] 
+    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG'] 
+    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG'] 
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp = section_trsp_at_depth(u_vol,v_vol,maskW,maskS,
+    vol_trsp = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
                                      cds=ds.coords.to_dataset(),
                                      grid=grid)
     # Sum over depth
@@ -140,11 +142,11 @@ def calc_section_heat_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define heat transport
-    u_heat = ds['ADVx_TH'] * ds['DFxE_TH']
-    v_heat = ds['ADVy_TH'] * ds['DFyE_TH']
+    x_heat = ds['ADVx_TH'] * ds['DFxE_TH']
+    y_heat = ds['ADVy_TH'] * ds['DFyE_TH']
 
     # Computes salt transport in degC * m^3/s at each depth level
-    heat_trsp = section_trsp_at_depth(u_heat,v_heat,maskW,maskS,
+    heat_trsp = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
                                       cds=ds.coords.to_dataset(),
                                       grid=grid)
     # Sum over depth
@@ -194,11 +196,11 @@ def calc_section_salt_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define salt transport
-    u_salt = ds['ADVx_SLT'] * ds['DFxE_SLT']
-    v_salt = ds['ADVy_SLT'] * ds['DFyE_SLT']
+    x_salt = ds['ADVx_SLT'] * ds['DFxE_SLT']
+    y_salt = ds['ADVy_SLT'] * ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp = section_trsp_at_depth(u_salt,v_salt,maskW,maskS,
+    salt_trsp = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
                                       cds=ds.coords.to_dataset(),
                                       grid=grid)
     # Sum over depth
@@ -223,7 +225,7 @@ def calc_section_salt_trsp(ds,
 # Main functions for computing standard transport quantities
 # -------------------------------------------------------------------------------
 
-def section_trsp_at_depth(ufld, vfld, maskW, maskS, cds, 
+def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds, 
                           grid=None):
     """
     Compute transport of vector quantity at each depth level 
@@ -231,7 +233,7 @@ def section_trsp_at_depth(ufld, vfld, maskW, maskS, cds,
 
     Parameters
     ----------
-    ufld, vfld : xarray DataArray
+    xfld, yfld : xarray DataArray
         3D spatial (+ time, optional) field at west and south grid cell edge
     maskW, maskS : xarray DataArray
         defines the section to define transport across
@@ -255,8 +257,8 @@ def section_trsp_at_depth(ufld, vfld, maskW, maskS, cds,
     sec_trsp = _initialize_section_trsp_data_array(cds)
 
     # Apply section mask and sum horizontally
-    sec_trsp_x = (ufld * maskW).sum(dim=['i_g','j','tile'])
-    sec_trsp_y = (vfld * maskS).sum(dim=['i','j_g','tile'])
+    sec_trsp_x = (xfld * maskW).sum(dim=['i_g','j','tile'])
+    sec_trsp_y = (yfld * maskS).sum(dim=['i','j_g','tile'])
 
     return sec_trsp_x + sec_trsp_y
 
@@ -273,6 +275,8 @@ def get_section_endpoints(section_name):
         pt1 = [-68, -54]
         pt2 = [-63, -66]
 
+    These sections mirror the gcmfaces definitions, see 
+    gcmfaces/gcmfaces_calc/gcmfaces_lines_pairs.m
 
     Parameters
     ----------
@@ -401,7 +405,6 @@ def get_available_sections():
     'Madagascar Antarctica',
     'South Africa Antarctica']
 
-
     return section_list
 
 # -------------------------------------------------------------------------------
@@ -409,11 +412,12 @@ def get_available_sections():
 # -------------------------------------------------------------------------------
 
 def get_section_line_masks(pt1, pt2, cds):
-    """Compute 2D mask with 1's along great circle line between lat/lon1 -> lat/lon2
+    """Compute 2D mask with 1's along great circle line 
+    from lat/lon1 -> lat/lon2
 
     Parameters
     ----------
-    pt1, pt2 : tuple or array with 2 floats
+    pt1, pt2 : tuple or list with 2 floats
         [longitude, latitude] or (longitude, latitude) of endpoints
     cds : xarray Dataset
         containing grid coordinate information, at least XC, YC
@@ -550,9 +554,9 @@ def _rotate_the_grid(lon, lat, rot_1, rot_2, rot_3):
     xg, yg, zg = _apply_rotation_matrix(rot_3, (xg,yg,zg))
 
     # Remake into LLC xarray DataArray
-    xg = remake_llc_xda(xg,lon)
-    yg = remake_llc_xda(yg,lat)
-    zg = remake_llc_xda(zg,lon)
+    xg = llc_tiles_to_xda(xg,grid_da=lon)
+    yg = llc_tiles_to_xda(yg,grid_da=lat)
+    zg = llc_tiles_to_xda(zg,grid_da=lon)
 
     return xg, yg, zg
 
@@ -626,7 +630,7 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
 
     Parameters
     ----------
-    see calc_vol_trsp
+    see calc_section_vol_trsp
 
     Returns
     -------
@@ -666,8 +670,6 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
             raise TypeError('Cannot provide more than one method for defining section')
         elif use_endpoints:
             _, maskW, maskS = get_section_line_masks(pt1, pt2, ds)
-
-
 
     return maskW, maskS
 
