@@ -7,7 +7,7 @@ from .calc_section_trsp import calc_section_vol_trsp, \
         section_trsp_at_depth, get_section_endpoints, \
         get_available_sections, get_section_line_masks
 
-from .calc_stf import calc_meridional_stf
+from .calc_stf import calc_meridional_stf, calc_section_stf
 
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64

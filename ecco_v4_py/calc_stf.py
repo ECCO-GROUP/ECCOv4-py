@@ -7,6 +7,7 @@ import numpy as np
 
 from .ecco_utils import get_llc_grid
 from .calc_meridional_trsp import meridional_trsp_at_depth
+from .calc_section_trsp import _parse_section_trsp_inputs, section_trsp_at_depth
 
 # Define constants
 METERS_CUBED_TO_SVERDRUPS = 10**-6
@@ -50,6 +51,59 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
                                        cds=ds.coords.to_dataset(), 
                                        basin_name=basin_name, 
                                        grid=grid)
+
+    # Flip depth dimension, take cumulative sum, flip back
+    if doFlip:
+        psi_moc = psi_moc.isel(k=slice(None,None,-1))
+
+    # Should this be done with a grid object??? 
+    psi_moc = psi_moc.cumsum(dim='k')
+    
+    if doFlip:
+        psi_moc = -1 * psi_moc.isel(k=slice(None,None,-1))
+
+    # Convert to Sverdrups
+    psi_moc = psi_moc * METERS_CUBED_TO_SVERDRUPS
+    psi_moc.attrs['units'] = 'Sv'
+
+    return psi_moc
+
+def calc_section_stf(ds, 
+                     pt1=None, pt2=None, 
+                     section_name=None,
+                     maskW=None, maskS=None,
+                     doFlip=True,grid=None):
+    """Compute the overturning streamfunction in plane normal to 
+    section defined by pt1 and pt2 in depth space
+
+    See calc_section_trsp.calc_section_vol_trsp for the various ways 
+    to call this function 
+
+    All inputs are the same except:
+
+    Parameters
+    ----------
+    ds : xarray DataSet
+        must contain UVELMASS,VVELMASS, drF, dyG, dxG
+
+    Returns
+    -------
+    psi : xarray DataArray
+        meridional overturning streamfunction in Sverdrups
+        with dimensions time (if present in dataset) and rho_c (density)
+    """
+
+    # Compute volume transport
+    trsp_x = ds['UVELMASS'] * ds['drF'] * ds['dyG']
+    trsp_y = ds['VVELMASS'] * ds['drF'] * ds['dxG']
+
+    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
+
+    # Creates an empty streamfunction
+    psi_moc = section_trsp_at_depth(trsp_x, trsp_y,
+                                    maskW, maskS, 
+                                    cds=ds.coords.to_dataset(), 
+                                    grid=grid)
 
     # Flip depth dimension, take cumulative sum, flip back
     if doFlip:
