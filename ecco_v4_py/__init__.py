@@ -47,7 +47,7 @@ from .read_bin_gen import load_binary_array
 
 from .resample_to_latlon import resample_to_latlon
 
-import scalar_calc
+from ecco_v4_py import  scalar_calc
 
 from .tile_exchange import append_border_to_tile
 from .tile_exchange import add_borders_to_DataArray_V_points
@@ -82,7 +82,7 @@ from .tile_rotation import rotate_single_tile_DataArrays_UV_points
 
 from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
 
-import vector_calc
+from ecco_v4_py import vector_calc
 
 __all__ = ['calc_meridional_trsp',
            'calc_section_trsp',

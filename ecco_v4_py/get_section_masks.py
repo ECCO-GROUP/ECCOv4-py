@@ -8,7 +8,7 @@ import numpy as np
 
 from .ecco_utils import get_llc_grid
 from .llc_array_conversion import llc_tiles_to_xda
-from . import scalar_calc
+from ecco_v4_py import scalar_calc
 
 # -------------------------------------------------------------------------------
 # Functions for generating pre-defined section masks
