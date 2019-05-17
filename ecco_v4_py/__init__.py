@@ -2,7 +2,11 @@ from .calc_meridional_trsp import calc_meridional_vol_trsp, \
         calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
         meridional_trsp_at_depth
 
-from .calc_stf import calc_meridional_stf
+from .calc_section_trsp import calc_section_vol_trsp, \
+        calc_section_heat_trsp, calc_section_salt_trsp, \
+        section_trsp_at_depth
+
+from .calc_stf import calc_meridional_stf, calc_section_stf
 
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
@@ -14,6 +18,8 @@ from .ecco_utils import get_llc_grid
 
 from .get_basin import get_basin_mask, get_available_basin_names
 
+from .get_section_masks import get_section_endpoints, \
+        get_available_sections, get_section_line_masks
 
 #from extract_grid_fields_from_mitgrid_files import extract_U_point_grid_fields_from_mitgrid_as_tiles
 #from extract_grid_fields_from_mitgrid_files import extract_G_point_grid_fields_from_mitgrid_as_tiles
@@ -79,8 +85,10 @@ from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversi
 from . import vector_calc
 
 __all__ = ['calc_meridional_trsp',
+           'calc_section_trsp',
            'calc_stf',
            'ecco_utils', 
+           'get_section_masks',
            'llc_array_conversion', 
            'netcdf_product_generation',
            'read_bin_llc',
