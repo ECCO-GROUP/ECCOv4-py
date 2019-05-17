@@ -12,7 +12,7 @@ except ImportError:
 
 from .get_basin import get_basin_mask
 from .ecco_utils import get_llc_grid
-from .vector_calc import get_latitude_masks
+from ecco_v4_py import vector_calc
 
 # Define constants
 # These are chosen (for now) to match gcmfaces
@@ -191,7 +191,7 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     for lat in lat_vals:
 
         # Compute mask for particular latitude band
-        lat_maskW, lat_maskS = get_latitude_masks(lat, cds['YC'], grid)
+        lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, cds['YC'], grid)
 
         # Sum horizontally
         lat_trsp_x = (xfld * lat_maskW * basin_maskW).sum(dim=['i_g','j','tile'])
