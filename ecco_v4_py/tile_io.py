@@ -2,6 +2,7 @@
 ECCO v4 Python: tile_io
 
 This module provides routines for loading ECCO netcdf files.
+--- now with actual documentation!
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
@@ -25,6 +26,44 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
                                  dask_chunk = True, 
                                  coords_as_vars = False):
         
+    """
+
+    Loads 1-13 NetCDF tile files of the lat-lon-cap (LLC) grid used in ECCOv4.
+
+    
+    Parameters
+    ----------
+    grid_dir : str
+        path to the NetCDF tile files
+
+    grid_base_name : str, optional, default 'ECCOv4r3_grid_tile_' 
+        the prefix string for the tile files.  Tile numbers are in the format 00, 01, .. 12
+  
+    tiles_to_load : int or list or range, optional, default range(13)
+        a list of which tiles to load
+        
+    k_subset : list, optional, default = [] (load all)
+        a list of which vertical levels to load. 
+                
+    cmin/cmax : floats, optional, default calculate using the min/max of the data
+        the minimum and maximum values to use for the colormap
+        
+    dask_chunk : boolean, optional, default True
+        whether or not to ask Dask to chunk the arrays into pieces 90x90.  
+        WARNING: DON'T MESS WITH THIS NUMBER.
+
+    coords_as_vars : boolean, optional, deafult False
+        boolean - do you want the non-dimension coords to actually be considered variables?
+        your call.  Default is no.
+        
+    Returns
+    -------
+    g : Dataset
+        an xarray Dataset
+
+    """
+
+
     g = []
     
     for i in tiles_to_load:
@@ -65,6 +104,53 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
                                           dask_chunk = True,
                                           less_output = True):
     
+    """
+
+    Loads one or more state estimate variables for one or more 
+    years.  Appropriate for ECCOv4 NetCDF files stored as *tiles*
+    * Makes use of load_ecco_var_from_tiles_nc *
+
+
+    Parameters
+    ----------
+    data_root_dir : str
+        path to a top-level directory below we will look for NetCDF tile files
+
+    vars_to_load : list or str, optional, default 'all' 
+        a list or string indicating which variables you want to load.
+        
+        Note: if 'all', data_root_dir must be a directory with one or more
+        variable names.  e.g.,  `eccov4_native_grid_netcdf_tiles` in the
+        below example
+            /eccov4r3_native_grid_netcdf_tiles/THETA/2010
+            /eccov4r3_native_grid_netcdf_tiles/SALT/2010
+            /eccov4r3_native_grid_netcdf_tiles/ETAN/2010
+        when pointed to eccov4r3_native_grid_netcdf_tiles in the above
+        the variables THETA, SALT, and ETAN will be loaded.
+
+    tiles_to_load : int or list or range, optional, default range(13)
+        a list of which tiles to load.  
+    
+    years_to_load : int or list or range, optional, default 'all'
+        a list of which tiles to load
+        
+    k_subset : list, optional, default = [] (load all)
+        a list of which vertical levels to load. 
+                
+    dask_chunk : boolean, optional, default True
+        whether or not to ask Dask to chunk the arrays into pieces 90x90.  
+        WARNING: DON'T MESS WITH THIS NUMBER.
+
+    less_output : boolean, default False
+        A debugging flag.  False = less debugging output
+        
+    Returns
+    -------
+    g : Dataset
+        an xarray Dataset
+
+    """
+
     g = []
 
  
@@ -232,6 +318,52 @@ def load_ecco_var_from_tiles_nc(data_dir,
                                 dask_chunk = True,
                                 less_output = True):
     
+        
+    """
+
+    Loads a single ECCOv4 NetCDF state estimate variable stored 
+    in a directory of 13 tiles, one for each of the tiles of the 
+    lat-lon-cap (llc) grid.  
+
+    Files in this format have names like 
+        /eccov4r3_native_grid_netcdf_tiles/mon_mean/2010/01/THETA_2010_01_tile_01.nc
+        /eccov4r3_native_grid_netcdf_tiles/day_mean/2010/001/THETA_2010_01_01_tile_01.nc
+        /eccov4r3_native_grid_netcdf_tiles/mon_snapshot/2010/01/THETA_2010_01_tile_01.nc
+
+    Simply point this routine at a directory with tile files in it
+    and one or more tiles will be loaded and concatenated.
+
+    * Used repeatedly by recursive_load_ecco_var_from_tiles_nc *
+
+
+    Parameters
+    ----------
+    data_dir : str
+        path to a directory within which we will look for NetCDF tile files
+
+    var_name : str
+        string indicating which variable to load.
+        
+    tiles_to_load : int or list or range, optional, default range(13)
+        a list of which tiles to load.  
+    
+    k_subset : list, optional, default = [] (load all)
+        a list of which vertical levels to load. 
+                
+    dask_chunk : boolean, optional, default True
+        whether or not to ask Dask to chunk the arrays into pieces 90x90.  
+        WARNING: DON'T MESS WITH THIS NUMBER.
+
+    less_output : boolean, default False
+        A debugging flag.  False = less debugging output
+        
+    Returns
+    -------
+    g : Dataset
+        an xarray Dataset
+
+    """
+
     g = []    
     files = np.sort(glob.glob(data_dir + '/' + var_name + '*nc'))
     
@@ -289,7 +421,51 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
                                 tiles_to_load = range(13), k_subset = [],
                                 dask_chunk = True, less_output = True):
     
+    """
+
+    Loads one or more ECCOv4 NetCDF state estimate variable in the
+    format of one file per variable per year.  All 13 tiles of the 
+    lat-lon-cap (llc) grid are present in this type of file.
+
+    Files in this format have names like 
+        /eccov4r3_native_grid_netcdf/mon_mean/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/day_mean/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/mon_snapshot/THETA_2010.nc
+
+    Simply point this routine at a directory with one or more 
+    of these files and one or more years of var_name variables will
+    be loaded. 
+    * Used repeatedly by recursive_load_ecco_var_from_years_nc *
+
+
+    Parameters
+    ----------
+    data_dir : str
+        path to a directory within which we will look for NetCDF tile files
+
+    var_name : str
+        string indicating which variable to load.
+        
+    years_to_load : str, int or list or range, optional, default 'all'
+        a list of which years to load.  
     
+    k_subset : list, optional, default = [] (load all)
+        a list of which vertical levels to load. 
+                
+    dask_chunk : boolean, optional, default True
+        whether or not to ask Dask to chunk the arrays into pieces 90x90.  
+        WARNING: DON'T MESS WITH THIS NUMBER.
+
+    less_output : boolean, default False
+        A debugging flag.  False = less debugging output
+        
+    Returns
+    -------
+    g : Dataset
+        an xarray Dataset
+
+    """
+
     files = np.sort(glob.glob(data_dir + '/' + var_name + '*nc'))
 
     g = []
@@ -353,12 +529,70 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
 #%%
 def recursive_load_ecco_var_from_years_nc(data_root_dir, 
                                           vars_to_load = 'all',
-                                          years_to_load = 'all',
                                           tiles_to_load = range(13),
+                                          years_to_load = 'all',
                                           k_subset = [],
                                           dask_chunk = True,
                                           less_output = True):
- 
+    
+    """
+
+    Loads one or more state estimate variables for one or more 
+    years.  Appropriate for ECCOv4 NetCDF files stored in the
+    format of one file per variable per year.  All 13 tiles of the 
+    lat-lon-cap (llc) grid are present in this type of file.
+
+    Files in this format have names like 
+        /eccov4r3_native_grid_netcdf/mon_mean/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/day_mean/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/mon_snapshot/THETA_2010.nc
+
+    Simply point this routine at a top-level directory, a list of
+    variables you want, and a list of years and prepare to be dazzled.
+
+    * Makes heavy use of load_ecco_var_from_years_nc *
+
+
+    Parameters
+    ----------
+    data_root_dir : str
+        path to a top-level directory below we will look for NetCDF tile files
+
+    vars_to_load : list or str, optional, default 'all' 
+        a list or string indicating which variables you want to load.
+        
+        Note: if 'all', data_root_dir must be a directory with one or more
+        variable names. In the follow example, THETA, SALT, and ETAN
+        will be loaded if the full path to `eccov4_native_grid_netcdf` is 
+        provided:
+            /eccov4r3_native_grid_netcdf/THETA/THETA_YYYY.nc 
+            /eccov4r3_native_grid_netcdf/SALT/SALT_YYYY.nc 
+            /eccov4r3_native_grid_netcdf/ETAN/ETAN_YYYY.nc 
+
+    tiles_to_load : int or list or range, optional, default range(13)
+        a list of which tiles to load.  
+    
+    years_to_load : int or list or range, optional, default 'all'
+        a list of which tiles to load
+        
+    k_subset : list, optional, default = [] (load all)
+        a list of which vertical levels to load. 
+                
+    dask_chunk : boolean, optional, default True
+        whether or not to ask Dask to chunk the arrays into pieces 90x90.  
+        WARNING: DON'T MESS WITH THIS NUMBER.
+
+    less_output : boolean, default False
+        A debugging flag.  False = less debugging output
+        
+    Returns
+    -------
+    g : Dataset
+        an xarray Dataset
+
+    """
+
+
     # ecco_dataset to return
     g = []
 
