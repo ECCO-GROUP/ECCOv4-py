@@ -74,11 +74,14 @@ def calc_section_vol_trsp(ds,
 
     Returns
     -------
-    vol_trsp_ds : xarray Dataset
+    ds_out : xarray Dataset
         includes variables as xarray DataArrays
             vol_trsp
                 freshwater transport across section in Sv
                 with dimensions 'time' (if in given dataset) and 'lat' 
+            vol_trsp_z
+                freshwater transport across section at each depth level in Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
             maskW, maskS
                 defining the section
         and the section_name as an attribute if it is provided
@@ -91,26 +94,28 @@ def calc_section_vol_trsp(ds,
     y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG'] 
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
-                                     cds=ds.coords.to_dataset(),
-                                     grid=grid)
-    # Sum over depth
-    vol_trsp = vol_trsp.sum('k')
+    vol_trsp_z = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
+                                       cds=ds.coords.to_dataset(),
+                                       grid=grid)
 
-    # Convert to Sv
-    vol_trsp = METERS_CUBED_TO_SVERDRUPS * vol_trsp
-    vol_trsp.attrs['units'] = 'Sv'
+    # Make a datset with this result
+    ds_out = vol_trsp_z.to_dataset(name='vol_trsp_z')
 
-    # Add this to a Dataset
-    vol_trsp_ds = vol_trsp.to_dataset(name='vol_trsp')
+    # Sum over depth for total transport
+    ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
+
+    # Convert both fields to Sv
+    for fld in ['vol_trsp','vol_trsp_z']:
+        ds_out[fld] = METERS_CUBED_TO_SVERDRUPS * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'Sv'
 
     # Add section name and masks to Dataset
-    vol_trsp_ds['maskW'] = maskW
-    vol_trsp_ds['maskS'] = maskS
+    ds_out['maskW'] = maskW
+    ds_out['maskS'] = maskS
     if section_name is not None:
-        vol_trsp_ds.attrs['name'] = section_name
+        ds_out.attrs['name'] = section_name
 
-    return vol_trsp_ds
+    return ds_out
 
 def calc_section_heat_trsp(ds,
                            pt1=None, pt2=None,
@@ -133,6 +138,9 @@ def calc_section_heat_trsp(ds,
             heat_trsp
                 heat transport across section in PW
                 with dimensions 'time' (if in given dataset) and 'lat' 
+            heat_trsp_z
+                heat transport across section at each depth level in PW
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
             maskW, maskS
                 defining the section
         and the section_name as an attribute if it is provided
@@ -145,26 +153,28 @@ def calc_section_heat_trsp(ds,
     y_heat = ds['ADVy_TH'] * ds['DFyE_TH']
 
     # Computes salt transport in degC * m^3/s at each depth level
-    heat_trsp = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
-                                      cds=ds.coords.to_dataset(),
-                                      grid=grid)
-    # Sum over depth
-    heat_trsp = heat_trsp.sum('k')
+    heat_trsp_z = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
+                                        cds=ds.coords.to_dataset(),
+                                        grid=grid)
 
-    # Convert to PW
-    heat_trsp = WATTS_TO_PETAWATTS * RHO_CONST * HEAT_CAPACITY * heat_trsp
-    heat_trsp.attrs['units'] = 'PW'
+    # Make a datset with this result
+    ds_out = heat_trsp_z.to_dataset(name='heat_trsp_z')
 
-    # Add this to a Dataset
-    heat_trsp_ds = heat_trsp.to_dataset(name='heat_trsp')
+    # Sum over depth for total transport
+    ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
+
+    # Convert both fields to PW
+    for fld in ['heat_trsp','heat_trsp_z']:
+        ds_out[fld] = WATTS_TO_PETAWATTS * RHO_CONST * HEAT_CAPACITY * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'PW'
 
     # Add section name and masks to Dataset
-    heat_trsp_ds['maskW'] = maskW
-    heat_trsp_ds['maskS'] = maskS
+    ds_out['maskW'] = maskW
+    ds_out['maskS'] = maskS
     if section_name is not None:
-        heat_trsp_ds.attrs['name'] = section_name
+        ds_out.attrs['name'] = section_name
 
-    return heat_trsp_ds
+    return ds_out
 
 def calc_section_salt_trsp(ds,
                            pt1=None, pt2=None,
@@ -187,6 +197,9 @@ def calc_section_salt_trsp(ds,
             salt_trsp
                 salt transport across section in psu*Sv
                 with dimensions 'time' (if in given dataset) and 'lat' 
+            salt_trsp_z
+                salt transport across section at each depth level in psu*Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
             maskW, maskS
                 defining the section
         and the section_name as an attribute if it is provided
@@ -199,26 +212,28 @@ def calc_section_salt_trsp(ds,
     y_salt = ds['ADVy_SLT'] * ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
-                                      cds=ds.coords.to_dataset(),
-                                      grid=grid)
-    # Sum over depth
-    salt_trsp = salt_trsp.sum('k')
+    salt_trsp_z = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
+                                        cds=ds.coords.to_dataset(),
+                                        grid=grid)
 
-    # Convert to PW
-    salt_trsp = METERS_CUBED_TO_SVERDRUPS * salt_trsp
-    salt_trsp.attrs['units'] = 'psu.Sv'
+    # Make a datset with this result
+    ds_out = salt_trsp_z.to_dataset(name='salt_trsp_z')
 
-    # Add this to a Dataset
-    salt_trsp_ds = salt_trsp.to_dataset(name='salt_trsp')
+    # Sum over depth for total transport
+    ds_out['salt_trsp'] = ds_out['salt_trsp_z'].sum('k')
+
+    # Convert both fields to psu.Sv
+    for fld in ['salt_trsp','salt_trsp_z']:
+        ds_out[fld] = METERS_CUBED_TO_SVERDRUPS * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'psu.Sv'
 
     # Add section name and masks to Dataset
-    salt_trsp_ds['maskW'] = maskW
-    salt_trsp_ds['maskS'] = maskS
+    ds_out['maskW'] = maskW
+    ds_out['maskS'] = maskS
     if section_name is not None:
-        salt_trsp_ds.attrs['name'] = section_name
+        ds_out.attrs['name'] = section_name
 
-    return salt_trsp_ds
+    return ds_out
 
 # -------------------------------------------------------------------------------
 # Main function for computing standard transport quantities
