@@ -68,7 +68,6 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
     # Sum over depth for total transport
     ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
 
-
     # Convert both fields to Sv
     for fld in ['vol_trsp','vol_trsp_z']:
         ds_out[fld] = METERS_CUBED_TO_SVERDRUPS * ds_out[fld]
@@ -116,7 +115,7 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
     # Sum over depth for total transport
     ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
 
-    # Convert both fields to Sv
+    # Convert both fields to PW
     for fld in ['heat_trsp','heat_trsp_z']:
         ds_out[fld] = WATTS_TO_PETAWATTS * RHO_CONST * HEAT_CAPACITY * ds_out[fld]
         ds_out[fld].attrs['units'] = 'PW'
