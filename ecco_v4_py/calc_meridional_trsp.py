@@ -57,13 +57,13 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     # Computes salt transport in m^3/s at each depth level
     vol_trsp_z = meridional_trsp_at_depth(x_vol,y_vol,
-                                       cds=ds.coords.to_dataset(),
-                                       lat_vals=lat_vals,
-                                       basin_name=basin_name,
-                                       grid=grid)
+                                          cds=ds.coords.to_dataset(),
+                                          lat_vals=lat_vals,
+                                          basin_name=basin_name,
+                                          grid=grid)
 
     # Make a datset with this result
-    ds_out = vol_trsp.to_dataset(name='vol_trsp_z')
+    ds_out = vol_trsp_z.to_dataset(name='vol_trsp_z')
 
     # Sum over depth for total transport
     ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
@@ -104,14 +104,14 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
     y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
 
     # Computes heat transport in degC * m^3/s at each depth level
-    heat_trsp = meridional_trsp_at_depth(x_heat,y_heat,
-                                         cds=ds.coords.to_dataset(),
-                                         lat_vals=lat_vals,
-                                         basin_name=basin_name,
-                                         grid=grid)
+    heat_trsp_z = meridional_trsp_at_depth(x_heat,y_heat,
+                                           cds=ds.coords.to_dataset(),
+                                           lat_vals=lat_vals,
+                                           basin_name=basin_name,
+                                           grid=grid)
 
     # Make a datset with this result
-    ds_out = heat_trsp.to_dataset(name='heat_trsp_z')
+    ds_out = heat_trsp_z.to_dataset(name='heat_trsp_z')
 
     # Sum over depth for total transport
     ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
@@ -150,13 +150,13 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
     y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp = meridional_trsp_at_depth(x_salt,y_salt,
-                                         cds=ds.coords.to_dataset(),
-                                         lat_vals=lat_vals,
-                                         basin_name=basin_name,
-                                         grid=grid)
+    salt_trsp_z = meridional_trsp_at_depth(x_salt,y_salt,
+                                           cds=ds.coords.to_dataset(),
+                                           lat_vals=lat_vals,
+                                           basin_name=basin_name,
+                                           grid=grid)
     # Make a datset with this result
-    ds_out = salt_trsp.to_dataset(name='salt_trsp_z')
+    ds_out = salt_trsp_z.to_dataset(name='salt_trsp_z')
 
     # Sum over depth for total transport
     ds_out['salt_trsp'] = ds_out['salt_trsp_z'].sum('k')
