@@ -41,29 +41,40 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     Returns
     -------
-    vol_trsp : xarray DataArray
-        meridional freshwater transport in Sv
-        with dimensions 'time' (if in given dataset) and 'lat' 
+    ds_out : xarray Dataset
+        Dataset with the following variables
+            'vol_trsp' :
+                meridional volume transport in Sv
+                with dimensions 'time' (if in given dataset) and 'lat'
+            'vol_trsp_z' :
+                meridional volume transport in Sv at each depth level
+                in the given input fields
+                dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
     x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
     y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp = meridional_trsp_at_depth(x_vol,y_vol,
+    vol_trsp_z = meridional_trsp_at_depth(x_vol,y_vol,
                                        cds=ds.coords.to_dataset(),
                                        lat_vals=lat_vals,
                                        basin_name=basin_name,
                                        grid=grid)
 
-    # Sum over depth
-    vol_trsp = vol_trsp.sum('k')
+    # Make a datset with this result
+    ds_out = vol_trsp.to_dataset(name='vol_trsp_z')
 
-    # Convert to Sv
-    vol_trsp = METERS_CUBED_TO_SVERDRUPS * vol_trsp
-    vol_trsp.attrs['units'] = 'Sv'
+    # Sum over depth for total transport
+    ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
 
-    return vol_trsp
+
+    # Convert both fields to Sv
+    for fld in ['vol_trsp','vol_trsp_z']:
+        ds_out[fld] = METERS_CUBED_TO_SVERDRUPS * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'Sv'
+
+    return ds_out
 
 
 def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
@@ -78,9 +89,15 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     Returns
     -------
-    heat_trsp : xarray DataArray
-        meridional heat transport in petawatts
-        with dimensions 'time' (if in given dataset) and 'lat' 
+    ds_out : xarray Dataset
+        Dataset with the following variables
+            'heat_trsp' :
+                meridional heat transport in PW
+                with dimensions 'time' (if in given dataset) and 'lat'
+            'heat_trsp_z' :
+                meridional heat transport in PW at each depth level
+                in the given input fields
+                dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
     x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
@@ -93,15 +110,18 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
                                          basin_name=basin_name,
                                          grid=grid)
 
-    # Sum over depth
-    heat_trsp = heat_trsp.sum('k')
+    # Make a datset with this result
+    ds_out = heat_trsp.to_dataset(name='heat_trsp_z')
 
-    # Convert to PetaWatts
-    heat_trsp = WATTS_TO_PETAWATTS * RHO_CONST * HEAT_CAPACITY * heat_trsp
+    # Sum over depth for total transport
+    ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
 
-    heat_trsp.attrs['units'] = 'PW'
+    # Convert both fields to Sv
+    for fld in ['heat_trsp','heat_trsp_z']:
+        ds_out[fld] = WATTS_TO_PETAWATTS * RHO_CONST * HEAT_CAPACITY * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'PW'
 
-    return heat_trsp
+    return ds_out
 
 def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
     """Compute salt transport across latitude band in psu * Sv
@@ -115,9 +135,15 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     Returns
     -------
-    salt_trsp : xarray DataArray
-        meridional salt transport in psu*Sv
-        with dimensions 'time' (if in given dataset) and 'lat' 
+    ds_out : xarray Dataset
+        Dataset with the following variables
+            'salt_trsp' :
+                meridional salt transport in psu*Sv
+                with dimensions 'time' (if in given dataset) and 'lat'
+            'salt_trsp_z' :
+                meridional salt transport in psu*Sv at each depth level
+                in the given input fields
+                dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
     x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
@@ -129,15 +155,18 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
                                          lat_vals=lat_vals,
                                          basin_name=basin_name,
                                          grid=grid)
-    # Sum over depth
-    salt_trsp = salt_trsp.sum('k')
+    # Make a datset with this result
+    ds_out = salt_trsp.to_dataset(name='salt_trsp_z')
 
-    # Convert to psu * Sv
-    salt_trsp = METERS_CUBED_TO_SVERDRUPS * salt_trsp
-    salt_trsp.attrs['units'] = 'psu.Sv'
+    # Sum over depth for total transport
+    ds_out['salt_trsp'] = ds_out['salt_trsp_z'].sum('k')
 
-    return salt_trsp
+    # Convert both fields to psu.Sv
+    for fld in ['salt_trsp','salt_trsp_z']:
+        ds_out[fld] = METERS_CUBED_TO_SVERDRUPS * ds_out[fld]
+        ds_out[fld].attrs['units'] = 'psu.Sv'
 
+    return ds_out
 
 # ---------------------------------------------------------------------
 
