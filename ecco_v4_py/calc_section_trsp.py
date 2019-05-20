@@ -94,12 +94,12 @@ def calc_section_vol_trsp(ds,
     y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG'] 
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp_z = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
-                                       cds=ds.coords.to_dataset(),
-                                       grid=grid)
+    ds_out = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
+                                   cds=ds.coords.to_dataset(),
+                                   grid=grid)
 
-    # Make a datset with this result
-    ds_out = vol_trsp_z.to_dataset(name='vol_trsp_z')
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'vol_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
@@ -153,12 +153,12 @@ def calc_section_heat_trsp(ds,
     y_heat = ds['ADVy_TH'] * ds['DFyE_TH']
 
     # Computes salt transport in degC * m^3/s at each depth level
-    heat_trsp_z = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
-                                        cds=ds.coords.to_dataset(),
-                                        grid=grid)
+    ds_out = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
+                                   cds=ds.coords.to_dataset(),
+                                   grid=grid)
 
-    # Make a datset with this result
-    ds_out = heat_trsp_z.to_dataset(name='heat_trsp_z')
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'heat_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
@@ -212,12 +212,12 @@ def calc_section_salt_trsp(ds,
     y_salt = ds['ADVy_SLT'] * ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp_z = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
-                                        cds=ds.coords.to_dataset(),
-                                        grid=grid)
+    ds_out = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
+                                   cds=ds.coords.to_dataset(),
+                                   grid=grid)
 
-    # Make a datset with this result
-    ds_out = salt_trsp_z.to_dataset(name='salt_trsp_z')
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'salt_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['salt_trsp'] = ds_out['salt_trsp_z'].sum('k')
@@ -258,23 +258,27 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
 
     Returns
     -------
-    lat_trsp : xarray DataArray
-        transport of vector quantity across denoted latitude band at
-        each depth level with dimensions 'time' (if in given dataset),
-        'k' (depth), and 'lat' 
+    ds_out : xarray Dataset
+        with the main variable
+            'trsp_z'
+                transport of vector quantity across denoted section at
+                each depth level with dimensions 'time' (if in given dataset),
+                and 'k' (depth) 
     """
 
     if grid is None:
         grid = get_llc_grid(cds)
 
     # Initialize empty DataArray with coordinates and dims
-    sec_trsp = _initialize_section_trsp_data_array(cds)
+    ds_out = _initialize_section_trsp_data_array(cds)
 
     # Apply section mask and sum horizontally
     sec_trsp_x = (xfld * maskW).sum(dim=['i_g','j','tile'])
     sec_trsp_y = (yfld * maskS).sum(dim=['i','j_g','tile'])
 
-    return sec_trsp_x + sec_trsp_y
+    ds_out['trsp_z'] = sec_trsp_x + sec_trsp_y
+
+    return ds_out
 
 
 # -------------------------------------------------------------------------------
@@ -344,8 +348,13 @@ def _initialize_section_trsp_data_array(cds):
 
     Returns
     -------
-    da : xarray DataArray
-        zero-valued DataArray with time and depth dimensions
+    ds_out : xarray Dataset
+        Dataset with the variables
+            'trsp_z'
+                zero-valued DataArray with time (optional) and 
+                depth dimensions
+            'Z'
+                the original depth coordinate
     """
 
     coords = OrderedDict()
@@ -363,4 +372,11 @@ def _initialize_section_trsp_data_array(cds):
 
     dims += ('k',)
 
-    return xr.DataArray(data=zeros, coords=coords, dims=dims)
+    xda = xr.DataArray(data=zeros, coords=coords, dims=dims)
+
+    # Convert to dataset to add Z coordinate
+    xds = xda.to_dataset(name='trsp_z')
+    xds['Z'] = cds['Z']
+    xds = xds.set_coords('Z')
+
+    return xds
