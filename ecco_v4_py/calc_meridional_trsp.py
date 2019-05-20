@@ -62,8 +62,8 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
                                           basin_name=basin_name,
                                           grid=grid)
 
-    # Make a datset with this result
-    ds_out = vol_trsp_z.to_dataset(name='vol_trsp_z')
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'vol_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['vol_trsp'] = ds_out['vol_trsp_z'].sum('k')
@@ -103,14 +103,14 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
     y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
 
     # Computes heat transport in degC * m^3/s at each depth level
-    heat_trsp_z = meridional_trsp_at_depth(x_heat,y_heat,
+    ds_out = meridional_trsp_at_depth(x_heat,y_heat,
                                            cds=ds.coords.to_dataset(),
                                            lat_vals=lat_vals,
                                            basin_name=basin_name,
                                            grid=grid)
 
-    # Make a datset with this result
-    ds_out = heat_trsp_z.to_dataset(name='heat_trsp_z')
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'heat_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['heat_trsp'] = ds_out['heat_trsp_z'].sum('k')
@@ -154,8 +154,9 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
                                            lat_vals=lat_vals,
                                            basin_name=basin_name,
                                            grid=grid)
-    # Make a datset with this result
-    ds_out = salt_trsp_z.to_dataset(name='salt_trsp_z')
+
+    # Rename to useful data array name
+    ds_out = ds_out.rename({'trsp_z': 'salt_trsp_z'})
 
     # Sum over depth for total transport
     ds_out['salt_trsp'] = ds_out['salt_trsp_z'].sum('k')
@@ -193,10 +194,12 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
 
     Returns
     -------
-    lat_trsp : xarray DataArray
-        transport of vector quantity across denoted latitude band at
-        each depth level with dimensions 'time' (if in given dataset),
-        'k' (depth), and 'lat' 
+    ds_out : xarray Dataset
+        with the main variable
+            'trsp_z'
+                transport of vector quantity across denoted latitude band at
+                each depth level with dimensions 'time' (if in given dataset),
+                'k' (depth), and 'lat' 
     """
 
     if grid is None:
@@ -206,7 +209,7 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
         lat_vals = [lat_vals]
 
     # Initialize empty DataArray with coordinates and dims
-    lat_trsp = _initialize_trsp_data_array(cds, lat_vals)
+    ds_out = _initialize_trsp_data_array(cds, lat_vals)
 
     # Get basin mask
     if basin_name is not None:
@@ -225,9 +228,9 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
         lat_trsp_x = (xfld * lat_maskW * basin_maskW).sum(dim=['i_g','j','tile'])
         lat_trsp_y = (yfld * lat_maskS * basin_maskS).sum(dim=['i','j_g','tile'])
 
-        lat_trsp.loc[{'lat':lat}] = lat_trsp_x + lat_trsp_y
+        ds_out['trsp_z'].loc[{'lat':lat}] = lat_trsp_x + lat_trsp_y
 
-    return lat_trsp
+    return ds_out
 
 
 def _initialize_trsp_data_array(cds, lat_vals):
@@ -243,8 +246,13 @@ def _initialize_trsp_data_array(cds, lat_vals):
 
     Returns
     -------
-    da : xarray DataArray
-        zero-valued DataArray with time (optional), depth, and latitude dimensions
+    ds_out : xarray Dataset
+        Dataset with the variables
+            'trsp_z'
+                zero-valued DataArray with time (optional), 
+                depth, and latitude dimensions
+            'Z'
+                the original depth coordinate
     """
 
     coords = OrderedDict()
@@ -266,5 +274,12 @@ def _initialize_trsp_data_array(cds, lat_vals):
 
     dims += ('k','lat')
 
-    return xr.DataArray(data=zeros, coords=coords, dims=dims)
+    xda = xr.DataArray(data=zeros, coords=coords, dims=dims)
+
+    # Convert to dataset to add Z coordinate
+    xds = xda.to_dataset(name='trsp_z')
+    xds['Z'] = cds['Z']
+    xds = xds.set_coords('Z')
+
+    return xds
 
