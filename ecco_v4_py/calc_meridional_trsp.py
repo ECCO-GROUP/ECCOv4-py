@@ -56,11 +56,11 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
     y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
     # Computes salt transport in m^3/s at each depth level
-    vol_trsp_z = meridional_trsp_at_depth(x_vol,y_vol,
-                                          cds=ds.coords.to_dataset(),
-                                          lat_vals=lat_vals,
-                                          basin_name=basin_name,
-                                          grid=grid)
+    ds_out = meridional_trsp_at_depth(x_vol,y_vol,
+                                      cds=ds.coords.to_dataset(),
+                                      lat_vals=lat_vals,
+                                      basin_name=basin_name,
+                                      grid=grid)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'vol_trsp_z'})
@@ -104,10 +104,10 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     # Computes heat transport in degC * m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_heat,y_heat,
-                                           cds=ds.coords.to_dataset(),
-                                           lat_vals=lat_vals,
-                                           basin_name=basin_name,
-                                           grid=grid)
+                                      cds=ds.coords.to_dataset(),
+                                      lat_vals=lat_vals,
+                                      basin_name=basin_name,
+                                      grid=grid)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'heat_trsp_z'})
@@ -149,11 +149,11 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
     y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
-    salt_trsp_z = meridional_trsp_at_depth(x_salt,y_salt,
-                                           cds=ds.coords.to_dataset(),
-                                           lat_vals=lat_vals,
-                                           basin_name=basin_name,
-                                           grid=grid)
+    ds_out = meridional_trsp_at_depth(x_salt,y_salt,
+                                      cds=ds.coords.to_dataset(),
+                                      lat_vals=lat_vals,
+                                      basin_name=basin_name,
+                                      grid=grid)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'salt_trsp_z'})
