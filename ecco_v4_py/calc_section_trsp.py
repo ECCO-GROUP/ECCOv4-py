@@ -77,10 +77,10 @@ def calc_section_vol_trsp(ds,
     ds_out : xarray Dataset
         includes variables as xarray DataArrays
             vol_trsp
-                freshwater transport across section in Sv
+                volumetric transport across section in Sv
                 with dimensions 'time' (if in given dataset) and 'lat' 
             vol_trsp_z
-                freshwater transport across section at each depth level in Sv
+                volumetric transport across section at each depth level in Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
             maskW, maskS
                 defining the section
