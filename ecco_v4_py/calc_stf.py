@@ -88,7 +88,18 @@ def calc_section_stf(ds,
 
     Returns
     -------
-    psi : xarray DataArray
+    ds_out : xarray Dataset
+        with the following variables
+            psi_ov
+                overturning streamfunction across the section in Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
+            trsp_z
+                freshwater transport across section at each depth level in Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
+            maskW, maskS
+                defining the section
+        and the section_name as an attribute if it is provided
+        
         meridional overturning streamfunction in Sverdrups
         with dimensions time (if present in dataset) and rho_c (density)
     """
@@ -100,10 +111,12 @@ def calc_section_stf(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Creates an empty streamfunction
-    psi_moc = section_trsp_at_depth(trsp_x, trsp_y,
+    ds_out = section_trsp_at_depth(trsp_x, trsp_y,
                                     maskW, maskS, 
                                     cds=ds.coords.to_dataset(), 
                                     grid=grid)
+
+    psi_moc = ds_out['trsp_z'].copy(deep=True)
 
     # Flip depth dimension, take cumulative sum, flip back
     if doFlip:
@@ -119,4 +132,12 @@ def calc_section_stf(ds,
     psi_moc = psi_moc * METERS_CUBED_TO_SVERDRUPS
     psi_moc.attrs['units'] = 'Sv'
 
-    return psi_moc
+    ds_out['psi_moc'] = psi_moc
+
+    # Add section name and masks to Dataset
+    ds_out['maskW'] = maskW
+    ds_out['maskS'] = maskS
+    if section_name is not None:
+        ds_out.attrs['name'] = section_name
+
+    return ds_out
