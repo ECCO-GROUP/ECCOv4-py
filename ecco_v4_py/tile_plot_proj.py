@@ -185,16 +185,18 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                                   alpha=0.5, linestyle='--', 
                                   draw_labels = show_grid_labels)
         
+         #%%
+        ax.add_feature(cfeature.LAND)
+        ax.add_feature(cfeature.COASTLINE)
+
+    ax= plt.gca()
+
     if show_colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)        
     
-    #%%
-    ax.add_feature(cfeature.LAND)
-    ax.add_feature(cfeature.COASTLINE)
-
-    ax= plt.gca()
+   
 
     #%%
     return f, ax, p, cbar
