@@ -92,10 +92,26 @@ def get_available_basin_names():
         strings denoting various basins
     """
 
-    available_names = ['pac','atl','ind','arct','bering',
-                       'southChina','mexico','okhotsk','hudson','med',
-                       'java','north','japan','timor','eastChina','red','gulf',
-                       'baffin','gin','barents']
+    available_names = ['pac',
+                       'atl',
+                       'ind',
+                       'arct',
+                       'bering',
+                       'southChina',
+                       'mexico',
+                       'okhotsk',
+                       'hudson',
+                       'med',
+                       'java',
+                       'north',
+                       'japan',
+                       'timor',
+                       'eastChina',
+                       'red',
+                       'gulf',
+                       'baffin',
+                       'gin',
+                       'barents']
 
     return available_names
 
