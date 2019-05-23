@@ -18,7 +18,7 @@ import xmitgcm as xm
 import dateutil
 import glob
 import os
-
+import sys
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
