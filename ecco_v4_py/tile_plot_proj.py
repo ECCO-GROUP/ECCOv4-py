@@ -22,7 +22,7 @@ from .resample_to_latlon import resample_to_latlon
 def plot_proj_to_latlon_grid(lons, lats, data, 
                              projection_type = 'robin', 
                              plot_type = 'pcolormesh', 
-                             user_lon_0 = -66,
+                             user_lon_0 = 0,
                              lat_lim = 50, 
                              levels = 20, 
                              cmap='jet', 
@@ -52,7 +52,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             'stereo' - polar stereographic projection, see lat_lim for choosing
             'InterruptedGoodeHomolosine'
                 North or South
-    user_lon_0 : int, optional
+    user_lon_0 : float, optional, default 0 degrees
         denote central longitude
     lat_lim : int, optional
         for stereographic projection, denote the Southern (Northern) bounds for 
@@ -109,13 +109,20 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         B_left_limit =  -180
         B_right_limit = user_lon_0
         center_lon = A_left_limit + 180
-        
+       
+        if not less_output:
+            print ('-180 < user_lon_0 < 180')
+ 
     elif user_lon_0 == 180 or user_lon_0 == -180:
         A_left_limit = -180
         A_right_limit = 0
         B_left_limit =  0
         B_right_limit = 180
         center_lon = 0
+	
+        if not less_output:
+            print('user_lon_0 ==-180 or 180')
+   
     else:
         raise ValueError('invalid starting longitude')
 
@@ -324,8 +331,12 @@ def plot_global(xx,yy, data,
 
 # -----------------------------------------------------------------------------
 
-def _create_projection_axis(projection_type, user_lon_0, lat_lim, subplot_grid,
+def _create_projection_axis(projection_type, 
+                            user_lon_0, 
+                            lat_lim, 
+                            subplot_grid, 
                             less_output):
+
     """Set appropriate axis for projection type
     See plot_proj_to_latlon_grid for input parameter definitions.
 
@@ -368,9 +379,9 @@ def _create_projection_axis(projection_type, user_lon_0, lat_lim, subplot_grid,
         show_grid_labels = True
 
     elif projection_type == 'PlateCaree':
-        if subplot_grid is not None:
+        if subplot_grid is not None   :
             ax = plt.subplot(row, col, ind,
-                    projection=ccrs.PlateCarree(central_longitude=user_lon_0))
+                    projection=ccrs.PlateCarree(central_longitude=    user_lon_0))
         else:
             ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=user_lon_0))
         show_grid_labels = True

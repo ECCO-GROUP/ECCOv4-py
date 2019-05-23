@@ -14,6 +14,7 @@ import xarray as xr
 import glob
 import os
 import re
+import sys
 
 from .netcdf_product_generation import update_ecco_dataset_geospatial_metadata
 from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_metadata
@@ -21,10 +22,11 @@ from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_met
 #%%
 def load_ecco_grid_from_tiles_nc(grid_dir, 
                                  grid_base_name = 'ECCOv4r3_grid_tile_',
-                                 tiles_to_load=range(13), 
+                                 tiles_to_load='all',
                                  k_subset = [], 
                                  dask_chunk = True, 
-                                 coords_as_vars = False):
+                                 coords_as_vars = False,
+                                 less_output = True):
         
     """
 
@@ -39,8 +41,8 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
     grid_base_name : str, optional, default 'ECCOv4r3_grid_tile_' 
         the prefix string for the tile files.  Tile numbers are in the format 00, 01, .. 12
   
-    tiles_to_load : int or list or range, optional, default range(13)
-        a list of which tiles to load
+    tiles_to_load : str, int, list, or tuple, or range, optional, default range(13)
+        a list of which tiles to load.  If not a list, code will try to make it a list
         
     k_subset : list, optional, default = [] (load all)
         a list of which vertical levels to load. 
@@ -62,13 +64,30 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
         an xarray Dataset
 
     """
+ 
+    
+    if not less_output:
+        print ('tiles_to_load ', tiles_to_load)
+        print ('years to load ', years_to_load)
 
-
+    if isinstance(tiles_to_load,str) :
+        if 'all' in tiles_to_load:
+            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+        else:
+            tiles_to_load = list(int(tiles_to_load))
+    elif isinstance(tiles_to_load,tuple):
+        tiles_to_load = list(tiles_to_load)
+    elif isinstance(tiles_to_load, int):
+        tiles_to_load = [tiles_to_load]
+    elif isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+    elif not isinstance(tiles_to_load, list):
+        raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(tiles_to_load))
     g = []
     
     for i in tiles_to_load:
         
-       
         if dask_chunk:
             g_i = xr.open_dataset(grid_dir + '/' + \
                               grid_base_name + \
@@ -76,7 +95,7 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
         else:
             g_i = xr.open_dataset(grid_dir + '/' + \
                               grid_base_name + \
-                              str(i).zfill(2) + '.nc')
+                              str(i).zfill(2) + '.nc').load()
 
         if len(k_subset) > 0:
             g_i = g_i.isel(k=k_subset)
@@ -98,7 +117,7 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
 
 def recursive_load_ecco_var_from_tiles_nc(data_root_dir, 
                                           vars_to_load = 'all',
-                                          tiles_to_load = range(13),
+                                          tiles_to_load = 'all',
                                           years_to_load = 'all',
                                           k_subset = [],
                                           dask_chunk = True,
@@ -128,7 +147,7 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
         when pointed to eccov4r3_native_grid_netcdf_tiles in the above
         the variables THETA, SALT, and ETAN will be loaded.
 
-    tiles_to_load : int or list or range, optional, default range(13)
+    tiles_to_load : int or list or range, optional, default 'all'
         a list of which tiles to load.  
     
     years_to_load : int or list or range, optional, default 'all'
@@ -153,12 +172,43 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
 
     g = []
 
+    if not less_output:
+        print ('tiles_to_load ', tiles_to_load)
+        print ('years to load ', years_to_load)
+        print ('vars  to load ', vars_to_load)
+
+    if isinstance(tiles_to_load,str):
+        if 'all' in tiles_to_load:
+            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+        else:
+            tiles_to_load = list(int(tiles_to_load))
+    elif isinstance(tiles_to_load,tuple):
+        tiles_to_load = list(tiles_to_load)
+    elif isinstance(tiles_to_load, int):
+        tiles_to_load = [tiles_to_load]
+    elif isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+    elif not isinstance(tiles_to_load, list):
+        raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(tiles_to_load))
  
     if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
     
-    if not isinstance(years_to_load,list):
+    if isinstance(years_to_load, str):
+        if 'all' not in years_to_load:        
+            years_to_load = int(years_to_load)
+    elif isinstance(years_to_load,tuple):
+        years_to_load = list(years_to_load)
+    elif isinstance(years_to_load, int):
         years_to_load = [years_to_load]
+    elif isinstance(years_to_load, str):
+        years_to_load = int(years_to_load)
+    elif isinstance(years_to_load, range):
+        years_to_load = list(years_to_load)
+    elif not isinstance(years_to_load, list):
+        raise Exception ('years_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(years_to_load))
     
     if not isinstance(k_subset, list):
         k_subset = [k_subset]
@@ -182,11 +232,12 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
            
         vars_to_load = var_names
         
-    
+    if not less_output:
+        print ('vars to load ', vars_to_load)
 
     #%%
     
-    dir_contents = os.walk(data_root_dir).next()
+    dir_contents = next(os.walk(data_root_dir))
     # if we happen to have files in this directory
     if len(dir_contents[1]) == 0:
         print ('there are no subdirectories here.  ' + \
@@ -197,8 +248,8 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
         top_level_dirs = np.sort(dir_contents[1])
         
     top_level_dirs_with_var = dict()
-    for var_name in vars_to_load:
-        top_level_dirs_with_var[var_name] = []
+    for var_to_load in vars_to_load:
+        top_level_dirs_with_var[var_to_load] = []
     
     for top_level_dir in top_level_dirs:
 #        if not less_output:
@@ -216,11 +267,10 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
                 next_dir = x[0] + '/' + x[1][0]
             elif len(x[2]) > 0:
                 keep_looking = False
-                test_var_name = x[2][0]
-                var_name_here = re.split(r"_\d+",str.split(test_var_name,'/')[-1])[0]
-               # print(var_name_here)
-                if var_name_here in vars_to_load:
-                    top_level_dirs_with_var[var_name_here].append(data_root_dir + '/' + top_level_dir + '/')
+                test_var_to_load = x[2][0]
+                var_to_load_here = re.split(r"_\d+",str.split(test_var_to_load,'/')[-1])[0]
+                if var_to_load_here in vars_to_load:
+                    top_level_dirs_with_var[var_to_load_here].append(data_root_dir + '/' + top_level_dir + '/')
     
     if not less_output:
         print(top_level_dirs_with_var)
@@ -228,27 +278,29 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
     #%%
         
       
-    for var_name in vars_to_load:
+    for var_to_load in vars_to_load:
         
         g_var = []
 
         #if not less_output:
-        dirs_with_var = top_level_dirs_with_var[var_name]
+        dirs_with_var = top_level_dirs_with_var[var_to_load]
         
         if len(dirs_with_var) > 0:
-            print ('located directories with %s ' % var_name)
+            print ('located directories with %s ' % var_to_load)
             
             for dir_with_var in dirs_with_var:
                 if not less_output:
                     print ('searching %s ' % dir_with_var)
-                sub_dirs = np.sort(([[x[0] for x in os.walk(dir_with_var)]]))[0]
 
-                for sub_dir in sub_dirs:
-                    
+                sub_dirs = np.sort(([[x[0] for x in os.walk(dir_with_var)]]))[0]
+                num_sub_dirs = len(sub_dirs)
+
+                for idxs, sub_dir in enumerate(sub_dirs):
+                 
                     if not less_output :
-                        print (sub_dir)
+                        print (idxs / num_sub_dirs)
                     
-                    files = np.sort(glob.glob(sub_dir + '/' + var_name + '*nc'))
+                    files = np.sort(glob.glob(sub_dir + '/' + var_to_load + '*nc'))
                     
                     if len(files) > 0:
 
@@ -275,11 +327,11 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
                                 print ('found files here .. loading %s ' % str(files))
                             
                             g_i = load_ecco_var_from_tiles_nc(sub_dir, 
-                                                               var_name, 
-                                                               tiles_to_load=tiles_to_load,
-                                                               k_subset=k_subset, 
-                                                               dask_chunk=dask_chunk, 
-                                                               less_output=less_output)
+                                                              var_to_load, 
+                                                              tiles_to_load=tiles_to_load,
+                                                              k_subset=k_subset, 
+                                                              dask_chunk=dask_chunk, 
+                                                              less_output=less_output)
                             if isinstance(g_var, list):
                                 g_var = g_i
                             else:
@@ -290,9 +342,9 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
                                        % file_year)
                             
         else:
-            print ('no subdirectories with %s ' % var_name)          
+            print ('no subdirectories with %s ' % var_to_load)          
         
-        # if we loaded var_name, then add it to g
+        # if we loaded var_to_load, then add it to g
         if len(g_var) > 0:
             # if g is [], make g = g_var
             if len(g) == 0 :
@@ -312,8 +364,8 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
 
 #%%
 def load_ecco_var_from_tiles_nc(data_dir, 
-                                var_name, 
-                                tiles_to_load = range(13), 
+                                var_to_load,
+                                tiles_to_load = 'all', 
                                 k_subset = [], 
                                 dask_chunk = True,
                                 less_output = True):
@@ -341,7 +393,7 @@ def load_ecco_var_from_tiles_nc(data_dir,
     data_dir : str
         path to a directory within which we will look for NetCDF tile files
 
-    var_name : str
+    var_to_load : str
         string indicating which variable to load.
         
     tiles_to_load : int or list or range, optional, default range(13)
@@ -363,20 +415,43 @@ def load_ecco_var_from_tiles_nc(data_dir,
         an xarray Dataset
 
     """
+   
+    if not less_output:
+        print ('tiles_to_load ', tiles_to_load)
+        print ('var   to_load ', var_to_load)
 
-    g = []    
-    files = np.sort(glob.glob(data_dir + '/' + var_name + '*nc'))
-    
-    if not isinstance(tiles_to_load, list):
+    if isinstance(tiles_to_load,str):
+        if 'all' in tiles_to_load:
+            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+        else:
+            tiles_to_load = list(int(tiles_to_load))
+    elif isinstance(tiles_to_load,tuple):
+        tiles_to_load = list(tiles_to_load)
+    elif isinstance(tiles_to_load, int):
         tiles_to_load = [tiles_to_load]
-        
+    elif isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+    elif not isinstance(tiles_to_load, list):
+        raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(tiles_to_load))
+    
+    g = []    
+    files = np.sort(glob.glob(data_dir + '/' + var_to_load + '*nc'))
+
+    if not less_output:
+        print('files -- ')
+        print(files)
+    
+    if not less_output:
+        print('tiles to load -- ')
+        print(tiles_to_load)
+
     for file in files:
         
         tile = int(file[-5:-3])
         var_name_of_file = re.split(r"_\d+",str.split(file,'/')[-1])[0]
 
-        #print (var_name_of_file, var_name)
-        if var_name == var_name_of_file:
+        if var_to_load == var_name_of_file:
             if tile in tiles_to_load:
                 if not less_output:
                     print ('loading tile %d' % tile)
@@ -386,7 +461,7 @@ def load_ecco_var_from_tiles_nc(data_dir,
 
                     #print ('chunking')
                 else:
-                    g_i = xr.open_dataset(file)
+                    g_i = xr.open_dataset(file).load()
                     #nt = len(g_i.time)
                     #g_i = g_i.chunk(nx, nx)
     
@@ -401,10 +476,10 @@ def load_ecco_var_from_tiles_nc(data_dir,
                     g = xr.concat((g, g_i ),'tile')
                     
             elif not less_output:
-                print ('not loading %s tile %d ' % (var_name, tile))
+                print ('not loading %s tile %d ' % (var_to_load, tile))
         else:
             print ('filename mismatch - trying to load %s and found %s ' % \
-                  (var_name, var_name_of_file))
+                  (var_to_load, var_name_of_file))
           
     if len(g) > 0:
         g = update_ecco_dataset_geospatial_metadata(g)
@@ -417,9 +492,12 @@ def load_ecco_var_from_tiles_nc(data_dir,
 
 
 #%%
-def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
-                                tiles_to_load = range(13), k_subset = [],
-                                dask_chunk = True, less_output = True):
+def load_ecco_var_from_years_nc(data_dir, var_to_load, \
+                                years_to_load = 'all', \
+                                tiles_to_load = 'all', \
+                                k_subset = [], \
+                                dask_chunk = True,\
+                                less_output = True):
     
     """
 
@@ -433,7 +511,7 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
         /eccov4r3_native_grid_netcdf/mon_snapshot/THETA_2010.nc
 
     Simply point this routine at a directory with one or more 
-    of these files and one or more years of var_name variables will
+    of these files and one or more years of var_to_load variables will
     be loaded. 
     * Used repeatedly by recursive_load_ecco_var_from_years_nc *
 
@@ -443,10 +521,10 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
     data_dir : str
         path to a directory within which we will look for NetCDF tile files
 
-    var_name : str
+    var_to_load : str
         string indicating which variable to load.
         
-    years_to_load : str, int or list or range, optional, default 'all'
+    years_to_load : str, int or list, optional, default 'all'
         a list of which years to load.  
     
     k_subset : list, optional, default = [] (load all)
@@ -465,34 +543,64 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
         an xarray Dataset
 
     """
+    if not less_output:
+        print ('tiles_to_load ', tiles_to_load)
+        print ('years to load ', years_to_load)
 
-    files = np.sort(glob.glob(data_dir + '/' + var_name + '*nc'))
+    if isinstance(tiles_to_load,str):
+        if 'all' in tiles_to_load:
+            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+        else:
+            tiles_to_load = list(int(tiles_to_load))
+    elif isinstance(tiles_to_load,tuple):
+        tiles_to_load = list(tiles_to_load)
+    elif isinstance(tiles_to_load, int):
+        tiles_to_load = [tiles_to_load]
+    elif isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+    elif not isinstance(tiles_to_load, list):
+        raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(tiles_to_load))
+ 
+    files = np.sort(glob.glob(data_dir + '/' + var_to_load + '*nc'))
 
     g = []
     
     if not less_output:
         print ('--- LOADING %s FROM YEARS NC: %s' % \
-               (var_name, data_dir))
-     
-    if not(isinstance(years_to_load, list)):
+               (var_to_load, data_dir))
+    
+    if isinstance(years_to_load, str):
+        if 'all' not in years_to_load:        
+            years_to_load = int(years_to_load)
+    elif isinstance(years_to_load,tuple):
+        years_to_load = list(years_to_load)
+    elif isinstance(years_to_load, int):
         years_to_load = [years_to_load]
-        
+    elif isinstance(years_to_load, str):
+        years_to_load = int(years_to_load)
+    elif isinstance(years_to_load, range):
+        years_to_load = list(years_to_load)
+    elif not isinstance(years_to_load, list):
+        raise Exception ('years_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(years_to_load))
+
     if len(files) > 0:
         if not less_output:
-            print ('---found %s nc files here.  loading ....' % var_name)
+            print ('---found %s nc files here.  loading ....' % var_to_load)
        
         for file in files:
             file_year = int(str.split(file,'.nc')[0][-4:])
             var_name_of_file = re.split(r"_\d+",str.split(file,'/')[-1])[0]
             
-            if var_name_of_file == var_name:
+            if var_name_of_file == var_to_load:
                 
                 if 'all' in years_to_load or file_year in years_to_load:
                      
                     if dask_chunk:
                         g_i = xr.open_dataset(file, chunks=90)
                     else:
-                        g_i = xr.open_dataset(file)
+                        g_i = xr.open_dataset(file).load()
 
                     # pull out a k subset
                     if len(k_subset) > 0 and 'k' in g_i.coords.keys():
@@ -512,7 +620,7 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
         if len(g) == 0:
             if not less_output:
                 print ('we had files but did not load any matching %s ' % \
-                       var_name)
+                       var_to_load)
         
         else:
             # update some metadata for fun.
@@ -522,14 +630,14 @@ def load_ecco_var_from_years_nc(data_dir, var_name, years_to_load = 'all',
     else:
         if not less_output:
             print ('no files found with name "%s" in %s \n' % \
-                   (var_name, data_dir ))
+                   (var_to_load, data_dir ))
         
     return g
 
 #%%
 def recursive_load_ecco_var_from_years_nc(data_root_dir, 
                                           vars_to_load = 'all',
-                                          tiles_to_load = range(13),
+                                          tiles_to_load = 'all',
                                           years_to_load = 'all',
                                           k_subset = [],
                                           dask_chunk = True,
@@ -592,13 +700,47 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
 
     """
 
+    if not less_output:
+        print ('tiles_to_load ', tiles_to_load)
+        print ('years to load ', years_to_load)
 
-    # ecco_dataset to return
-    g = []
+    
+    if isinstance(tiles_to_load,str) :
+        if 'all' in tiles_to_load:
+            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+        else:
+            tiles_to_load = list(int(tiles_to_load))
+    elif isinstance(tiles_to_load,tuple):
+        tiles_to_load = list(tiles_to_load)
+    elif isinstance(tiles_to_load, int):
+        tiles_to_load = [tiles_to_load]
+    elif isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+    elif not isinstance(tiles_to_load, list):
+        raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % str(type(tiles_to_load)))
 
+    if isinstance(years_to_load, str):
+        if 'all' not in years_to_load:        
+            years_to_load = int(years_to_load)
+    elif isinstance(years_to_load,tuple):
+        years_to_load = list(years_to_load)
+    elif isinstance(years_to_load, int):
+        years_to_load = [years_to_load]
+    elif isinstance(years_to_load, str):
+        years_to_load = int(years_to_load)
+    elif isinstance(years_to_load, range):
+        years_to_load = list(years_to_load)
+    elif not isinstance(years_to_load, list):
+        raise Exception ('years_to_load has to be a tuple, int, list or string ' + \
+                         'you passed a %s and I cannot handle that' % type(years_to_load))
+    
     if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
         
+    # ecco_dataset to return
+    g = []
+
     #if 'all' in vars_to_load:
     var_head_dirs = np.sort(glob.glob(data_root_dir + '/*'))
     var_names = []
@@ -622,22 +764,22 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
         years_to_load = [years_to_load]    
     
     # loop through the variable names found here.
-    for var_name in var_names:
+    for var_to_load in var_names:
         g_var = []
 
-        if 'all' in vars_to_load or var_name in vars_to_load:
+        if 'all' in vars_to_load or var_to_load in vars_to_load:
             if not less_output:
-                print ('trying to load %s ' % var_name)
+                print ('trying to load %s ' % var_to_load)
                 
             sub_dirs = np.sort(([[x[0] for x in os.walk(data_root_dir)]]))
 
             
-            # loop through subdirectories look for var_name
+            # loop through subdirectories look for var_to_load
             for sub_dir in sub_dirs[0]:
                 if not less_output :
-                    print ('searching for %s in %s ' % (var_name, sub_dir))
+                    print ('searching for %s in %s ' % (var_to_load, sub_dir))
                 
-                g_i = load_ecco_var_from_years_nc(sub_dir, var_name, 
+                g_i = load_ecco_var_from_years_nc(sub_dir, var_to_load, 
                                              years_to_load = years_to_load,
                                              tiles_to_load = tiles_to_load,
                                              k_subset =  k_subset,
@@ -654,12 +796,12 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
             
             # finshed looping through all dirs 
             if len(g_var) == 0:
-                print ('finished searching for %s ... not found!' % var_name) 
+                print ('finished searching for %s ... not found!' % var_to_load) 
             else:
-                print ('finished searching for %s ... success!' % var_name) 
+                print ('finished searching for %s ... success!' % var_to_load) 
                 
         
-        # if we loaded var_name, then add it to g
+        # if we loaded var_to_load, then add it to g
         if len(g_var) > 0:
             # if g is [], make g = g_var
             if len(g) == 0 :

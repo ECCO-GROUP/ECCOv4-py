@@ -129,6 +129,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     """
 
+    # range object is different between python 2 and 3
+    if sys.version_info[0] >= 3 and isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
 
     #ECCO v4 r3 starts 1992/1/1 12:00:00
     ecco_v4_start_year = 1992

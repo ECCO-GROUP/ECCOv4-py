@@ -95,6 +95,10 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      meta_common = dict(),
                                                      mds_datatype = '>f4'):
 
+    # range object is different between python 2 and 3
+    if sys.version_info[0] >= 3 and isinstance(tiles_to_load, range):
+        tiles_to_load = list(tiles_to_load)
+
     # force mds_files_to_load to be a list (if str is passed)
     if isinstance(mds_files_to_load, str):
         mds_files_to_load = [mds_files_to_load]
