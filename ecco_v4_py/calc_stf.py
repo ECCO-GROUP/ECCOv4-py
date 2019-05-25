@@ -36,9 +36,14 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
 
     Returns
     -------
-    psi : xarray DataArray
-        meridional overturning streamfunction in Sverdrups
-        with dimensions time (if present in dataset), k, and latitude
+    ds_out : xarray Dataset
+        with the following variables
+            psi_moc
+                meridional overturning streamfunction across the section in Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
+            trsp_z
+                freshwater transport across section at each depth level in Sv
+                with dimensions 'time' (if in given dataset), 'lat', and 'k'
     """
 
     # Compute volume transport
@@ -46,11 +51,13 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
     trsp_y = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
     # Creates an empty streamfunction
-    psi_moc = meridional_trsp_at_depth(trsp_x, trsp_y, 
-                                       lat_vals=lat_vals, 
-                                       cds=ds.coords.to_dataset(), 
-                                       basin_name=basin_name, 
-                                       grid=grid)
+    ds_out = meridional_trsp_at_depth(trsp_x, trsp_y, 
+                                      lat_vals=lat_vals, 
+                                      cds=ds.coords.to_dataset(), 
+                                      basin_name=basin_name, 
+                                      grid=grid)
+
+    psi_moc = ds_out['trsp_z'].copy(deep=True)
 
     # Flip depth dimension, take cumulative sum, flip back
     if doFlip:
@@ -62,9 +69,13 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
     if doFlip:
         psi_moc = -1 * psi_moc.isel(k=slice(None,None,-1))
 
+    # Add to dataset
+    ds_out['psi_moc'] = psi_moc
+
     # Convert to Sverdrups
-    psi_moc = psi_moc * METERS_CUBED_TO_SVERDRUPS
-    psi_moc.attrs['units'] = 'Sv'
+    for fld in ['trsp_z','psi_moc']:
+        ds_out[fld] = ds_out[fld] * METERS_CUBED_TO_SVERDRUPS
+        ds_out[fld].attrs['units'] = 'Sv'
 
     return psi_moc
 
@@ -90,7 +101,7 @@ def calc_section_stf(ds,
     -------
     ds_out : xarray Dataset
         with the following variables
-            psi_ov
+            psi_moc
                 overturning streamfunction across the section in Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
             trsp_z
@@ -99,9 +110,6 @@ def calc_section_stf(ds,
             maskW, maskS
                 defining the section
         and the section_name as an attribute if it is provided
-        
-        meridional overturning streamfunction in Sverdrups
-        with dimensions time (if present in dataset) and rho_c (density)
     """
 
     # Compute volume transport
@@ -128,11 +136,13 @@ def calc_section_stf(ds,
     if doFlip:
         psi_moc = -1 * psi_moc.isel(k=slice(None,None,-1))
 
-    # Convert to Sverdrups
-    psi_moc = psi_moc * METERS_CUBED_TO_SVERDRUPS
-    psi_moc.attrs['units'] = 'Sv'
-
+    # Add to dataset
     ds_out['psi_moc'] = psi_moc
+
+    # Convert to Sverdrups
+    for fld in ['trsp_z','psi_moc']:
+        ds_out[fld] = ds_out[fld] * METERS_CUBED_TO_SVERDRUPS
+        ds_out[fld].attrs['units'] = 'Sv'
 
     # Add section name and masks to Dataset
     ds_out['maskW'] = maskW
