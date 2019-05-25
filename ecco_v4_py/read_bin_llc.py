@@ -13,11 +13,11 @@ The llc layout is used for ECCO v4.
 
 from __future__ import division,print_function
 from xmitgcm import open_mdsdataset
-import xmitgcm as xm
 import xmitgcm
 import numpy as np
 import xarray as xr
 import time
+import sys
 
 from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
