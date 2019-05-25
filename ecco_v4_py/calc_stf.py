@@ -38,6 +38,9 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
     -------
     ds_out : xarray Dataset
         with the following variables
+            moc
+                meridional overturning strength as maximum of streamfunction
+                in depth space, with dimensions 'time' (if in dataset), and 'lat'
             psi_moc
                 meridional overturning streamfunction across the section in Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
@@ -72,10 +75,18 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
     # Add to dataset
     ds_out['psi_moc'] = psi_moc
 
+    # Compute overturning strength
+    ds_out['moc'] = ds_out['psi_moc'].max(dim='k')
+
     # Convert to Sverdrups
-    for fld in ['trsp_z','psi_moc']:
+    for fld in ['trsp_z','psi_moc','moc']:
         ds_out[fld] = ds_out[fld] * METERS_CUBED_TO_SVERDRUPS
         ds_out[fld].attrs['units'] = 'Sv'
+
+    # Name the fields here, after unit conversion which doesn't keep attrs
+    ds_out['trsp_z'].attrs['name'] = 'volumetric trsp per depth level'
+    ds_out['psi_moc'].attrs['name'] = 'meridional overturning streamfunction'
+    ds_out['moc'].attrs['name'] = 'meridional overturning strength'
 
     return ds_out
 
@@ -101,6 +112,9 @@ def calc_section_stf(ds,
     -------
     ds_out : xarray Dataset
         with the following variables
+            moc
+                meridional overturning strength as maximum of streamfunction
+                in depth space, with dimensions 'time' (if in dataset), and 'lat'
             psi_moc
                 overturning streamfunction across the section in Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
@@ -139,10 +153,18 @@ def calc_section_stf(ds,
     # Add to dataset
     ds_out['psi_moc'] = psi_moc
 
+    # Compute overturning strength
+    ds_out['moc'] = ds_out['psi_moc'].max(dim='k')
+
     # Convert to Sverdrups
-    for fld in ['trsp_z','psi_moc']:
+    for fld in ['trsp_z','psi_moc','moc']:
         ds_out[fld] = ds_out[fld] * METERS_CUBED_TO_SVERDRUPS
         ds_out[fld].attrs['units'] = 'Sv'
+
+    # Name the fields here, after unit conversion which doesn't keep attrs
+    ds_out['trsp_z'].attrs['name'] = 'volumetric trsp per depth level'
+    ds_out['psi_moc'].attrs['name'] = 'overturning streamfunction'
+    ds_out['moc'].attrs['name'] = 'overturning strength'
 
     # Add section name and masks to Dataset
     ds_out['maskW'] = maskW
