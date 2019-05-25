@@ -77,7 +77,7 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,basin_name=None,grid=None):
         ds_out[fld] = ds_out[fld] * METERS_CUBED_TO_SVERDRUPS
         ds_out[fld].attrs['units'] = 'Sv'
 
-    return psi_moc
+    return ds_out
 
 def calc_section_stf(ds, 
                      pt1=None, pt2=None, 
