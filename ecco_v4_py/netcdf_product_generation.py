@@ -18,7 +18,7 @@ import xmitgcm as xm
 import dateutil
 import glob
 import os
-
+import sys
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -89,15 +89,11 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      output_dir,
                                                      output_freq_code,
                                                      vars_to_load = 'all',
-                                                     tiles_to_load = range(13),
+                                                     tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                                                      time_steps_to_load = [],
                                                      meta_variable_specific = dict(),
                                                      meta_common = dict(),
                                                      mds_datatype = '>f4'):
-
-    # range object is different between python 2 and 3
-    if sys.version_info[0] >= 3 and isinstance(tiles_to_load, range):
-        tiles_to_load = list(tiles_to_load)
 
     # force mds_files_to_load to be a list (if str is passed)
     if isinstance(mds_files_to_load, str):

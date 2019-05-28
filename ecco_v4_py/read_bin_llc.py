@@ -13,11 +13,11 @@ The llc layout is used for ECCO v4.
 
 from __future__ import division,print_function
 from xmitgcm import open_mdsdataset
-import xmitgcm as xm
 import xmitgcm
 import numpy as np
 import xarray as xr
 import time
+import sys
 
 from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
@@ -30,7 +30,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             mds_grid_dir,
                             mds_files=None,
                             vars_to_load = 'all', 
-                            tiles_to_load = range(13),
+                            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                             model_time_steps_to_load = 'all',
                             output_freq_code = '', 
                             meta_variable_specific=dict(),
