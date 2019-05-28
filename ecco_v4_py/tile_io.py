@@ -65,14 +65,13 @@ def load_ecco_grid_from_tiles_nc(grid_dir,
 
     """
  
-    
     if not less_output:
         print ('tiles_to_load ', tiles_to_load)
         print ('years to load ', years_to_load)
 
-    if isinstance(tiles_to_load,str) :
+    if isinstance(tiles_to_load,str):
         if 'all' in tiles_to_load:
-            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12]
         else:
             tiles_to_load = list(int(tiles_to_load))
     elif isinstance(tiles_to_load,tuple):
@@ -179,7 +178,7 @@ def recursive_load_ecco_var_from_tiles_nc(data_root_dir,
 
     if isinstance(tiles_to_load,str):
         if 'all' in tiles_to_load:
-            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12]
         else:
             tiles_to_load = list(int(tiles_to_load))
     elif isinstance(tiles_to_load,tuple):
@@ -422,7 +421,7 @@ def load_ecco_var_from_tiles_nc(data_dir,
 
     if isinstance(tiles_to_load,str):
         if 'all' in tiles_to_load:
-            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12]
         else:
             tiles_to_load = list(int(tiles_to_load))
     elif isinstance(tiles_to_load,tuple):
@@ -549,7 +548,7 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
 
     if isinstance(tiles_to_load,str):
         if 'all' in tiles_to_load:
-            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12]
         else:
             tiles_to_load = list(int(tiles_to_load))
     elif isinstance(tiles_to_load,tuple):
@@ -704,10 +703,9 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
         print ('tiles_to_load ', tiles_to_load)
         print ('years to load ', years_to_load)
 
-    
-    if isinstance(tiles_to_load,str) :
+    if isinstance(tiles_to_load,str):
         if 'all' in tiles_to_load:
-            tiles_to_load = (0,1,2,3,4,5,6,7,8,9,10,11,12) 
+            tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12]
         else:
             tiles_to_load = list(int(tiles_to_load))
     elif isinstance(tiles_to_load,tuple):
