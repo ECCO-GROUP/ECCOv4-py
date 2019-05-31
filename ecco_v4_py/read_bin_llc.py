@@ -151,6 +151,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
 
     if model_time_steps_to_load == 'all':
+        if not less_output:
+            print ('loading all model time steps')
 
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
                                        grid_dir = mds_grid_dir,
@@ -165,8 +167,11 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        llc_method = llc_method)
     
     else:
+        if not less_output:
+            print ('loading subset of  model time steps')
+
         if isinstance(model_time_steps_to_load, int):
-            iters_to_load = [iters_to_load]
+            model_time_steps_to_load = [model_time_steps_to_load]
         
         if isinstance(model_time_steps_to_load, list):
             ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
@@ -181,7 +186,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            grid_vars_to_coords=True,
                                            llc_method=llc_method)
         else:
-            raise TypeError('not a valid iters_to_load.  must be "all", an "int", or a list of "int"')
+            raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
@@ -226,33 +231,66 @@ def load_ecco_vars_from_mds(mds_var_dir,
     if not isinstance(tiles_to_load, list) and not isinstance(tiles_to_load,range):
         tiles_to_load = [tiles_to_load]
 
+    if not less_output:
+        print ('subsetting tiles to ', tiles_to_load)
+
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
     
     #ecco_dataset = ecco_dataset.isel(time=0)
+    if not less_output:
+        print ('creating time bounds .... ')
+
     if 'AVG' in output_freq_code and \
         'time_bnds' not in ecco_dataset.keys():
+    
+        if not less_output:
+            print ('avg in output freq code and time bounds not in ecco keys')
 
         time_bnds_ds, center_times = \
             make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset,\
                                                                 output_freq_code)
         
+        ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
+        if 'time_bnds-no-units' in meta_common:
+            ecco_dataset.time_bnds.attrs=meta_common['time_bnds-no-units']
+
+        ecco_dataset = ecco_dataset.set_coords('time_bnds')
+
+        if not less_output:
+            print ('time bounds -----')
+            print (time_bnds_ds)
+            print ('center times -----')
+            print (center_times)
+            print ('ecco dataset time values type', type(ecco_dataset.time.values))
+            print ('ecco dataset time_bnds typ   ', type(ecco_dataset.time_bnds))
+            print ('ecco dataset time_bnds       ', ecco_dataset.time_bnds)
+
         if isinstance(ecco_dataset.time.values, np.datetime64):
+            if not less_output:
+                print ('replacing time.values....')
             ecco_dataset.time.values = center_times
         
         elif isinstance(center_times, np.datetime64):
+            if not less_output:
+                print ('replacing time.values....')
             center_times = np.array(center_times)
             ecco_dataset.time.values[:] = center_times
-        
+
+        elif isinstance(ecco_dataset.time.values, np.ndarray) and \
+             isinstance(center_times, np.ndarray):
+            if not less_output:
+                print ('replacing time.values....')
+            ecco_dataset.time.values = center_times
+ 
         if 'ecco-v4-time-average-center-no-units' in meta_common:
             ecco_dataset.time.attrs = \
                 meta_common['ecco-v4-time-average-center-no-units']
           
-        ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
         
-        if 'time_bnds-no-units' in meta_common:
-            ecco_dataset.time_bnds.attrs=meta_common['time_bnds-no-units']
       
-        ecco_dataset = ecco_dataset.set_coords('time_bnds')
+
+        if not less_output:
+            print ('dataset times : ', ecco_dataset.time.values)
         
     elif  'SNAPSHOT' in output_freq_code:
          if 'ecco-v4-time-snapshot-no-units' in meta_common:
