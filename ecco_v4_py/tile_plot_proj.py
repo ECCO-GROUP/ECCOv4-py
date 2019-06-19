@@ -305,6 +305,7 @@ def plot_global(xx,yy, data,
                 cmap='jet', 
                 show_grid_lines = True,
                 show_grid_labels = True,
+		grid_linewidth = 1, 
                 levels=20):
 
     if show_grid_lines :
@@ -329,7 +330,7 @@ def plot_global(xx,yy, data,
     else:
         raise ValueError('plot_type  must be either "pcolormesh" or "contourf"') 
                          
-    ax.coastlines('110m', linewidth=0.8)
+    ax.coastlines('110m', linewidth=grid_linewidth)
     ax.add_feature(cfeature.LAND)
 
     cbar = []
