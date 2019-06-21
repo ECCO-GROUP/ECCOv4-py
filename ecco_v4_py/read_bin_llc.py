@@ -23,6 +23,8 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
     llc_tiles_to_faces, llc_tiles_to_compact
 
+from .read_bin_gen import load_binary_array
+
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 
 
@@ -333,8 +335,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
 
 #%%
-def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-                      filetype = '>f4', less_output = True):
+def read_llc_to_tiles_xmitgcm(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
+                   	      filetype = '>f4', less_output = True):
     """
     Loads an MITgcm binary file in the 'tiled' format of the 
     lat-lon-cap (LLC) grids via xmitgcm.  
@@ -360,7 +362,8 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         Default: 90
     
     skip : int, optional, default 0
-        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
+        the number of 2D slices (or records) to skip.  
+	Records could be vertical levels of a 3D field, or different 2D fields, or both.
     
     nk : int, optional, default 1 [singleton]
         number of 2D slices (or records) to load in the depth dimension.  
@@ -368,7 +371,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     
     nl : int, optional, default 1 [singleton]
         number of 2D slices (or records) to load in the "record" dimension.  
-        Default: 1 [singleton] 
+        :Default: 1 [singleton] 
     
     filetype: string, default '>f4'
         the file type, default is big endian (>) 32 bit float (f4)
@@ -410,38 +413,41 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
                                                 nrecs=nrecs, dtype=filetype)
 
+    print (data_tiles.shape)
+    
     # Handle cases of single or multiple records, and skip>0
     # Also, swap so that Ntiles dim is ALWAYS first 
     # for ecco_v4_py convention
     if nl==1:
         # Only want 1 record
         data_tiles = data_tiles[skip_3d,...]
-        if nk>1:
-            data_tiles = data_tiles.swapaxes(0,1)
+    #    if nk>1:
+    #        data_tiles = data_tiles.swapaxes(0,1)
 
     else:
         # Want more than one record
         data_tiles = data_tiles[skip_3d:skip_3d+nl,...]
 
-        if nk>1:
-            data_tiles = data_tiles.swapaxes(1,2)
+    #     if nk>1:
+    #         data_tiles = data_tiles.swapaxes(1,2)
 
-        data_tiles = data_tiles.swapaxes(0,1)
+    #    data_tiles = data_tiles.swapaxes(0,1)
 
     # return the array
     return data_tiles
+
 
 #%%
 def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
             filetype = '>f4', less_output = False ):
     """
 
-    Loads an MITgcm binary file in the 'tiled' format of the 
-    lat-lon-cap (LLC) grids, then converts to the compact form
+    Loads an MITgcm binary file in the compact format of the
+    lat-lon-cap (LLC) grids.  Note, does not use Dask.
 
     Array is returned with the following dimension order:
 
-        [N_recs, N_z, N_tiles*llc, llc]
+        [nl, nk, N_tiles*llc, llc]
 
     where if either N_z or N_recs =1, then that dimension is collapsed 
     and not present in the returned array.
@@ -484,14 +490,70 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         a numpy array of dimension nl x nk x 13*llc x llc 
 
     """
+    data_compact = load_binary_array(fdir, fname, llc, 13*llc, nk=nk, nl=nl, 
+                                     skip=skip, filetype = filetype, 
+                                     less_output = less_output) 
+    #data_tiles = read_bin_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
+    #                skip=skip, filetype = filetype, less_output = less_output)
 
-    data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
-                                   filetype=filetype)
+    #data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
+    #                               filetype=filetype)
 
-    data_compact = llc_tiles_to_compact(data_tiles,less_output=less_output)
+    #data_compact = llc_tiles_to_compact(data_tiles,less_output=less_output)
     
     # return the array
     return data_compact
+
+
+#%%
+def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
+              	      filetype = '>f', less_output = False):
+    """
+    Loads an MITgcm binary file in the 'compact' format of the 
+    lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
+    of the LLC grids.  
+    Parameters
+    ----------
+    fdir : string
+        A string with the directory of the binary file to open
+    fname : string
+        A string with the name of the binary file to open
+    llc : int
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
+        so `llc` would be `90`.  
+        Default: 90
+    skip : int
+        the number of 2D slices (or records) to skip.  
+        Records could be vertical levels of a 3D field, or different 2D fields, or both.
+    nk : int
+        number of 2D slices (or records) to load in the third dimension.  
+        if nk = -1, load all 2D slices
+        Default: 1 [singleton]
+    nl : int
+        number of 2D slices (or records) to load in the fourth dimension.  
+        Default: 1 [singleton] 
+    filetype: string
+        the file type, default is big endian (>) 32 bit float (f)
+        alternatively, ('<d') would be little endian (<) 64 bit float (d)
+    less_output : boolean
+        A debugging flag.  False = less debugging output
+        Default: False
+        
+    Returns
+    -------
+    data_tiles
+        a numpy array of dimension 13 x nl x nk x llc x llc, one llc x llc array 
+        for each of the 13 tiles and nl and nk levels.  
+    """
+    
+    data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
+       				    filetype = filetype, less_output=less_output)
+
+    data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
+
+        
+    # return the array
+    return data_tiles
 
 
 
@@ -524,7 +586,8 @@ def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         the size of the llc grid.  For ECCO v4, we use the llc90 domain (llc=90)
     
     skip : int, optional, default 0
-        the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
+        the number of 2D slices (or records) to skip.  
+        Records could be vertical levels of a 3D field, or different 2D fields, or both.
     
     nk : int, optional, default 1 [singleton]
         number of 2D slices (or records) to load in the depth dimension.  
@@ -550,11 +613,16 @@ def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         4,f5: llc x 3*llc  
 
     """
-    
-    data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
-                                   filetype=filetype)
+   
+    data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
+                                    filetype = filetype, less_output=less_output)
 
-    data_faces = llc_tiles_to_faces(data_tiles, less_output = less_output)
+    data_faces = llc_compact_to_faces(data_compact, less_output = less_output)
+ 
+    #data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
+    #                               filetype=filetype)
+
+    #data_faces = llc_tiles_to_faces(data_tiles, less_output = less_output)
 
     return data_faces
 
