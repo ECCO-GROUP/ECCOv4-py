@@ -37,8 +37,8 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
 #    vars_to_load = []
     
     grid =  load_ecco_vars_from_mds(grid_input_dir, 
-                                    mds_files, 
                                     grid_input_dir,
+                                    mds_files, 
                                     meta_variable_specific = meta_variable_specific,
                                     meta_common = meta_common,
                                     mds_datatype = mds_datatype)
@@ -164,8 +164,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
             # load the dataset
             ecco_dataset =  \
                 load_ecco_vars_from_mds(mds_var_dir, \
-                                        mds_file,
                                         mds_grid_dir,
+                                        mds_file,
                                         vars_to_load = vars_to_load,
                                         tiles_to_load=tiles_to_load,
                                         model_time_steps_to_load=[time_step],
