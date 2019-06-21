@@ -1,0 +1,169 @@
+{
+  "ecco-v4-global": {
+    "Project": "Estimating the Circulation and Climate of the Ocean",
+    "product_version": "ECCO Version 4 Release 3 (ECCOv4r3) 1992-2015", 
+    "Insitution": "JPL", 
+    "author": "Ian Fenty and Ou Wang", 
+    "Metadata_Conventions": "CF-1.6, Unidata Dataset Discovery v1.0, GDS v2.0", 
+    "Conventions": "CF-1.6", 
+    "cdm_data_type": "Grid", 
+    "product_time_coverage_start": "1992-01-01T12:00:00", 
+    "product_time_coverage_end":   "2015-12-31T12:00:00", 
+    "time_units": "days since 1992-01-01 00:00:00", 
+    "geospatial_lat_units": "degrees_north", 
+    "geospatial_lon_units": "degrees_east", 
+    "no_data": "NaNf"
+  },
+  "ecco-v4-global-time-coverage": {
+    "time_coverage_start": "TIME-SLICE-DEPENDENT",
+    "time_coverage_end": "TIME-SLICE-DEPENDENT"
+  },
+  "time-average-year": {
+    "time_coverage_resolution": "P1Y"
+  },
+  "time-average-month": {
+    "time_coverage_resolution": "P1M"
+  },
+  "time-average-week": {
+    "time_coverage_resolution": "P7D"
+  },
+  "time-average-day": {
+    "time_coverage_resolution": "P1D"
+  },
+  "time-snapshot": {
+    "time_coverage_resolution": "point"
+  },
+  "ecco-v4-global-3D":{
+      "nz": "50", 
+      "geospatial_vertical_min": "0", 
+      "geospatial_vertical_units": "meter", 
+      "geospatial_vertical_max": "6134.5"
+  }, 
+  "ecco-v4-time_bnds": {
+    "units": "days since 1992-01-01 00:00:00", 
+    "long_name": "time bounds of averaging period", 
+    "standard_name": "time_bounds"
+  }, 
+  "time_bnds-no-units": {
+    "long_name": "time bounds of averaging period", 
+    "standard_name": "time_bounds"
+  }, 
+
+  "ecco-v4-native-grid": {
+    "cdm_data_type": "Grid",
+    "spatial_resolution": "1 degree",
+    "xmin": "0", 
+    "ymax": "89", 
+    "nx": "90", 
+    "ny": "90", 
+    "geospatial_lat_max": "TILE-DEPENDENT", 
+    "geospatial_lat_min": "TILE-DEPENDENT", 
+    "geospatial_lon_max": "TILE-DEPENDENT", 
+    "geospatial_lon_min": "TILE-DEPENDENT"
+  },
+
+  "0.5 deg lat-lon-interp": {
+    "cdm_data_type": "Grid", 
+    "spatial_resolution": "0.5 degree by 0.5 degree", 
+    "spacing": "0.5", 
+    "xmin": "-179.75", 
+    "ymax": "89.75", 
+    "nx": "720", 
+    "ny": "360", 
+    "grid_method": "nearest neighbor", 
+    "geospatial_lat_max": "89.75", 
+    "geospatial_lat_min": "-89.75", 
+    "geospatial_lon_max": "179.75", 
+    "geospatial_lon_min": "-179.75", 
+    "proj4": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs", 
+    "Projection": "Lat Lon EPSG:4326", 
+    "radius_of_influence": "120000 m"
+  },   
+
+  "cell_methods": {
+    "native_mn": "longitude: point (comment: native model grid latitude: point (comment: native model grid) time: mean", 
+    "interp_mn": "longitude: point (comment: nearest neighbor interpolated from model grid) latitude: point (comment: nearest neighbor interpolated from model grid) time: mean", 
+    "interp_snapshot": "longitude: point (comment: nearest neighbor interpolated from model grid) latitude: point (comment: nearest neighbor interpolated from model grid) time: snapshot", 
+    "native_snapshot": "longitude: point (comment: native model grid latitude: point (comment: native model grid) time: snapshot"
+  }, 
+  "ansi_date": {
+    "long_name": "center time of averaging period in ANSI format", 
+    "standard_name": "time"
+  }, 
+  "ecco-v4-time-average-center": {
+    "units": "days since 1992-01-01 00:00:00", 
+    "long_name": "center time of averaging period", 
+    "standard_name": "time", 
+    "bounds": "time_bnds", 
+    "axis": "T"
+  }, 
+  "ecco-v4-time-average-center-no-units": {
+    "long_name": "center time of averaging period", 
+    "standard_name": "time", 
+    "bounds": "time_bnds", 
+    "axis": "T"
+  }, 
+ "ecco-v4-time-snapshot-no-units": {
+    "long_name": "model actual time (snapshot)", 
+    "standard_name": "time", 
+    "axis": "T"
+  }, 
+  "ecco-v4-time-average-end": {
+    "units": "days since 1992-01-01 00:00:00", 
+    "long_name": "time at the end of the averaging period", 
+    "standard_name": "time", 
+    "bounds": "time_bnds", 
+    "axis": "T"
+  },
+  "longitude-no-bounds": {
+    "name": "longitude", 
+    "valid_range": "-180., 180.", 
+    "long_name": "longitude", 
+    "standard_name": "longitude", 
+    "units": "degrees_east"
+  }, 
+  "longitude-with-bounds": {
+    "name": "longitude", 
+    "bounds": "longitude_bnds", 
+    "valid_range": "-180., 180.", 
+    "long_name": "longitude", 
+    "standard_name": "longitude", 
+    "units": "degrees_east"
+  }, 
+  "latitude-no-bounds": {
+    "name": "latitude", 
+    "valid_range": "-90., 90.", 
+    "long_name": "latitude", 
+    "standard_name": "latitude", 
+    "units": "degrees_north"
+  },  
+  "latitude-with-bounds": {
+    "name": "latitude", 
+    "bounds": "latitude_bnds", 
+    "valid_range": "-90., 90.", 
+    "long_name": "latitude", 
+    "standard_name": "latitude", 
+    "units": "degrees_north"
+  }, 
+  "latitude_bnds": {
+    "units": "degrees_north", 
+    "long_name": "latitude bounds", 
+    "standard_name": "latitude_bounds"
+  }, 
+  "longitude_bnds": {
+    "units": "degrees_east", 
+    "long_name": "longitude bounds", 
+    "standard_name": "longitude_bounds"
+  }, 
+  "3d": {
+    "depth": {
+      "long_name": "depth", 
+      "standard_name": "depth"
+    }, 
+    "depth_bnds": {
+      "long_name": "depth bounds", 
+      "standard_name": "depth bounds", 
+      "unit": "meter"
+    }
+  }
+}
