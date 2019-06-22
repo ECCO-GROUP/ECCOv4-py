@@ -55,6 +55,9 @@ def llc_compact_to_tiles(data_compact, less_output = False):
                     llc_compact_to_faces(data_compact,
                                          less_output=less_output), 
                     less_output=less_output)
+
+    # Squeeze out singleton dimension
+    data_tiles = np.squeeze(data_tiles)
         
     return data_tiles
 
@@ -421,7 +424,7 @@ def llc_faces_to_tiles(F, less_output=False):
                 data_tiles[l,k,11,:] = f5[l,k,:,llc*1:llc*2]
                 data_tiles[l,k,12,:] = f5[l,k,:,llc*2:]
 
-    data_tiles = np.squeeze(data_tiles)
+
 
 
     return data_tiles
