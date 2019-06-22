@@ -348,14 +348,14 @@ def llc_faces_to_tiles(F, less_output=False):
 
     elif num_dims == 3: # we have 3D slices (time or depth, y, x)
         nk = dims[0]
-        data_tiles = np.zeros((13, nk, llc, llc))
+        data_tiles = np.zeros((nk, 13, llc, llc))
 
 
     elif num_dims == 4: # we have a 4D slice (time or depth, time or depth, y, x)
         nl = dims[0]
         nk = dims[1]
 
-        data_tiles = np.zeros((13, nl, nk, llc, llc))
+        data_tiles = np.zeros((nl, nk, 13, llc, llc))
     
     else:
         print ('can only handle face arrays that have 2, 3, or 4 dimensions!')
@@ -388,38 +388,40 @@ def llc_faces_to_tiles(F, less_output=False):
     if num_dims == 3:
         # loop over k
         for k in range(nk):
-            data_tiles[0,k,:]  = f1[k,llc*0:llc*1,:]
-            data_tiles[1,k,:]  = f1[k,llc*1:llc*2,:]
-            data_tiles[2,k,:]  = f1[k,llc*2:,:]
-            data_tiles[3,k,:]  = f2[k,llc*0:llc*1,:]
-            data_tiles[4,k,:]  = f2[k,llc*1:llc*2,:]
-            data_tiles[5,k,:]  = f2[k,llc*2:,:]
-            data_tiles[6,k,:]  = f3[k,:]
-            data_tiles[7,k,:]  = f4[k,:,llc*0:llc*1]
-            data_tiles[8,k,:]  = f4[k,:,llc*1:llc*2]
-            data_tiles[9,k,:]  = f4[k,:,llc*2:]
-            data_tiles[10,k,:] = f5[k,:,llc*0:llc*1]
-            data_tiles[11,k,:] = f5[k,:,llc*1:llc*2]
-            data_tiles[12,k,:] = f5[k,:,llc*2:]
+            data_tiles[k,0,:]  = f1[k,llc*0:llc*1,:]
+            data_tiles[k,1,:]  = f1[k,llc*1:llc*2,:]
+            data_tiles[k,2,:]  = f1[k,llc*2:,:]
+            data_tiles[k,3,:]  = f2[k,llc*0:llc*1,:]
+            data_tiles[k,4,:]  = f2[k,llc*1:llc*2,:]
+            data_tiles[k,5,:]  = f2[k,llc*2:,:]
+            data_tiles[k,6,:]  = f3[k,:]
+            data_tiles[k,7,:]  = f4[k,:,llc*0:llc*1]
+            data_tiles[k,8,:]  = f4[k,:,llc*1:llc*2]
+            data_tiles[k,9,:]  = f4[k,:,llc*2:]
+            data_tiles[k,10,:] = f5[k,:,llc*0:llc*1]
+            data_tiles[k,11,:] = f5[k,:,llc*1:llc*2]
+            data_tiles[k,12,:] = f5[k,:,llc*2:]
 
     # -- 4D case
     if num_dims == 4:
         #loop over l and k
         for l in range(nl):
             for k in range(nk):
-                data_tiles[0,l,k,:]  = f1[l,k,llc*0:llc*1,:]
-                data_tiles[1,l,k,:]  = f1[l,k,llc*1:llc*2,:]
-                data_tiles[2,l,k,:]  = f1[l,k,llc*2:,:]
-                data_tiles[3,l,k,:]  = f2[l,k,llc*0:llc*1,:]
-                data_tiles[4,l,k,:]  = f2[l,k,llc*1:llc*2,:]
-                data_tiles[5,l,k,:]  = f2[l,k,llc*2:,:]
-                data_tiles[6,l,k,:]  = f3[l,k,:]
-                data_tiles[7,l,k,:]  = f4[l,k,:,llc*0:llc*1]
-                data_tiles[8,l,k,:]  = f4[l,k,:,llc*1:llc*2]
-                data_tiles[9,l,k,:]  = f4[l,k,:,llc*2:]
-                data_tiles[10,l,k,:] = f5[l,k,:,llc*0:llc*1]
-                data_tiles[11,l,k,:] = f5[l,k,:,llc*1:llc*2]
-                data_tiles[12,l,k,:] = f5[l,k,:,llc*2:]
+                data_tiles[l,k,0,:]  = f1[l,k,llc*0:llc*1,:]
+                data_tiles[l,k,1,:]  = f1[l,k,llc*1:llc*2,:]
+                data_tiles[l,k,2,:]  = f1[l,k,llc*2:,:]
+                data_tiles[l,k,3,:]  = f2[l,k,llc*0:llc*1,:]
+                data_tiles[l,k,4,:]  = f2[l,k,llc*1:llc*2,:]
+                data_tiles[l,k,5,:]  = f2[l,k,llc*2:,:]
+                data_tiles[l,k,6,:]  = f3[l,k,:]
+                data_tiles[l,k,7,:]  = f4[l,k,:,llc*0:llc*1]
+                data_tiles[l,k,8,:]  = f4[l,k,:,llc*1:llc*2]
+                data_tiles[l,k,9,:]  = f4[l,k,:,llc*2:]
+                data_tiles[l,k,10,:] = f5[l,k,:,llc*0:llc*1]
+                data_tiles[l,k,11,:] = f5[l,k,:,llc*1:llc*2]
+                data_tiles[l,k,12,:] = f5[l,k,:,llc*2:]
+
+    data_tiles = np.squeeze(data_tiles)
 
 
     return data_tiles
