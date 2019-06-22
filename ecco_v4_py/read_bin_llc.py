@@ -397,7 +397,7 @@ def read_llc_to_tiles_xmitgcm(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     full_filename = '%s/%s' % (fdir,fname)
 
     if not less_output:
-        print (full_filename)
+        print('full_filename: ',full_filename)
     
     # Handle "skipped" records by reading up until that record, and
     # dropping preceding records afterward
@@ -413,25 +413,17 @@ def read_llc_to_tiles_xmitgcm(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
                                                 nrecs=nrecs, dtype=filetype)
 
-    print (data_tiles.shape)
-    
     # Handle cases of single or multiple records, and skip>0
-    # Also, swap so that Ntiles dim is ALWAYS first 
-    # for ecco_v4_py convention
     if nl==1:
         # Only want 1 record
         data_tiles = data_tiles[skip_3d,...]
-    #    if nk>1:
-    #        data_tiles = data_tiles.swapaxes(0,1)
 
     else:
         # Want more than one record
         data_tiles = data_tiles[skip_3d:skip_3d+nl,...]
 
-    #     if nk>1:
-    #         data_tiles = data_tiles.swapaxes(1,2)
-
-    #    data_tiles = data_tiles.swapaxes(0,1)
+    if not less_output:
+        print('data_tiles shape = ',data_tiles.shape)
 
     # return the array
     return data_tiles

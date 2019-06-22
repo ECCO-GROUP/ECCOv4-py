@@ -777,49 +777,15 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
     if var_type is None and grid_da is None:
         raise TypeError('Must specify var_type="c","w","s", or "z" if grid_da is not provided')
 
-    # Reshape data to match xmitgcm dimension order
-    # Want it in [N_recs, N_z, N_tiles, N_j, N_i]
-    if len(data_tiles.shape)==5:
-        if not less_output:
-            print('Found 5D array, assuming [N_tiles, N_recs, N_z, N_y, N_x]')
-            print('Swapping dims 0 <-> 1')
-
-        data_tiles = data_tiles.swapaxes(0,1)
-
-        if not less_output:
-            print('Array shape is now:')
-            print(data_tiles.shape)
-            print('Swapping dims 1 <-> 2')
-
-        data_tiles = data_tiles.swapaxes(1,2)
-        if not less_output:
-            print('Array shape is now:')
-            print(data_tiles.shape)
-
-    elif len(data_tiles.shape)==4:
-        if not less_output:
-            print('Found 4D array, assuming [N_tiles, N_?, N_y, N_x]')
-            print('Swapping dims 0 <-> 1')
-
-        data_tiles = data_tiles.swapaxes(0,1)
-
-        if not less_output:
-            print('Array shape is now:')
-            print(data_tiles.shape)
-
-    elif len(data_tiles.shape)==3:
-        if not less_output:
-            print('Found 3D array, assuming [N_tiles, N_y, N_x]')
-            print('No swapping necessary')
-    elif len(data_tiles.shape)==1:
+    # Test for special case: 1D data
+    if len(data_tiles.shape)==1:
         if grid_da is None:
             raise TypeError('If converting 1D array, must specify grid_da as template')
 
         if not less_output:
             print('Found 1D array, will use grid_da input to shape it')
-
-    else:
-        raise TypeError('Found unfamiliar array shape: %d' % data_tiles.shape)
+    elif len(data_tiles.shape)>5:
+        raise TypeError('Found unfamiliar array shape: ', data_tiles.shape)
 
     # If a DataArray or Dataset is given to model after, use this first!
     if grid_da is not None:
