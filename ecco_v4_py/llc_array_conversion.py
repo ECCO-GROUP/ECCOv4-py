@@ -173,17 +173,17 @@ def llc_compact_to_faces(data_compact, less_output = False):
     elif num_dims == 4: # we have a 4D slice (time or depth, time or depth, y, x)
         nl = dims[0]
         nk = dims[1]
-        
-        if less_output == False:
-            print ('4 dimensions')
-            print('nl, nk ', nl, nk)
-            print('f5 shape ', f5.shape)
 
         f1 = np.zeros((nl, nk, 3*llc, llc))
         f2 = np.zeros((nl, nk, 3*llc, llc))
         f3 = np.zeros((nl, nk, llc, llc))
         f4 = np.zeros((nl, nk, llc, 3*llc))
         f5 = np.zeros((nl, nk, llc, 3*llc))
+
+        if less_output == False:
+            print ('4 dimensions')
+            print('nl, nk ', nl, nk)
+            print('f5 shape ', f5.shape)
 
     else:
         print ('can only handle compact arrays that have 2, 3, or 4 dimensions!')
@@ -275,8 +275,8 @@ def llc_compact_to_faces(data_compact, less_output = False):
                     i2 = np.arange(0,3*llc,3) + 10*llc + f -11
                     f5_tmp[:,i1] = data_compact[l,k,i2,:]
             
-                f4[k,l,:,:] = f4_tmp
-                f5[k,l,:,:] = f5_tmp
+                f4[l,k,:,:] = f4_tmp
+                f5[l,k,:,:] = f5_tmp
 
 
     # put the 5 faces in the dictionary.  
