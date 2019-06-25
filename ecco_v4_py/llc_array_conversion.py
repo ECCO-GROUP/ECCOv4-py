@@ -56,9 +56,6 @@ def llc_compact_to_tiles(data_compact, less_output = False):
                                          less_output=less_output), 
                     less_output=less_output)
 
-    # Squeeze out singleton dimension
-    data_tiles = np.squeeze(data_tiles)
-        
     return data_tiles
 
 # %%
