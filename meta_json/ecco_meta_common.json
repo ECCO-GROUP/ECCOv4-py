@@ -42,11 +42,9 @@
   "ecco-v4-time_bnds": {
     "units": "days since 1992-01-01 00:00:00", 
     "long_name": "time bounds of averaging period", 
-    "standard_name": "time_bounds"
   }, 
   "time_bnds-no-units": {
     "long_name": "time bounds of averaging period", 
-    "standard_name": "time_bounds"
   }, 
 
   "ecco-v4-native-grid": {
@@ -148,12 +146,10 @@
   "latitude_bnds": {
     "units": "degrees_north", 
     "long_name": "latitude bounds", 
-    "standard_name": "latitude_bounds"
   }, 
   "longitude_bnds": {
     "units": "degrees_east", 
     "long_name": "longitude bounds", 
-    "standard_name": "longitude_bounds"
   }, 
   "3d": {
     "depth": {
@@ -162,7 +158,6 @@
     }, 
     "depth_bnds": {
       "long_name": "depth bounds", 
-      "standard_name": "depth bounds", 
       "unit": "meter"
     }
   }

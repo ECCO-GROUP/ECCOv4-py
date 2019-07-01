@@ -1,122 +1,98 @@
 {
   "ADVr_SLT": {
     "long_name": "Vertical   Advective Flux of Salinity", 
-    "standard_name": "r_sea_water_salinity_transport_due_to_advection", 
     "units": "psu.m^3/s"
   }, 
   "ADVr_TH": {
     "long_name": "Vertical   Advective Flux of Pot.Temperature", 
-    "standard_name": "r_sea_water_potential_temperature_transport_due_to_advection", 
     "units": "degC.m^3/s"
   }, 
   "ADVxHEFF": {
     "long_name": "Zonal      Advective Flux of eff ice thickn", 
-    "standard_name": "x_sea_ice_transport_due_to_advection", 
     "units": "m.m^2/s"
   }, 
   "ADVxSNOW": {
     "long_name": "Zonal      Advective Flux of eff snow thickn", 
-    "standard_name": "x_snow_transport_due_to_advection", 
     "units": "m.m^2/s"
   }, 
   "ADVx_SLT": {
     "long_name": "Zonal      Advective Flux of Salinity", 
-    "standard_name": "x_sea_water_salinity_transport_due_to_advection", 
     "units": "psu.m^3/s"
   }, 
   "ADVx_TH": {
     "long_name": "Zonal      Advective Flux of Pot.Temperature", 
-    "standard_name": "x_sea_water_potential_temperature_transport_due_to_advection", 
     "units": "degC.m^3/s"
   }, 
   "ADVyHEFF": {
     "long_name": "Meridional Advective Flux of eff ice thickn", 
-    "standard_name": "y_sea_ice_transport_due_to_advection", 
     "units": "m.m^2/s"
   }, 
   "ADVySNOW": {
     "long_name": "Meridional Advective Flux of eff snow thickn", 
-    "standard_name": "y_snow_transport_due_to_advection", 
     "units": "m.m^2/s"
   }, 
   "ADVy_SLT": {
     "long_name": "Meridional Advective Flux of Salinity", 
-    "standard_name": "y_sea_water_salinity_transport_due_to_advection", 
     "units": "psu.m^3/s"
   }, 
   "ADVy_TH": {
     "long_name": "Meridional Advective Flux of Pot.Temperature", 
-    "standard_name": "y_sea_water_potential_temperature_transport_due_to_advection", 
     "units": "degC.m^3/s"
   }, 
   "DETADT2": {
     "long_name": "Square of Surface Height Anomaly Tendency", 
-    "standard_name": "square_of_sea_surface_height_anomaly_tendency", 
     "units": "m^2/s^2"
   }, 
   "DFrE_SLT": {
     "long_name": "Vertical Diffusive Flux of Salinity    (Explicit part)", 
-    "standard_name": "r_sea_water_salinity_transport_due_to_explicit_diffusion", 
     "units": "psu.m^3/s"
   }, 
   "DFrE_TH": {
     "long_name": "Vertical Diffusive Flux of Pot.Temperature (Explicit part)", 
-    "standard_name": "r_sea_water_potential_temperature_transport_due_to_explicit_diffusion", 
     "units": "degC.m^3/s"
   }, 
   "DFrI_SLT": {
     "long_name": "Vertical Diffusive Flux of Salinity    (Implicit part)", 
-    "standard_name": "r_sea_water_salinity_transport_due_to_implicit_diffusion", 
     "units": "psu.m^3/s"
   }, 
   "DFrI_TH": {
     "long_name": "Vertical Diffusive Flux of Pot.Temperature (Implicit part)", 
-    "standard_name": "r_sea_water_potential_temperature_transport_due_to_implicit_diffusion", 
     "units": "degC.m^3/s"
   }, 
   "DFxEHEFF": {
     "long_name": "Zonal      Diffusive Flux of eff ice thickn", 
-    "standard_name": "x_sea_ice_transport_due_to_diffusion", 
     "units": "m.m^2/s"
   }, 
   "DFxESNOW": {
     "long_name": "Zonal      Diffusive Flux of eff snow thickn", 
-    "standard_name": "x_snow_transport_due_to_diffusion", 
     "units": "m.m^2/s"
   }, 
   "DFxE_SLT": {
     "long_name": "Zonal      Diffusive Flux of Salinity", 
-    "standard_name": "x_sea_water_salinity_transport_due_to_diffusion", 
     "units": "psu.m^3/s"
   }, 
   "DFxE_TH": {
     "long_name": "Zonal      Diffusive Flux of Pot.Temperature", 
-    "standard_name": "x_sea_water_potential_temperature_transport_due_to_diffusion", 
     "units": "degC.m^3/s"
   }, 
   "DFyEHEFF": {
     "long_name": "Meridional Diffusive Flux of eff ice thickn", 
-    "standard_name": "y_sea_ice_transport_due_to_diffusion", 
     "units": "m.m^2/s"
   }, 
   "DFyESNOW": {
     "long_name": "Meridional Diffusive Flux of eff snow thickn", 
-    "standard_name": "y_snow_transport_due_to_diffusion", 
     "units": "m.m^2/s"
   }, 
   "DFyE_SLT": {
     "long_name": "Meridional Diffusive Flux of Salinity", 
-    "standard_name": "y_sea_water_salinity_transport_due_to_diffusion", 
     "units": "psu.m^3/s"
   }, 
   "DFyE_TH": {
     "long_name": "Meridional Diffusive Flux of Pot.Temperature", 
-    "standard_name": "y_sea_water_potential_temperature_transport_due_to_diffusion", 
     "units": "degC.m^3/s"
   }, 
   "DRHODR": {
     "long_name": "Stratification: d.Sigma/dr (kg/m3/r_unit)", 
-    "standard_name": "stratification", 
     "units": "kg/m^4"
   }, 
   "ETAN": {
@@ -131,7 +107,6 @@
   }, 
   "EVELMASS": {
     "long_name": "Eastward Geometry-Weighted Comp of Velocity (m/s)", 
-    "standard_name": "eastward_sea_water_velocity_weighted_by_geometry", 
     "units": "m/s"
   }, 
   "EVELSTAR": {
@@ -141,12 +116,10 @@
   }, 
   "GM_PsiX": {
     "long_name": "GM Bolus transport stream-function : U component", 
-    "standard_name": "bolus_x_transport_streamfunction", 
     "units": "m^2/s"
   }, 
   "GM_PsiY": {
     "long_name": "GM Bolus transport stream-function : V component", 
-    "standard_name": "bolus_y_transport_streamfunction", 
     "units": "m^2/s"
   }, 
   "MXLDEPTH": {
@@ -161,7 +134,6 @@
   }, 
   "NVELMASS": {
     "long_name": "Northward Geometry-Weighted Comp of Velocity (m/s)", 
-    "standard_name": "northward_sea_water_velocity_weighted_by_geometry", 
     "units": "m/s"
   }, 
   "NVELSTAR": {
@@ -171,22 +143,18 @@
   }, 
   "OBP": {
     "long_name": "Ocean Bottom Pressure adjusted for global steric height change", 
-    "standard_name": "sea_water_pressure_anomaly_at_sea_floor_adjusted_for_global_steric_height_change", 
     "units": "m"
   }, 
   "PHIBOT": {
     "long_name": "Bottom Pressure Pot.(p/rho) Anomaly", 
-    "standard_name": "sea_water_pressure_anomaly_at_sea_floor", 
     "units": "m^2/s^2"
   }, 
   "PHIHYD": {
     "long_name": "Hydrostatic Pressure Pot.(p/rho) Anomaly", 
-    "standard_name": "sea_water_pressure_anomaly", 
     "units": "m^2/s^2"
   }, 
   "RHOAnoma": {
     "long_name": "Density Anomaly (=Rho-rhoConst)", 
-    "standard_name": "sea_water_potential_density_anomaly", 
     "units": "kg/m^3"
   }, 
   "SALT": {
@@ -196,12 +164,10 @@
   }, 
   "SFLUX": {
     "long_name": "total salt flux (match salt-content variations), >0 increases salt", 
-    "standard_name": "salt_flux_into_sea_water", 
     "units": "g/m^2/s"
   }, 
   "SIacSubl": {
     "long_name": "Actual sublimation freshwater flux, >0 decr. ice", 
-    "standard_name": "surface_snow_and_ice_sublimation_flux", 
     "units": "kg/m^2/s"
   }, 
   "SIarea": {
@@ -211,7 +177,6 @@
   }, 
   "SIatmFW": {
     "long_name": "Net freshwater flux from atmosphere & land (+=down)", 
-    "standard_name": "surface_downward_water_flux_in_air", 
     "units": "kg/m^2/s"
   }, 
   "SIatmQnt": {
@@ -236,17 +201,14 @@
   }, 
   "SItflux": {
     "long_name": "Same as TFLUX but incl seaice (>0 incr T decr H)", 
-    "standard_name": "heat_flux_into_sea_ice_and_sea_water", 
     "units": "W/m^2"
   }, 
   "SIuice": {
     "long_name": "SEAICE x-dir. ice velocity (m/s)",
-    "standard_name": "x_sea_ice_velocity", 
     "units": "m/s"
   }, 
   "SIvice": {
     "long_name": "SEAICE y-dir. ice velocity (m/s)", 
-    "standard_name": "y_sea_ice_velocity", 
     "units": "m/s"
   }, 
   "SSH": {
@@ -256,7 +218,6 @@
   }, 
   "TFLUX": {
     "long_name": "total heat flux (match heat-content variations), >0 increases theta", 
-    "standard_name": "heat_flux_into_sea_water", 
     "units": "W/m^2"
   }, 
   "THETA": {
@@ -266,22 +227,18 @@
   }, 
   "UVEL": {
     "long_name": "Zonal      Comp of Velocity (m/s)", 
-    "standard_name": "x_sea_water_velocity", 
     "units": "m/s"
   }, 
   "UVELMASS": {
     "long_name": "Zonal Geometry-Weighted Comp of Velocity (m/s)", 
-    "standard_name": "product_of_hfacw_and_x_sea_water_velocity", 
     "units": "m/s"
   }, 
   "VVEL": {
     "long_name": "Meridional Comp of Velocity (m/s)", 
-    "standard_name": "y_sea_water_velocity", 
     "units": "m/s"
   }, 
   "VVELMASS": {
     "long_name": "Meridional Geometry-Weighted Comp of Velocity (m/s)", 
-    "standard_name": "product_of_hfacs_and_y_sea_water_velocity", 
     "units": "m/s"
   }, 
   "WVELMASS": {
@@ -301,7 +258,6 @@
   }, 
   "oceQnet": {
     "long_name": "net surface heat flux into the ocean (+=down), >0 increases theta", 
-    "standard_name": "heat_flux_into_sea_water", 
     "units": "W/m^2"
   }, 
   "oceQsw": {
@@ -311,17 +267,14 @@
   }, 
   "oceSPDep": {
     "long_name": "Salt plume depth based on density criterion (>0)", 
-    "standard_name": "salt_plume_depth", 
     "units": "m"
   }, 
   "oceSPflx": {
     "long_name": "net surface Salt flux rejected into the ocean during freezing, (+=down),", 
-    "standard_name": "salt_plume_flux", 
     "units": "g/m^2/s"
   }, 
   "oceSPtnd": {
     "long_name": "salt tendency due to salt plume flux >0 increases salinity", 
-    "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_salt_plume_flux", 
     "units": "g/m^2/s"
   }, 
   "oceTAUX": {
@@ -347,55 +300,45 @@
   "YC": {
     "valid_range": "-90., 90.", 
     "long_name": "latitude at center of tracer cell", 
-    "standard_name": "latitude_at_c_location", 
     "units": "degrees_north"
   },  
   "YG": {
     "valid_range": "-90., 90.", 
     "long_name": "latitude at tracer face", 
-    "standard_name": "latitude_at_f_location", 
     "units": "degrees_north"
   },  
   "XC": {
     "valid_range": "-180., 180.", 
     "long_name": "longitude at center of tracer cell", 
-    "standard_name": "longitude_at_c_location",
     "units": "degrees_east"
   }, 
   "XG": {
     "valid_range": "-180., 180.", 
     "long_name": "longitude at tracer face", 
-    "standard_name": "longitude_at_f_location",
     "units": "degrees_east"
   },
   "rA": {
     "long_name": "tracer cell area",
-    "standard_name": "grid_cell_area",
     "units": "m^2"
   },
   "rAs": {
     "long_name": "cell area at s location",
-    "standard_name": "cell_area_at_s_location",
     "units": "m^2"
   },
   "rAw": {
     "long_name": "cell area at w location",
-    "standard_name": "cell_area_at_w_location",
     "units": "m^2"
   },
   "rAz": {
     "long_name": "cell area at z location",
-    "standard_name": "cell_area_at_z_location",
     "units": "m^2"
   },
   "CS": {
     "long_name": "cosine of grid orientation angle",
-    "standard_name": "cosine_of_grid_orientation_angle",
     "units": "1"
   },
   "SN": {
     "long_name": "sine of grid orientation angle",
-    "standard_name": "sine_of_grid_orientation_angle",
     "units": "1"
   }
 
