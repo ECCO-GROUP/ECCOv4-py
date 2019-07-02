@@ -42,7 +42,6 @@ from .read_bin_llc import read_llc_to_tiles
 from .read_bin_llc import read_llc_to_compact
 from .read_bin_llc import read_llc_to_faces
 from .read_bin_llc import load_ecco_vars_from_mds
-from .read_bin_llc import read_llc_to_tiles_xmitgcm
 from .read_bin_gen import load_binary_array
 
 from .resample_to_latlon import resample_to_latlon
