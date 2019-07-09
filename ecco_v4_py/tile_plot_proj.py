@@ -31,10 +31,13 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False, 
                              show_grid_lines = True,
                              show_grid_labels = True,
-		 	     grid_linewidth = 1, 
-	   	 	     grid_linestyle = '--', 
+		 	                 grid_linewidth = 1, 
+	   	 	                 grid_linestyle = '--', 
                              subplot_grid=None,
                              less_output=True,
+                             custom_background = False,
+                             background_name = [],
+                             background_resolution = [],
                              **kwargs):
     """Generate a plot of llc data, resampled to lat/lon grid, on specified 
     projection.
@@ -177,6 +180,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              circle_boundary=True,
                              cmap=cmap, 
                              show_grid_lines=False,
+                             custom_background = custom_background,
+                             background_name = background_name,
+                             background_resolution = background_resolution,
                              less_output=less_output)
 
         else: # not polar stereo
@@ -189,7 +195,10 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             plot_type = plot_type,                                       
                             show_colorbar = False,
                             cmap=cmap, 
-			    show_grid_lines = False,
+			                show_grid_lines = False,
+                            custom_background = custom_background,
+                            background_name = background_name,
+                            background_resolution = background_resolution,
                             show_grid_labels = False)
 			    
                     
@@ -202,8 +211,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                                   draw_labels = show_grid_labels)
         
          #%%
-        ax.add_feature(cfeature.LAND)
-        ax.add_feature(cfeature.COASTLINE,linewidth=0.5)
+        # ax.add_feature(cfeature.LAND)
+        #ax.add_feature(cfeature.COASTLINE,linewidth=0.5)
 
     ax= plt.gca()
 
@@ -228,10 +237,13 @@ def plot_pstereo(xx,yy, data,
                  plot_type = 'pcolormesh', 
                  show_colorbar=False, 
                  circle_boundary = False, 
-		 grid_linewidth = 1, 
-		 grid_linestyle = '--', 
+		         grid_linewidth = 1, 
+		         grid_linestyle = '--', 
                  cmap='jet', 
                  show_grid_lines=False,
+                 custom_background = False,
+                 background_name = [],
+                 background_resolution = [],
                  levels = 20,
                  less_output=True):
 
@@ -270,7 +282,9 @@ def plot_pstereo(xx,yy, data,
         # reproject the data if necessary
         data_crs=ccrs.epsg(data_projection_code)
     
-
+    if custom_background:
+        ax.background_img(name=background_name, resolution=background_resolution)
+        
     p=[]    
     if plot_type == 'pcolormesh':
         p = ax.pcolormesh(xx, yy, data, transform=data_crs, \
@@ -283,8 +297,8 @@ def plot_pstereo(xx,yy, data,
     else:
         raise ValueError('plot_type  must be either "pcolormesh" or "contourf"')
 
-         
-    ax.add_feature(cfeature.LAND)
+    if not custom_background:     
+        ax.add_feature(cfeature.LAND)
     ax.coastlines('110m', linewidth=0.8)
 
     cbar = []
@@ -305,7 +319,10 @@ def plot_global(xx,yy, data,
                 cmap='jet', 
                 show_grid_lines = True,
                 show_grid_labels = True,
-		grid_linewidth = 1, 
+		        grid_linewidth = 1, 
+                custom_background = False,
+                background_name = [],
+                background_resolution = [],
                 levels=20):
 
     if show_grid_lines :
@@ -320,7 +337,10 @@ def plot_global(xx,yy, data,
         data_crs =  ccrs.PlateCarree()
     else:
         data_crs =ccrs.epsg(data_projection_code)
-        
+     
+    if custom_background:
+        ax.background_img(name=background_name, resolution=background_resolution)
+  
     if plot_type == 'pcolormesh':
         p = ax.pcolormesh(xx, yy, data, transform=data_crs, 
                           vmin=cmin, vmax=cmax, cmap=cmap)
@@ -330,16 +350,18 @@ def plot_global(xx,yy, data,
     else:
         raise ValueError('plot_type  must be either "pcolormesh" or "contourf"') 
                          
+    
+    if not custom_background:     
+        ax.add_feature(cfeature.LAND)
     ax.coastlines('110m', linewidth=grid_linewidth)
-    ax.add_feature(cfeature.LAND)
-
+        
     cbar = []
     if show_colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)
     
-    return p, gl, cbar
+    return p, gl, cbar 
 
 # -----------------------------------------------------------------------------
 
