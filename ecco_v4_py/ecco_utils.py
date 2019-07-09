@@ -69,7 +69,7 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
         time_start = []
         time_end  = []
         center_time = []
-        for time_i in range(len(ecco_dataset.iter)):
+        for time_i in range(len(ecco_dataset.timestep)):
              tb, ct = \
                  make_time_bounds_from_ds64(ecco_dataset.time.values[time_i], 
                                   output_freq_code)

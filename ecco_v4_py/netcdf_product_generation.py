@@ -33,9 +33,7 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
                                                 mds_datatype = '>f4'):
     
     mds_files = ''
-#    iters_to_load = []
-#    vars_to_load = []
-    
+
     grid =  load_ecco_vars_from_mds(grid_input_dir, 
                                     mds_files, 
                                     grid_input_dir,
@@ -93,8 +91,9 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      time_steps_to_load = [],
                                                      meta_variable_specific = dict(),
                                                      meta_common = dict(),
-                                                     mds_datatype = '>f4'):
-
+                                                     mds_datatype = '>f4',
+                                                     method = 'time_interval_and_combined_tiles'):
+    #%%
     # force mds_files_to_load to be a list (if str is passed)
     if isinstance(mds_files_to_load, str):
         mds_files_to_load = [mds_files_to_load]
@@ -118,18 +117,6 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
            time_steps_to_load = \
                get_time_steps_from_mds_files(mds_var_dir, mds_file)
 
-            
-        #print ('mds_file ', mds_file)
-        
-        # find all of the files in this directory matching the name 'mds_file'
-        #mds_search = mds_var_dir + '/' + mds_file + '*meta'
-        
-        #print ('searching in ', mds_search)
-        #tmp_files = np.sort(glob.glob(mds_search))
-            
-        #if len(tmp_files) == 0:
-        #    print ('no files matching ', mds_file)
-        #    break
         
         first_meta_fname  = mds_file + '.' + \
             str(time_steps_to_load[0]).zfill(10) + '.meta'    
@@ -156,30 +143,45 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                 print (vars_here)
                 
                 break
+        #%%
         
-        # loop through time steps
-        for time_step in time_steps_to_load:
-            #print (mds_file, time_step)
- 
-            # load the dataset
-            ecco_dataset =  \
+        
+        ecco_dataset_all =  \
                 load_ecco_vars_from_mds(mds_var_dir, \
-                                        mds_file,
-                                        mds_grid_dir,
-                                        vars_to_load = vars_to_load,
-                                        tiles_to_load=tiles_to_load,
-                                        model_time_steps_to_load=[time_step],
-                                        output_freq_code = \
+                                         mds_grid_dir,
+                                         mds_file,
+                                         vars_to_load = vars_to_load,
+                                         tiles_to_load=tiles_to_load,
+                                         model_time_steps_to_load=time_steps_to_load,
+                                         output_freq_code = \
                                               output_freq_code, 
-                                        meta_variable_specific = \
+                                         meta_variable_specific = \
                                               meta_variable_specific,
-                                        meta_common=meta_common,
-                                        mds_datatype=mds_datatype,
-                                        llc_method = 'bigchunks')
+                                         meta_common=meta_common,
+                                         mds_datatype=mds_datatype,
+                                         llc_method = 'bigchunks')
+                
+        print ('loaded ecco dataset....')
+        # loop through time steps, one at a time.
+        for time_step in time_steps_to_load:
             
-            # pull out the associated time
+            i, = np.where(ecco_dataset_all.timestep == time_step)
+            print (ecco_dataset_all.timestep.values)
+            print ('time step ', time_step, i)
+           
+            # load the dataset
+            ecco_dataset = ecco_dataset_all.isel(time=i)  
+
+            # pull out the year, month day, hour, min, sec associated with
+            # this time step
+            if type(ecco_dataset.time.values) == np.ndarray:
+                cur_time = ecco_dataset.time.values[0]
+            else:
+                cur_time = ecco_dataset.time.values
+                
+            #print (type(cur_time))
             year, mon, day, hh, mm, ss  = \
-                 extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(ecco_dataset.time.values)
+                 extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(cur_time)
                         
             print(year, mon, day)
             
@@ -195,107 +197,174 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
             for var in ecco_dataset.keys():
                 print ('    ' + var)                
                 var_ds = ecco_dataset[var]
-                
-#                # give the variable name a little 
-#                if output_freq_code   == 'AVG_MON':
-#                    var_ds.name = var_ds.name + '_mon'
-#                elif output_freq_code == 'AVG_DAY':
-#                    var_ds.name = var_ds.name + '_day'
-#                elif output_freq_code == 'AVG_WEEK':
-#                    var_ds.name = var_ds.name + '_wk'
-#                elif output_freq_code == 'AVG_YEAR':
-#                    var_ds.name = var_ds.name + '_yr'
-#                elif output_freq_code == 'SNAPSHOT_MON':
-#                    var_ds.name = var_ds.name + '_inst'
-#                else:
-#                    print ('invalid output frequency code specified')
-#                    print ('leaving the variable name unchanged')
-                    
+               
                 # drop these ancillary fields -- they are in grid anyway    
-                for key in var_ds.coords.keys():
-                    if 'CS' in key or 'SN' in key or 'Depth' in key:
-                        var_ds = var_ds.drop(key)
-                    
-                # save each tile separately
-                for tile_i in range(13):
+                keys_to_drop = ['CS','SN','Depth','rA','PHrefC','hFacC',\
+                                'maskC','drF', 'dxC', 'dyG', 'rAw', 'hFacW',\
+                                'rAs','hFacS','maskS','dxG','dyC', 'maskW']
                 
-                    # pull out the tile
-                    tmp = var_ds.isel(tile=tile_i)
-                    
-                    # create the new file path name
-                    if 'MON' in output_freq_code:
-
-                        fname = var + '_' + \
-                                str(year) + '_' + \
-                                str(mon).zfill(2) + '_tile_' + \
-                                str(tile_i).zfill(2) + '.nc'
+                for key_to_drop in keys_to_drop:
+                    #print (key_to_drop)
+                    if key_to_drop in var_ds.coords.keys():
+                        var_ds = var_ds.drop(key_to_drop)
             
-                        newpath = output_dir + '/' + var + '/' + \
-                            str(year) + '/' + str(mon).zfill(2)
+                #print(var_ds.coords.keys())
+                #%%
+                # METHOD 'TIME_INTERVAL_AND_COMBINED_TILES'
+                # --> MAKES ONE FILE PER TIME RECORD, KEEPS TILES TOGETHER
+                
+                if method == 'time_interval_and_combined_tiles':
+                    # create the new file path name
+                        if 'MON' in output_freq_code:
+    
+                            fname = var + '_' +  str(year) + '.nc'
+                
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(mon).zfill(2)
+                        
+                        elif ('WEEK' in output_freq_code) or \
+                             ('DAY' in output_freq_code):
+                                                    
+                            fname = var + '_' + \
+                                    str(year) + '_' + \
+                                    str(mon).zfill(2) + '_' + \
+                                    str(day).zfill(2) +  '.nc'
+                            d0 = datetime.datetime(year, 1,1)
+                            d1 = datetime.datetime(year, mon, day)
+                            doy = (d1-d0).days + 1
+                            
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(doy).zfill(3)
+                                               
+                        elif 'YEAR' in output_freq_code:
+                          
+                             fname = var + '_' + str(year) + '.nc'
+            
+                             newpath = output_dir + '/' + var + '/' + \
+                                str(year) 
+                            
+                        else:
+                            print ('no valid output frequency code specified')
+                            print ('saving to year/mon/day/tile')
+                            fname = var + '_' + \
+                                str(year) + '_' + \
+                                str(mon).zfill(2) + '_' + \
+                                str(day).zfill(2) + '.nc'
+                            
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(doy).zfill(3)
+                            
+        
+                        # create the path if it does not exist/
+                        if not os.path.exists(newpath):
+                            os.makedirs(newpath)
+                     
+                        # convert the data array to a dataset.
+                        tmp = var_ds.to_dataset()
+    
+                        # add the time bounds field back in if we have an 
+                        # average field
+                        if 'AVG' in output_freq_code:
+                            tmp = xr.merge((tmp, tb))
+                            tmp = tmp.drop('tb')
+        
+                        # put the metadata back in
+                        tmp.attrs = ecco_dataset.attrs
+                        
+                        # update the temporal and geospatial metadata
+                        tmp = update_ecco_dataset_geospatial_metadata(tmp)
+                        tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
+                        
+                        # save to netcdf.  it's that simple.
+                        print ('saving to %s' % newpath + '/' + fname)
+                        tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
+                        
+                # METHOD 'TIME_INTERVAL_AND_SEPARATED_TILES'
+                # --> MAKES ONE FILE PER TIME RECORD PER TILE
+                
+                if method == 'time_interval_and_separate_tiles':
+    
+                    # save each tile separately
+                    for tile_i in range(13):
                     
-                    elif ('WEEK' in output_freq_code) or \
-                         ('DAY' in output_freq_code):
-                                                
-                        fname = var + '_' + \
+                        # pull out the tile
+                        tmp = var_ds.isel(tile=tile_i)
+                        
+                        # create the new file path name
+                        if 'MON' in output_freq_code:
+    
+                            fname = var + '_' + \
+                                    str(year) + '_' + \
+                                    str(mon).zfill(2) + '_tile_' + \
+                                    str(tile_i).zfill(2) + '.nc'
+                
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(mon).zfill(2)
+                        
+                        elif ('WEEK' in output_freq_code) or \
+                             ('DAY' in output_freq_code):
+                                                    
+                            fname = var + '_' + \
+                                    str(year) + '_' + \
+                                    str(mon).zfill(2) + '_' + \
+                                    str(day).zfill(2) + '_tile_' + \
+                                    str(tile_i).zfill(2) + '.nc'
+                            d0 = datetime.datetime(year, 1,1)
+                            d1 = datetime.datetime(year, mon, day)
+                            doy = (d1-d0).days + 1
+                            
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(doy).zfill(3)
+                       
+                            #print (d0, d1)
+                            
+                        elif 'YEAR' in output_freq_code:
+                          
+                             fname = var + '_' + \
+                                    str(year) + '_' + '_tile_' + \
+                                    str(tile_i).zfill(2) + '.nc'
+            
+                             newpath = output_dir + '/' + var + '/' + \
+                                str(year) 
+                            
+                        else:
+                            print ('no valid output frequency code specified')
+                            print ('saving to year/mon/day/tile')
+                            fname = var + '_' + \
                                 str(year) + '_' + \
                                 str(mon).zfill(2) + '_' + \
                                 str(day).zfill(2) + '_tile_' + \
                                 str(tile_i).zfill(2) + '.nc'
-                        d0 = datetime.datetime(year, 1,1)
-                        d1 = datetime.datetime(year, mon, day)
-                        doy = (d1-d0).days + 1
-                        
-                        newpath = output_dir + '/' + var + '/' + \
-                            str(year) + '/' + str(doy).zfill(3)
-                   
-                        #print (d0, d1)
-                        
-                    elif 'YEAR' in output_freq_code:
-                      
-                         fname = var + '_' + \
-                                str(year) + '_' + '_tile_' + \
-                                str(tile_i).zfill(2) + '.nc'
+                            
+                            newpath = output_dir + '/' + var + '/' + \
+                                str(year) + '/' + str(doy).zfill(3)
+                            
         
-                         newpath = output_dir + '/' + var + '/' + \
-                            str(year) 
-                        
-                    else:
-                        print ('no valid output frequency code specified')
-                        print ('saving to year/mon/day/tile')
-                        fname = var + '_' + \
-                            str(year) + '_' + \
-                            str(mon).zfill(2) + '_' + \
-                            str(day).zfill(2) + '_tile_' + \
-                            str(tile_i).zfill(2) + '.nc'
-                        
-                        newpath = output_dir + '/' + var + '/' + \
-                            str(year) + '/' + str(doy).zfill(3)
-                        
+                        # create the path if it does not exist/
+                        if not os.path.exists(newpath):
+                            os.makedirs(newpath)
+                     
+                        # convert the data array to a dataset.
+                        tmp = tmp.to_dataset()
     
-                    # create the path if it does not exist/
-                    if not os.path.exists(newpath):
-                        os.makedirs(newpath)
-                 
-                    # convert the data array to a dataset.
-                    tmp = tmp.to_dataset()
-
-                    # add the time bounds field back in if we have an 
-                    # average field
-                    if 'AVG' in output_freq_code:
-                        tmp = xr.merge((tmp, tb))
-                        tmp = tmp.drop('tb')
-    
-                    # put the metadata back in
-                    tmp.attrs = ecco_dataset.attrs
-                    
-                    # update the temporal and geospatial metadata
-                    tmp = update_ecco_dataset_geospatial_metadata(tmp)
-                    tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
-                    
-                    # save to netcdf.  it's that simple.
-                    print ('saving to %s' % newpath + '/' + fname)
-                    tmp.to_netcdf(newpath + '/' + fname)
-                    
+                        # add the time bounds field back in if we have an 
+                        # average field
+                        if 'AVG' in output_freq_code:
+                            tmp = xr.merge((tmp, tb))
+                            tmp = tmp.drop('tb')
+        
+                        # put the metadata back in
+                        tmp.attrs = ecco_dataset.attrs
+                        
+                        # update the temporal and geospatial metadata
+                        tmp = update_ecco_dataset_geospatial_metadata(tmp)
+                        tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
+                        
+                        # save to netcdf.  it's that simple.
+                        print ('saving to %s' % newpath + '/' + fname)
+                        tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
+       
+#%%            
     return ecco_dataset, tmp
 
 
@@ -379,11 +448,24 @@ def update_ecco_dataset_geospatial_metadata(ecco_dataset):
         ecco_dataset.attrs['geospatial_lon_max'] = ecco_dataset.XC.values.max()
         ecco_dataset.attrs['geospatial_lon_min'] = ecco_dataset.XC.values.min()
             
-    if 'drF' in ecco_dataset.coords.keys():
+    if 'k' in ecco_dataset.coords.keys():
         ecco_dataset.attrs['geospatial_vertical_max'] = \
-            ecco_dataset.drF.cumsum().values[-1]
-        ecco_dataset.attrs['geospatial_vertical_min'] = 0
-        ecco_dataset.attrs['nz'] = len(ecco_dataset.k)
+            ecco_dataset.Z.values[0]
+        ecco_dataset.attrs['geospatial_vertical_min'] = \
+            ecco_dataset.Z.values[-1]
+        ecco_dataset.attrs['nz'] = len(ecco_dataset.k.values)
+    elif 'k_l' in ecco_dataset.coords.keys():
+        ecco_dataset.attrs['geospatial_vertical_max'] = \
+            ecco_dataset.Z.values[0]
+        ecco_dataset.attrs['geospatial_vertical_min'] = \
+            ecco_dataset.Z.values[-1]
+        ecco_dataset.attrs['nz'] = len(ecco_dataset.k_l.values)
+    elif 'k_u' in ecco_dataset.coords.keys():
+        ecco_dataset.attrs['geospatial_vertical_max'] = \
+            ecco_dataset.Z.values[0]
+        ecco_dataset.attrs['geospatial_vertical_min'] = \
+            ecco_dataset.Z.values[-1]
+        ecco_dataset.attrs['nz'] = len(ecco_dataset.k_u.values)    
     else:
         ecco_dataset.attrs['geospatial_vertical_max'] = 0
         ecco_dataset.attrs['geospatial_vertical_min'] = 0
