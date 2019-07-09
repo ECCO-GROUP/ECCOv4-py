@@ -193,8 +193,11 @@ def load_ecco_vars_from_mds(mds_var_dir,
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'face': 'tile'})
-        ecco_dataset.tile.attrs['standard_name'] = 'tile_index'
+        ecco_dataset.tile.attrs['long_name'] = 'index of llc grid tile'
        
+    if 'iter' in ecco_dataset.coords.keys():
+        ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
+        ecco_dataset.tile.attrs['long_name'] = 'model time step'
     # if vars_to_load is an empty list, keep all variables.  otherwise,
     # only keep those variables in the vars_to_load list.
     
@@ -287,9 +290,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
         if 'ecco-v4-time-average-center-no-units' in meta_common:
             ecco_dataset.time.attrs = \
                 meta_common['ecco-v4-time-average-center-no-units']
-          
-        
-      
 
         if not less_output:
             print ('dataset times : ', ecco_dataset.time.values)
@@ -309,8 +309,18 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ecco_dataset=ecco_dataset.drop('maskCtrlC')
         
     # UPDATE THE VARIABLE SPECIFIC METADATA USING THE 'META_VARSPECIFIC' DICT.
-    # if it exists
+    # if it exists...
     for ecco_var in ecco_dataset.variables.keys():
+
+        # always drop whatever is in the standard name field
+        if 'standard_name' in ecco_dataset[ecco_var].attrs.keys():
+            ecco_dataset[ecco_var].attrs.pop('standard_name')
+    
+        ecco_dataset[ecco_var].encoding['_FillValue'] = False
+
+
+        # use the variable specific keys from the meta_variable_specific
+        # dictionary
         if ecco_var in meta_variable_specific.keys():
             ecco_dataset[ecco_var].attrs = meta_variable_specific[ecco_var]
 
@@ -328,7 +338,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
     ecco_dataset.attrs['date_created'] = time.ctime()
     
     # give it a hug?
-    ecco_dataset = ecco_dataset.squeeze()
+    # ecco_dataset = ecco_dataset.squeeze()
 
     return ecco_dataset
 
