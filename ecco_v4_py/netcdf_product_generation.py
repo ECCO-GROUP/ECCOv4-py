@@ -456,15 +456,15 @@ def update_ecco_dataset_geospatial_metadata(ecco_dataset):
         ecco_dataset.attrs['nz'] = len(ecco_dataset.k.values)
     elif 'k_l' in ecco_dataset.coords.keys():
         ecco_dataset.attrs['geospatial_vertical_max'] = \
-            ecco_dataset.Z.values[0]
+            ecco_dataset.Zl.values[0]
         ecco_dataset.attrs['geospatial_vertical_min'] = \
-            ecco_dataset.Z.values[-1]
+            ecco_dataset.Zl.values[-1]
         ecco_dataset.attrs['nz'] = len(ecco_dataset.k_l.values)
     elif 'k_u' in ecco_dataset.coords.keys():
         ecco_dataset.attrs['geospatial_vertical_max'] = \
-            ecco_dataset.Z.values[0]
+            ecco_dataset.Zu.values[0]
         ecco_dataset.attrs['geospatial_vertical_min'] = \
-            ecco_dataset.Z.values[-1]
+            ecco_dataset.Zu.values[-1]
         ecco_dataset.attrs['nz'] = len(ecco_dataset.k_u.values)    
     else:
         ecco_dataset.attrs['geospatial_vertical_max'] = 0
