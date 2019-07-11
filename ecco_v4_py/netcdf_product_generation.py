@@ -365,6 +365,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                         tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
        
 #%%            
+    ecco_dataset_all.close()
     return ecco_dataset, tmp
 
 
