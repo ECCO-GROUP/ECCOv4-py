@@ -413,7 +413,7 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 #%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
               	      filetype = '>f', less_output = False, 
-                      use_xmitgcm=True):
+                      use_xmitgcm=False):
     """
 
 
@@ -468,7 +468,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         option to use the routine xmitgcm.utils.read_3d_llc_data into a dask
         array, i.e. not into memory. 
         Otherwise read in as a compact array, convert to faces, then to tiled format
-        Default: True
+        Default: False
         
     Returns
     -------
