@@ -490,7 +490,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         # Note: that xmitgcm looks at recs including a full 3D chunk
         # while "skip" refers to 2D chunks.
         nrecs = nl
-        skip_3d = int(skip/nk)
+        skip_3d = int(np.ceil(skip/nk))
         nrecs += skip_3d
 
         # Reads data into dask array as numpy memmap 
@@ -501,11 +501,19 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         # Handle cases of single or multiple records, and skip>0
         if nl==1:
             # Only want 1 record
-            data_tiles = data_tiles[skip_3d,...]
+            # extra logic because xmitgcm grabs 3D data as a single chunk
+            if nk > 1:
+                data_tiles = np.squeeze(data_tiles[:,skip,...])
+            else:
+                data_tiles = data_tiles[skip,...]
 
         else:
             # Want more than one record
-            data_tiles = data_tiles[skip_3d:skip_3d+nl,...]
+            # extra logic because xmitgcm grabs 3D data as a single chunk
+            if nk > 1:
+                data_tiles = np.squeeze(data_tiles[:,skip:skip+nl,...])
+            else:
+                data_tiles = data_tiles[skip:skip+nl,...]
 
 
     else:
