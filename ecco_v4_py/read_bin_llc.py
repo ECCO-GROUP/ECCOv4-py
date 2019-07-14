@@ -499,24 +499,25 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
                                                     nrecs=nrecs, dtype=filetype)
 
         # Handle cases of single or multiple records, and skip>0
-        if nl==1:
-            # Only want 1 record
-            # extra logic because xmitgcm grabs 3D data as a single chunk
-            if nk > 1:
-                data_tiles = np.squeeze(data_tiles[:,skip,...])
-            else:
-                data_tiles = data_tiles[skip,...]
+        if skip>0:
+            if nl==1:
+                # Only want 1 record
+                # extra logic because xmitgcm grabs 3D data as a single chunk
+                if nk > 1:
+                    data_tiles = np.squeeze(data_tiles[:,skip,...])
+                else:
+                    data_tiles = data_tiles[skip,...]
 
-        else:
-            # Want more than one record
-            # extra logic because xmitgcm grabs 3D data as a single chunk
-            if nk > 1:
-                data_tiles = np.squeeze(data_tiles[:,skip:skip+nl,...])
             else:
-                data_tiles = data_tiles[skip:skip+nl,...]
+                # Want more than one record
+                # extra logic because xmitgcm grabs 3D data as a single chunk
+                if nk > 1:
+                    data_tiles = np.squeeze(data_tiles[:,skip:skip+nl,...])
+                else:
+                    data_tiles = data_tiles[skip:skip+nl,...]
 
-                # to make consistent with default, add singleton vertical dimension... 
-                data_tiles = np.expand_dims(data_tiles,axis=1)
+                    # to make consistent with default, add singleton vertical dimension... 
+                    data_tiles = np.expand_dims(data_tiles,axis=1)
 
 
     else:
