@@ -566,7 +566,7 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
                 f2[l,k,llc*1:llc*2,:] = data_tiles[l,k,4,:]
                 f2[l,k,llc*2:,:]      = data_tiles[l,k,5,:]
                 
-                f3[l,k,:]             = data_tiles[l,k,:]
+                f3[l,k,:]             = data_tiles[l,k,6,:]
 
                 f4[l,k,:,llc*0:llc*1] = data_tiles[l,k,7,:]
                 f4[l,k,:,llc*1:llc*2] = data_tiles[l,k,8,:]
