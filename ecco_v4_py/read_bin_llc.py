@@ -518,6 +518,8 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
                     # to make consistent with default, add singleton vertical dimension... 
                     data_tiles = np.expand_dims(data_tiles,axis=1)
+        else:
+            data_tiles=np.squeeze(data_tiles)
 
 
     else:
