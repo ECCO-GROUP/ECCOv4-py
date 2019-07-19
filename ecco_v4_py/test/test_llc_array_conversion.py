@@ -8,9 +8,9 @@ import ecco_v4_py as ecco
 _PKG_DIR = os.path.dirname(os.path.abspath(__file__))
 _DATA_DIR = os.path.join(_PKG_DIR,'../../bin')
 
-_TEST_FILES = ['basins.data', 'hFacC.data']
-_TEST_NK = [1, 50]
-_TEST_RECS = [1, 1]
+_TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']
+_TEST_NK = [1, 50, 50]
+_TEST_RECS = [1, 1, 3]
 
 
 # Test convert from tiles #
