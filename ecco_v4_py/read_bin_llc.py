@@ -342,103 +342,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     return ecco_dataset
 
-
-
-#%%
-def read_llc_to_tiles_xmitgcm(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-                   	      filetype = '>f4', less_output = True):
-    """
-    Loads an MITgcm binary file in the 'tiled' format of the 
-    lat-lon-cap (LLC) grids via xmitgcm.  
-
-    Array is returned with the following dimension order:
-
-        [N_tiles, N_recs, N_z, llc, llc]
-
-    where if either N_z or N_recs =1, then that dimension is collapsed
-    and not present in the returned array.
-
-    Parameters
-    ----------
-    fdir : string
-        A string with the directory of the binary file to open
-    
-    fname : string
-        A string with the name of the binary file to open
-    
-    llc : int, optional, default 90
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
-        so `llc` would be `90`.  
-        Default: 90
-    
-    skip : int, optional, default 0
-        the number of 2D slices (or records) to skip.  
-	Records could be vertical levels of a 3D field, or different 2D fields, or both.
-    
-    nk : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the depth dimension.  
-        Default: 1 [singleton]
-    
-    nl : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the "record" dimension.  
-        :Default: 1 [singleton] 
-    
-    filetype: string, default '>f4'
-        the file type, default is big endian (>) 32 bit float (f4)
-        alternatively, ('<d') would be little endian (<) 64 bit float (d)
-            
-    less_output : boolean, optional, default False
-        A debugging flag.  False = less debugging output
-           
-        
-    Returns
-    -------
-    data_tiles : dask Array
-        a dask array of dimension nk 13 x nl x nk x llc x llc, one llc x llc array 
-        for each of the 13 tiles and nl and nk levels.  
-
-    Note
-    ----
-        The dask array can be converted to a numpy array via
-        data = np.asarray(data_tiles)
-        
-    """
-
-    full_filename = '%s/%s' % (fdir,fname)
-
-    if not less_output:
-        print('full_filename: ',full_filename)
-    
-    # Handle "skipped" records by reading up until that record, and
-    # dropping preceding records afterward
-    #
-    # Note: that xmitgcm looks at recs including a full 3D chunk
-    # while "skip" refers to 2D chunks.
-    nrecs = nl
-    skip_3d = int(skip/nk)
-    nrecs += skip_3d
-
-    # Reads data into dask array as numpy memmap 
-    # [Nrecs x Nz x Ntiles x llc x llc]
-    data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
-                                                nrecs=nrecs, dtype=filetype)
-
-    # Handle cases of single or multiple records, and skip>0
-    if nl==1:
-        # Only want 1 record
-        data_tiles = data_tiles[skip_3d,...]
-
-    else:
-        # Want more than one record
-        data_tiles = data_tiles[skip_3d:skip_3d+nl,...]
-
-    if not less_output:
-        print('data_tiles shape = ',data_tiles.shape)
-
-    # return the array
-    return data_tiles
-
-
 #%%
 def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
             filetype = '>f4', less_output = False ):
@@ -509,11 +412,32 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
 #%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-              	      filetype = '>f', less_output = False):
+              	      filetype = '>f', less_output = False, 
+                      use_xmitgcm=False):
     """
-    Loads an MITgcm binary file in the 'compact' format of the 
-    lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
-    of the LLC grids.  
+
+
+    Loads an MITgcm binary file in the 'tiled' format of the 
+    lat-lon-cap (LLC) grids with dimension order:
+
+        [N_recs, N_z, N_tiles, llc, llc]
+
+    where if either N_z or N_recs =1, then that dimension is collapsed
+    and not present in the returned array.
+
+    if use_xmitgcm == True
+
+        data are read in via the low level routine 
+        xmitgcm.utils.read_3d_llc_data and returned as dask array.
+
+        Hint: use data_tiles.compute() to load into memory.
+
+    if use_xmitgcm == False
+
+        Loads an MITgcm binary file in the 'compact' format of the 
+        lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
+        of the LLC grids.  
+
     Parameters
     ----------
     fdir : string
@@ -540,6 +464,11 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     less_output : boolean
         A debugging flag.  False = less debugging output
         Default: False
+    use_xmitgcm : boolean
+        option to use the routine xmitgcm.utils.read_3d_llc_data into a dask
+        array, i.e. not into memory. 
+        Otherwise read in as a compact array, convert to faces, then to tiled format
+        Default: False
         
     Returns
     -------
@@ -547,19 +476,66 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         a numpy array of dimension 13 x nl x nk x llc x llc, one llc x llc array 
         for each of the 13 tiles and nl and nk levels.  
     """
-    
-    data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
-       				    filetype = filetype, less_output=less_output)
 
-    data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
+    if use_xmitgcm:
 
+        full_filename = '%s/%s' % (fdir,fname)
+
+        if not less_output:
+            print('full_filename: ',full_filename)
+        
+        # Handle "skipped" records by reading up until that record, and
+        # dropping preceding records afterward
+        #
+        # Note: that xmitgcm looks at recs including a full 3D chunk
+        # while "skip" refers to 2D chunks.
+        nrecs = nl
+        skip_3d = int(np.ceil(skip/nk))
+        nrecs += skip_3d
+
+        # Reads data into dask array as numpy memmap 
+        # [Nrecs x Nz x Ntiles x llc x llc]
+        data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
+                                                    nrecs=nrecs, dtype=filetype)
+
+        # Handle cases of single or multiple records, and skip>0
+        if skip>0:
+            if nl==1:
+                # Only want 1 record
+                # extra logic because xmitgcm grabs 3D data as a single chunk
+                if nk > 1:
+                    data_tiles = np.squeeze(data_tiles[:,skip,...])
+                else:
+                    data_tiles = data_tiles[skip,...]
+
+            else:
+                # Want more than one record
+                # extra logic because xmitgcm grabs 3D data as a single chunk
+                if nk > 1:
+                    data_tiles = np.squeeze(data_tiles[:,skip:skip+nl,...])
+                else:
+                    data_tiles = data_tiles[skip:skip+nl,...]
+
+                    # to make consistent with default, add singleton vertical dimension... 
+                    data_tiles = np.expand_dims(data_tiles,axis=1)
+        else:
+            data_tiles=np.squeeze(data_tiles)
+
+
+    else:
+
+        data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
+           				    filetype = filetype, less_output=less_output)
+
+        data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
+
+    if not less_output:
+        print('data_tiles shape = ',data_tiles.shape)
         
     # return the array
     return data_tiles
 
-
-
-
+#%%
 def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         filetype = '>f4', less_output = False):
     """
