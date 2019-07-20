@@ -469,7 +469,8 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
     # the final dimension is always length llc
     llc = dims[-1]
 
-    num_tiles = dims[0]
+    # tiles is always just before (y,x) dims
+    num_tiles = dims[-3]
 
     if less_output == False:
         print('num tiles, ', num_tiles)
@@ -481,8 +482,9 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
         f4 = np.zeros((llc, 3*llc))
         f5 = np.zeros((llc, 3*llc))
 
-    elif num_dims == 4: # 13 3D slices (tile, time or depth, y, x)
-        nk = dims[1]
+    elif num_dims == 4: # 13 3D slices (time or depth, tile, y, x)
+
+        nk = dims[0]
         
         f1 = np.zeros((nk, 3*llc, llc))
         f2 = np.zeros((nk, 3*llc, llc))
@@ -490,9 +492,9 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
         f4 = np.zeros((nk, llc, 3*llc))
         f5 = np.zeros((nk, llc, 3*llc))
 
-    elif num_dims == 5: # 4D slice (tile, time or depth, time or depth, y, x
-        nl = dims[1]
-        nk = dims[2]
+    elif num_dims == 5: # 4D slice (time or depth, time or depth, tile, y, x)
+        nl = dims[0]
+        nk = dims[1]
 
         f1 = np.zeros((nl,nk, 3*llc, llc))
         f2 = np.zeros((nl,nk, 3*llc, llc))
@@ -532,47 +534,47 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
     elif num_dims == 4: 
 
         for k in range(nk):
-            f1[k,llc*0:llc*1,:] = data_tiles[0,k,:]
+            f1[k,llc*0:llc*1,:] = data_tiles[k,0,:]
 
-            f1[k,llc*1:llc*2,:] = data_tiles[1,k,:]
-            f1[k,llc*2:,:]      = data_tiles[2,k,:]
+            f1[k,llc*1:llc*2,:] = data_tiles[k,1,:]
+            f1[k,llc*2:,:]      = data_tiles[k,2,:]
 
-            f2[k,llc*0:llc*1,:] = data_tiles[3,k,:]
-            f2[k,llc*1:llc*2,:] = data_tiles[4,k,:]
-            f2[k,llc*2:,:]      = data_tiles[5,k,:]
+            f2[k,llc*0:llc*1,:] = data_tiles[k,3,:]
+            f2[k,llc*1:llc*2,:] = data_tiles[k,4,:]
+            f2[k,llc*2:,:]      = data_tiles[k,5,:]
             
-            f3[k,:]             = data_tiles[6,k,:]
+            f3[k,:]             = data_tiles[k,6,:]
 
-            f4[k,:,llc*0:llc*1] = data_tiles[7,k,:]
-            f4[k,:,llc*1:llc*2] = data_tiles[8,k,:]
-            f4[k,:,llc*2:]      = data_tiles[9,k,:]
+            f4[k,:,llc*0:llc*1] = data_tiles[k,7,:]
+            f4[k,:,llc*1:llc*2] = data_tiles[k,8,:]
+            f4[k,:,llc*2:]      = data_tiles[k,9,:]
             
-            f5[k,:,llc*0:llc*1] = data_tiles[10,k,:]
-            f5[k,:,llc*1:llc*2] = data_tiles[11,k,:]
-            f5[k,:,llc*2:]      = data_tiles[12,k,:]
+            f5[k,:,llc*0:llc*1] = data_tiles[k,10,:]
+            f5[k,:,llc*1:llc*2] = data_tiles[k,11,:]
+            f5[k,:,llc*2:]      = data_tiles[k,12,:]
 
     # 4D slices on 13 tiles
     elif num_dims == 5: 
         for l in range(nl):
             for k in range(nk):
-                f1[l,k,llc*0:llc*1,:] = data_tiles[0,l,k,:]
+                f1[l,k,llc*0:llc*1,:] = data_tiles[l,k,0,:]
 
-                f1[l,k,llc*1:llc*2,:] = data_tiles[1,l,k,:]
-                f1[l,k,llc*2:,:]      = data_tiles[2,l,k,:]
+                f1[l,k,llc*1:llc*2,:] = data_tiles[l,k,1,:]
+                f1[l,k,llc*2:,:]      = data_tiles[l,k,2,:]
 
-                f2[l,k,llc*0:llc*1,:] = data_tiles[3,l,k,:]
-                f2[l,k,llc*1:llc*2,:] = data_tiles[4,l,k,:]
-                f2[l,k,llc*2:,:]      = data_tiles[5,l,k,:]
+                f2[l,k,llc*0:llc*1,:] = data_tiles[l,k,3,:]
+                f2[l,k,llc*1:llc*2,:] = data_tiles[l,k,4,:]
+                f2[l,k,llc*2:,:]      = data_tiles[l,k,5,:]
                 
-                f3[l,k,:]             = data_tiles[6,l,k,:]
+                f3[l,k,:]             = data_tiles[l,k,6,:]
 
-                f4[l,k,:,llc*0:llc*1] = data_tiles[7,l,k,:]
-                f4[l,k,:,llc*1:llc*2] = data_tiles[8,l,k,:]
-                f4[l,k,:,llc*2:]      = data_tiles[9,l,k,:]
+                f4[l,k,:,llc*0:llc*1] = data_tiles[l,k,7,:]
+                f4[l,k,:,llc*1:llc*2] = data_tiles[l,k,8,:]
+                f4[l,k,:,llc*2:]      = data_tiles[l,k,9,:]
                 
-                f5[l,k,:,llc*0:llc*1] = data_tiles[10,l,k,:]
-                f5[l,k,:,llc*1:llc*2] = data_tiles[11,l,k,:]
-                f5[l,k,:,llc*2:]      = data_tiles[12,l,k,:]
+                f5[l,k,:,llc*0:llc*1] = data_tiles[l,k,10,:]
+                f5[l,k,:,llc*1:llc*2] = data_tiles[l,k,11,:]
+                f5[l,k,:,llc*2:]      = data_tiles[l,k,12,:]
 
     # Build the F dictionary
     F = {}
