@@ -149,8 +149,8 @@ def calc_section_heat_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define heat transport
-    x_heat = ds['ADVx_TH'] * ds['DFxE_TH']
-    y_heat = ds['ADVy_TH'] * ds['DFyE_TH']
+    x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
+    y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
 
     # Computes salt transport in degC * m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
@@ -208,8 +208,8 @@ def calc_section_salt_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define salt transport
-    x_salt = ds['ADVx_SLT'] * ds['DFxE_SLT']
-    y_salt = ds['ADVy_SLT'] * ds['DFyE_SLT']
+    x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
+    y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
