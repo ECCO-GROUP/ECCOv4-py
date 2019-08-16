@@ -496,7 +496,6 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
             # if the field comes from an average, 
             # extract the time bounds -- we'll use it before we save
             # the variable
-            
             if 'AVG' in output_freq_code:
                 tb = ecco_dataset.time_bnds
                 tb.name = 'tb'
