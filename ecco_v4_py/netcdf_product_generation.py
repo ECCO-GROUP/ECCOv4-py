@@ -487,8 +487,6 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                 cur_time = ecco_dataset.time.values[0]
             else:
                 cur_time = ecco_dataset.time.values
-            print(ecco_dataset)
-            print('==============================')
             #print (type(cur_time))
             year, mon, day, hh, mm, ss  = \
                  extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(cur_time)
