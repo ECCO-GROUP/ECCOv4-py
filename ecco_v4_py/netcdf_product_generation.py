@@ -19,6 +19,8 @@ import dateutil
 import glob
 import os
 import sys
+import pyresample as pr
+
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -382,6 +384,7 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                                                      mds_datatype = '>f4',
                                                      dlon=0.5, dlat=0.5,
                                                      radius_of_influence = 120000,
+                                                     express=1,
                                                      kvarnmidx = 2, # coordinate idx for vertical axis                                                      
                                                      # method now is only a place holder. 
                                                      # This can be expanded. For example, 
@@ -414,6 +417,8 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
     i_reg = new_grid_min_lon + np.asarray(range(new_grid_nx))*dlon
     j_reg_idx = np.asarray(range(new_grid_ny)) 
     i_reg_idx = np.asarray(range(new_grid_nx)) 
+    if (new_grid_ny < 1) or (new_grid_nx < 1):    
+        raise ValueError('You need to have at least one grid point for the new grid.')
         
     # loop through each mds file in mds_files_to_load
     for mds_file in mds_files_to_load:
@@ -545,26 +550,57 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                     jname = 'j_g'
 
                 # interpolation
+                # To do it fast, set express==1 (default)
+                if(express==1):
+                    orig_lons_1d = XX.values.ravel()
+                    orig_lats_1d = YY.values.ravel()
+                    orig_grid = pr.geometry.SwathDefinition(lons=orig_lons_1d,
+                                                            lats=orig_lats_1d)
+                
+                    if (new_grid_ny > 0) and (new_grid_nx > 0):
+                        # 1D grid values 
+                        new_grid_lon, new_grid_lat = np.meshgrid(i_reg, j_reg)
+
+                        # define the lat lon points of the two parts.
+                        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
+                                                               lats=new_grid_lat)
+
+                        # Get the neighbor info once. 
+                        # It will be used repeatedly late to resample data
+                        # fast for each of the datasets that is based on 
+                        # the same swath, e.g. for a model variable at different times. 
+                        valid_input_index, valid_output_index, index_array, distance_array = \
+                        pr.kd_tree.get_neighbour_info(orig_grid,
+                                                   new_grid, radius_of_influence,
+                                                   neighbours=1)                
                 # 3d fields (with Z-axis) for each time record
                 if(nttmp != 0 and nrtmp != 0):
                     tmpall = np.zeros((nttmp, nrtmp,new_grid_ny,new_grid_nx))
                     for ir in range(nrtmp): # Z-loop
                         # mask
                         maskloc = ecco_dataset[varmask].values[ir,:]  
+                        
                         for it in range(nttmp): # time loop
                             # one 2d field at a time
                             var_ds_onechunk = var_ds[it,ir,:]
                             # apply mask
                             var_ds_onechunk.values[maskloc==0]=np.nan  
-                            # interpolation
-                            new_grid_lon, new_grid_lat, tmp = resample_to_latlon(XX, YY, var_ds_onechunk,
-                                                              new_grid_min_lat,
-                                                              new_grid_max_lat, dlat,
-                                                              new_grid_min_lon,
-                                                              new_grid_max_lon, dlon,
-                                                              nprocs_user=1,
-                                                              mapping_method = 'nearest_neighbor',
-                                                              radius_of_influence=radius_of_influence)    
+                            orig_field = var_ds_onechunk.values
+                            if(express==1):
+                                tmp = pr.kd_tree.get_sample_from_neighbour_info(
+                                        'nn', new_grid.shape, orig_field, 
+                                        valid_input_index, valid_output_index, 
+                                        index_array)
+                     
+                            else:
+                                new_grid_lon, new_grid_lat, tmp = resample_to_latlon(XX, YY, orig_field,
+                                                                  new_grid_min_lat,
+                                                                  new_grid_max_lat, dlat,
+                                                                  new_grid_min_lon,
+                                                                  new_grid_max_lon, dlon,
+                                                                  nprocs_user=1,
+                                                                  mapping_method = 'nearest_neighbor',
+                                                                  radius_of_influence=radius_of_influence)    
                             tmpall[it,ir,:] = tmp
                 # 2d fields (without Z-axis) for each time record      
                 elif(nttmp != 0):
@@ -574,14 +610,21 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                     for it in range(nttmp): # time loop
                         var_ds_onechunk = var_ds[it,:]                   
                         var_ds_onechunk.values[maskloc==0]=np.nan
-                        new_grid_lon, new_grid_lat, tmp = resample_to_latlon(XX, YY, var_ds_onechunk,
-                                                          new_grid_min_lat,
-                                                          new_grid_max_lat, dlat,
-                                                          new_grid_min_lon,
-                                                          new_grid_max_lon, dlon,
-                                                          nprocs_user=1,
-                                                          mapping_method = 'nearest_neighbor',
-                                                          radius_of_influence=radius_of_influence)      
+                        orig_field = var_ds_onechunk.values
+                        if(express==1):
+                            tmp = pr.kd_tree.get_sample_from_neighbour_info(
+                                    'nn', new_grid.shape, orig_field, 
+                                    valid_input_index, valid_output_index, 
+                                    index_array)         
+                        else:
+                            new_grid_lon, new_grid_lat, tmp = resample_to_latlon(XX, YY, orig_field,
+                                                              new_grid_min_lat,
+                                                              new_grid_max_lat, dlat,
+                                                              new_grid_min_lon,
+                                                              new_grid_max_lon, dlon,
+                                                              nprocs_user=1,
+                                                              mapping_method = 'nearest_neighbor',
+                                                              radius_of_influence=radius_of_influence)      
                         tmpall[it,:] = tmp
                         
                 else:
