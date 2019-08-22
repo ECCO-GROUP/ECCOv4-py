@@ -662,12 +662,12 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                 #%%
                 
                 # create the new file path name
-                if 'MON' in output_freq_code:
+                if 'MON' in output_freq_code:    
 
-                    fname = var + '_' +  str(year) + '.nc'
+                    fname = var + '_' +  str(year) + '_' + str(mon).zfill(2) + '.nc'
         
                     newpath = output_dir + '/' + var + '/' + \
-                        str(year) + '/' + str(mon).zfill(2)
+                        str(year) + '/'
                 
                 elif ('WEEK' in output_freq_code) or \
                      ('DAY' in output_freq_code):
