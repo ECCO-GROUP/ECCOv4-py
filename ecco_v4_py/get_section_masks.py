@@ -90,6 +90,9 @@ def get_section_endpoints(section_name):
     elif section_name == 'icelandfaroe':
         pt1 = [-16, 65]
         pt2 = [ -7, 62.5]
+    elif section_name == 'faroescotland':
+        pt1 = [-6.5, 62.5]
+        pt2 = [-4, 57]
     elif section_name == 'scotlandnorway':
         pt1 = [-4, 57]
         pt2 = [ 8, 62]
