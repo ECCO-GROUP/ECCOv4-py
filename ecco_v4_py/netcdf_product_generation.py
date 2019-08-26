@@ -476,103 +476,114 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                 
         # do the actual loading. Otherwise, the code may be slow.
         ecco_dataset_all.load()
-        # loop through time steps, one at a time.
-        for time_step in time_steps_to_load:
-            
-            i, = np.where(ecco_dataset_all.timestep == time_step)
-            print (ecco_dataset_all.timestep.values)
-            print ('time step ', time_step, i)
-           
-            # load the dataset
-            ecco_dataset = ecco_dataset_all.isel(time=i)  
 
-            # pull out the year, month day, hour, min, sec associated with
-            # this time step
-            if type(ecco_dataset.time.values) == np.ndarray:
-                cur_time = ecco_dataset.time.values[0]
-            else:
-                cur_time = ecco_dataset.time.values
-            #print (type(cur_time))
-            year, mon, day, hh, mm, ss  = \
-                 extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(cur_time)
+        print(ecco_dataset_all.keys())    
+        # loop through each variable in this dataset, 
+        for var in ecco_dataset_all.keys():
+            print ('    ' + var)    
+            # obtain the grid information (use fields from time=0)
+            # Note that nrtmp would always equal to one,
+            # since each outfile will include only one time-record (e.g. daily, monthly avgs.).
+            
+            ecco_dataset = ecco_dataset_all.isel(time=[0])  
                         
-            print(year, mon, day)
-            
-            # if the field comes from an average, 
-            # extract the time bounds -- we'll use it before we save
-            # the variable
-            if 'AVG' in output_freq_code:
-                tb = ecco_dataset.time_bnds
-                tb.name = 'tb'
-                
-            # loop through each variable in this dataset, 
-            for var in ecco_dataset.keys():
-                print ('    ' + var)                
-                var_ds = ecco_dataset[var]
-               
-                shapetmp = var_ds.shape
-                print(shapetmp)
-                lenshapetmp = len(shapetmp)
-                nttmp = 0
+            var_ds = ecco_dataset[var]
+           
+            shapetmp = var_ds.shape
+
+            lenshapetmp = len(shapetmp)
+            nttmp = 0
+            nrtmp = 0
+            if(lenshapetmp==4):
+                nttmp = shapetmp[0]
                 nrtmp = 0
-                if(lenshapetmp==4):
-                    nttmp = shapetmp[0]
-                    nrtmp = 0
-                elif(lenshapetmp==5):
-                    nttmp = shapetmp[0]
-                    nrtmp = shapetmp[1]                    
-                else:
-                    print('Error! ', var_ds.shape)
-                    sys.exit()
+            elif(lenshapetmp==5):
+                nttmp = shapetmp[0]
+                nrtmp = shapetmp[1]                    
+            else:
+                print('Error! ', var_ds.shape)
+                sys.exit()
 
-                # Get X,Y of the original grid. They could be XC/YC, XG/YC, XC/YG, etc.
-                # Similar for mask.
-                # default is XC, YC
-                if 'i' in var_ds.coords.keys():
-                    XX = ecco_dataset['XC']
-                    XXname = 'XC'
-                if 'j' in var_ds.coords.keys():                    
-                    YY = ecco_dataset['YC']
-                    YYname = 'YC'
-                varmask = 'maskC'
-                iname = 'i'
-                jname = 'j'
+            # Get X,Y of the original grid. They could be XC/YC, XG/YC, XC/YG, etc.
+            # Similar for mask.
+            # default is XC, YC
+            if 'i' in var_ds.coords.keys():
+                XX = ecco_dataset['XC']
+                XXname = 'XC'
+            if 'j' in var_ds.coords.keys():                    
+                YY = ecco_dataset['YC']
+                YYname = 'YC'
+            varmask = 'maskC'
+            iname = 'i'
+            jname = 'j'
 
-                if 'i_g' in var_ds.coords.keys():
-                    XX = ecco_dataset['XG']
-                    XXname = 'XG'
-                    varmask = 'maskW'
-                    iname = 'i_g'
-                if 'j_g' in var_ds.coords.keys():
-                    YY = ecco_dataset['YG']  
-                    YYname = 'YG'
-                    varmask = 'maskS'
-                    jname = 'j_g'
+            if 'i_g' in var_ds.coords.keys():
+                XX = ecco_dataset['XG']
+                XXname = 'XG'
+                varmask = 'maskW'
+                iname = 'i_g'
+            if 'j_g' in var_ds.coords.keys():
+                YY = ecco_dataset['YG']  
+                YYname = 'YG'
+                varmask = 'maskS'
+                jname = 'j_g'
 
-                # interpolation
-                # To do it fast, set express==1 (default)
-                if(express==1):
-                    orig_lons_1d = XX.values.ravel()
-                    orig_lats_1d = YY.values.ravel()
-                    orig_grid = pr.geometry.SwathDefinition(lons=orig_lons_1d,
-                                                            lats=orig_lats_1d)
+            # interpolation
+            # To do it fast, set express==1 (default)
+            if(express==1):
+                orig_lons_1d = XX.values.ravel()
+                orig_lats_1d = YY.values.ravel()
+                orig_grid = pr.geometry.SwathDefinition(lons=orig_lons_1d,
+                                                        lats=orig_lats_1d)
+            
+                if (new_grid_ny > 0) and (new_grid_nx > 0):
+                    # 1D grid values 
+                    new_grid_lon, new_grid_lat = np.meshgrid(i_reg, j_reg)
+
+                    # define the lat lon points of the two parts.
+                    new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
+                                                           lats=new_grid_lat)
+
+                    # Get the neighbor info once. 
+                    # It will be used repeatedly late to resample data
+                    # fast for each of the datasets that is based on 
+                    # the same swath, e.g. for a model variable at different times. 
+                    valid_input_index, valid_output_index, index_array, distance_array = \
+                    pr.kd_tree.get_neighbour_info(orig_grid,
+                                               new_grid, radius_of_influence,
+                                               neighbours=1) 
+                    
+            # loop through time steps, one at a time.
+            for time_step in time_steps_to_load:
                 
-                    if (new_grid_ny > 0) and (new_grid_nx > 0):
-                        # 1D grid values 
-                        new_grid_lon, new_grid_lat = np.meshgrid(i_reg, j_reg)
+                i, = np.where(ecco_dataset_all.timestep == time_step)
+                print (ecco_dataset_all.timestep.values)
+                print ('time step ', time_step, i)
+               
+                # load the dataset
+                ecco_dataset = ecco_dataset_all.isel(time=i)  
+    
+                # pull out the year, month day, hour, min, sec associated with
+                # this time step
+                if type(ecco_dataset.time.values) == np.ndarray:
+                    cur_time = ecco_dataset.time.values[0]
+                else:
+                    cur_time = ecco_dataset.time.values
+                #print (type(cur_time))
+                year, mon, day, hh, mm, ss  = \
+                     extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(cur_time)
+                            
+                print(year, mon, day)
+                
+                # if the field comes from an average, 
+                # extract the time bounds -- we'll use it before we save
+                # the variable
+                if 'AVG' in output_freq_code:
+                    tb = ecco_dataset.time_bnds
+                    tb.name = 'tb'
 
-                        # define the lat lon points of the two parts.
-                        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
-                                                               lats=new_grid_lat)
-
-                        # Get the neighbor info once. 
-                        # It will be used repeatedly late to resample data
-                        # fast for each of the datasets that is based on 
-                        # the same swath, e.g. for a model variable at different times. 
-                        valid_input_index, valid_output_index, index_array, distance_array = \
-                        pr.kd_tree.get_neighbour_info(orig_grid,
-                                                   new_grid, radius_of_influence,
-                                                   neighbours=1)                
+                var_ds = ecco_dataset[var]
+                
                 # 3d fields (with Z-axis) for each time record
                 if(nttmp != 0 and nrtmp != 0):
                     tmpall = np.zeros((nttmp, nrtmp,new_grid_ny,new_grid_nx))
@@ -608,7 +619,7 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                     # mask
                     maskloc = ecco_dataset[varmask].values[0,:]
                     for it in range(nttmp): # time loop
-                        var_ds_onechunk = var_ds[it,:]                   
+                        var_ds_onechunk = var_ds[it,:]                           
                         var_ds_onechunk.values[maskloc==0]=np.nan
                         orig_field = var_ds_onechunk.values
                         if(express==1):
