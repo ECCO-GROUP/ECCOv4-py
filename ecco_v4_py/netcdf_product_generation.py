@@ -95,6 +95,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      meta_variable_specific = dict(),
                                                      meta_common = dict(),
                                                      mds_datatype = '>f4',
+                                                     verbose=True,
                                                      method = 'time_interval_and_combined_tiles'):
 
     #%%
@@ -165,13 +166,15 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                          mds_datatype=mds_datatype,
                                          llc_method = 'bigchunks')
                 
-        print ('loaded ecco dataset....')
+        if(verbose):
+            print ('loaded ecco dataset....')
         # loop through time steps, one at a time.
         for time_step in time_steps_to_load:
             
             i, = np.where(ecco_dataset_all.timestep == time_step)
-            print (ecco_dataset_all.timestep.values)
-            print ('time step ', time_step, i)
+            if(verbose):
+                print (ecco_dataset_all.timestep.values)
+                print ('time step ', time_step, i)
            
             # load the dataset
             ecco_dataset = ecco_dataset_all.isel(time=i)  
@@ -278,7 +281,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                         tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
                         
                         # save to netcdf.  it's that simple.
-                        print ('saving to %s' % newpath + '/' + fname)
+                        if(verbose):                        
+                            print ('saving to %s' % newpath + '/' + fname)
                         tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
                         
                 # METHOD 'TIME_INTERVAL_AND_SEPARATED_TILES'
@@ -363,7 +367,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                         tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
                         
                         # save to netcdf.  it's that simple.
-                        print ('saving to %s' % newpath + '/' + fname)
+                        if(verbose):
+                            print ('saving to %s' % newpath + '/' + fname)
                         tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
        
 #%%            
@@ -392,6 +397,7 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                                                      # split to tiles, similarly to 
                                                      # the tiled native fields, to 
                                                      # reduce the size of each file.
+                                                     verbose=True,
                                                      method = ''):
     #%%
     # force mds_files_to_load to be a list (if str is passed)
@@ -477,7 +483,7 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
         # do the actual loading. Otherwise, the code may be slow.
         ecco_dataset_all.load()
 
-        print(ecco_dataset_all.keys())    
+        # print(ecco_dataset_all.keys())    
         # loop through each variable in this dataset, 
         for var in ecco_dataset_all.keys():
             print ('    ' + var)    
@@ -557,8 +563,9 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
             for time_step in time_steps_to_load:
                 
                 i, = np.where(ecco_dataset_all.timestep == time_step)
-                print (ecco_dataset_all.timestep.values)
-                print ('time step ', time_step, i)
+                if(verbose):
+                    print (ecco_dataset_all.timestep.values)
+                    print ('time step ', time_step, i)
                
                 # load the dataset
                 ecco_dataset = ecco_dataset_all.isel(time=i)  
@@ -777,7 +784,8 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                 tmp = update_ecco_dataset_temporal_coverage_metadata(tmp)
                 
                 # save to netcdf.  it's that simple.
-                print ('saving to %s' % newpath + '/' + fname)
+                if(verbose):
+                    print ('saving to %s' % newpath + '/' + fname)
                 # do not include _FillValue
                 encoding = {i: {'_FillValue': False} for i in tmp.variables.keys()}
 
