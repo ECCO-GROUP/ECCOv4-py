@@ -255,10 +255,12 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                 str(year) + '_' + \
                                 str(mon).zfill(2) + '_' + \
                                 str(day).zfill(2) + '.nc'
+                            d0 = datetime.datetime(year, 1,1)
+                            d1 = datetime.datetime(year, mon, day)
+                            doy = (d1-d0).days + 1
                             
                             newpath = output_dir + '/' + var + '/' + \
                                 str(year) + '/' + str(doy).zfill(3)
-                            
         
                         # create the path if it does not exist/
                         if not os.path.exists(newpath):
@@ -341,6 +343,9 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                 str(mon).zfill(2) + '_' + \
                                 str(day).zfill(2) + '_tile_' + \
                                 str(tile_i).zfill(2) + '.nc'
+                            d0 = datetime.datetime(year, 1,1)
+                            d1 = datetime.datetime(year, mon, day)
+                            doy = (d1-d0).days + 1
                             
                             newpath = output_dir + '/' + var + '/' + \
                                 str(year) + '/' + str(doy).zfill(3)
@@ -758,6 +763,9 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
                         str(year) + '_' + \
                         str(mon).zfill(2) + '_' + \
                         str(day).zfill(2) + '.nc'
+                    d0 = datetime.datetime(year, 1,1)
+                    d1 = datetime.datetime(year, mon, day)
+                    doy = (d1-d0).days + 1
                     
                     newpath = output_dir + '/' + var + '/' + \
                         str(year) + '/' + str(doy).zfill(3)
