@@ -96,6 +96,24 @@ def get_section_endpoints(section_name):
     elif section_name == 'scotlandnorway':
         pt1 = [-4, 57]
         pt2 = [ 8, 62]
+    elif section_name == 'framstrait':
+        pt1 = [-22, 79]
+        pt2 = [15, 78.8]
+    elif section_name == 'barentssea':
+        pt1 = [16.5, 77]
+        pt2 = [21.5, 69.6]
+    elif section_name == 'labradorgreenland':
+        pt1 = [-57, 53]
+        pt2 = [-43, 60]
+    elif section_name == 'hudsonstrait':
+        pt1 = [-65.5, 59]
+        pt2 = [-65.5, 63.5]
+    elif section_name == 'englishchannel':
+        pt1 = [-4.5, 48]
+        pt2 = [-5, 50.5]
+    elif section_name == 'southernboundary':
+        pt1 = [-53., 47.5]
+        pt2 = [-8, 43]
     elif section_name == 'indonesiaw1':
         pt1 = [103, 4]
         pt2 = [103,-1]
@@ -145,6 +163,12 @@ def get_available_sections():
     'Iceland Faroe',
     'Faroe Scotland',
     'Scotland Norway',
+    'Fram Strait',
+    'Barents Sea',
+    'Labrador Greenland',
+    'Hudson Strait',
+    'English Channel',
+    'Southern Boundary',
     'Drake Passage',
     'Indonesia W1',
     'Indonesia W2',
