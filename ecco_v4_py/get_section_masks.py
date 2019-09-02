@@ -111,7 +111,7 @@ def get_section_endpoints(section_name):
     elif section_name == 'englishchannel':
         pt1 = [-4.5, 48]
         pt2 = [-5, 50.5]
-    elif section_name == 'southernboundary':
+    elif section_name == 'newfoundlandiberia':
         pt1 = [-53., 47.5]
         pt2 = [-8, 43]
     elif section_name == 'indonesiaw1':
@@ -168,7 +168,7 @@ def get_available_sections():
     'Labrador Greenland',
     'Hudson Strait',
     'English Channel',
-    'Southern Boundary',
+    'Newfoundland Iberia',
     'Drake Passage',
     'Indonesia W1',
     'Indonesia W2',
