@@ -111,7 +111,6 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
     if isinstance(tiles_to_load, int):
         tiles_to_load = [tiles_to_load]
 
-        
     # loop through each mds file in mds_files_to_load
     for mds_file in mds_files_to_load:
         
