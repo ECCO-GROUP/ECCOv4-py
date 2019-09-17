@@ -20,7 +20,7 @@ import glob
 import os
 import sys
 import pyresample as pr
-
+import json
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -110,7 +110,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
     # for ce tiles_to_load to be a list (if int is passed)
     if isinstance(tiles_to_load, int):
         tiles_to_load = [tiles_to_load]
-        
+
     # loop through each mds file in mds_files_to_load
     for mds_file in mds_files_to_load:
         
@@ -416,6 +416,22 @@ def create_nc_variable_files_on_regular_grid_from_mds(mds_var_dir,
     # for ce tiles_to_load to be a list (if int is passed)
     if isinstance(tiles_to_load, int):
         tiles_to_load = [tiles_to_load]
+
+    # if no specific file data passed, read default metadata from json file
+    # -- variable specific meta data
+    script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+    if not meta_variable_specific:
+        meta_variable_rel_path = '../meta_json/ecco_meta_variable.json'
+        abs_meta_variable_path = os.path.join(script_dir, meta_variable_rel_path)
+        with open(abs_meta_variable_path, 'r') as fp:
+            meta_variable_specific = json.load(fp)
+
+    # --- common meta data
+    if not meta_common:
+        meta_common_rel_path = '../meta_json/ecco_meta_common.json'
+        abs_meta_common_path = os.path.join(script_dir, meta_common_rel_path)
+        with open(abs_meta_common_path, 'r') as fp:
+            meta_common = json.load(fp)
 
     # info for the regular grid
     new_grid_min_lat = -90+dlat/2.
@@ -909,3 +925,4 @@ def update_ecco_dataset_geospatial_metadata(ecco_dataset):
         ecco_dataset.attrs['nz'] = 1
     
     return ecco_dataset
+
