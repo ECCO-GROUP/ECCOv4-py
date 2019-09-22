@@ -171,7 +171,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 # ---------------------------------------------------------------------
 
 def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds, 
-                             basin_name=None, grid=None):
+                             basin_name=None, grid=None, less_output=True):
     """
     Compute transport of vector quantity at each depth level 
     across latitude(s) defined in lat_vals
@@ -227,7 +227,8 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     tmp_y = yfld * basin_maskS
     
     for lat in lat_vals:
-        print ('calculating for latitutde ', lat)
+        if not less_output:
+            print ('calculating transport for latitutde ', lat)
         # Compute mask for particular latitude band
         lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, cds['YC'], grid)
 
