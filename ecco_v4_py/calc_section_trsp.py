@@ -21,7 +21,7 @@ from .get_section_masks import get_available_sections, \
 # Define constants
 METERS_CUBED_TO_SVERDRUPS = 10**-6
 WATTS_TO_PETAWATTS = 10**-15
-RHO_CONST = 1000
+RHO_CONST = 1029
 HEAT_CAPACITY = 4000
 
 def calc_section_vol_trsp(ds,
