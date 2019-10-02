@@ -20,7 +20,7 @@ from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_met
 
 
 #%%
-def load_ecco_grid_nc(grid_dir, grid_filename='', \
+def load_ecco_grid_nc(grid_dir, grid_filename=[], \
                       tiles_to_load = 'all', \
                       k_subset = [], \
                       dask_chunk = False,\
@@ -42,7 +42,8 @@ def load_ecco_grid_nc(grid_dir, grid_filename='', \
 
     grid_filename : str
         name of model grid file
-    
+        Something like : ECCOv4r3_grid.nc or ECCOv4r4_grid.nc
+        
     tiles_to_load : int or list or range, optional, default range(13)
         a list of which tiles to load.  
     
@@ -126,8 +127,11 @@ def load_ecco_grid_nc(grid_dir, grid_filename='', \
 
     # no files
     else:
-        print('you must specify the model grid filename')
-        
+        print('\n\n Attention!!')
+        print('ECCO netcdf grid file not found in ' + grid_dir)
+        print('Consider passing the grid file directory and grid filename as arguments')
+        return []
+    
     return g_i
 
 
