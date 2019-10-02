@@ -106,7 +106,7 @@
     "units": "m/s"
   }, 
   "EVELMASS": {
-    "long_name": "Eastward Geometry-Weighted Comp of Velocity (m/s)", 
+    "long_name": "Eastward Geometry-Weighted Velocity (m/s) (cell center)", 
     "units": "m/s"
   }, 
   "EVELSTAR": {
@@ -133,7 +133,7 @@
     "units": "m/s"
   }, 
   "NVELMASS": {
-    "long_name": "Northward Geometry-Weighted Comp of Velocity (m/s)", 
+    "long_name": "Northward Geometry-Weighted Velocity (m/s) (cell center)", 
     "units": "m/s"
   }, 
   "NVELSTAR": {
@@ -143,6 +143,10 @@
   }, 
   "OBP": {
     "long_name": "Ocean Bottom Pressure adjusted for global steric height change", 
+    "units": "m"
+  }, 
+  "OBPNOPAB": {
+    "long_name": "OBP with Global Mean Air-Pressure Removed",
     "units": "m"
   }, 
   "PHIBOT": {
@@ -216,6 +220,14 @@
     "standard_name": "sea_surface_height", 
     "units": "m"
   }, 
+  "SSHIB": {
+    "long_name": "Inverted Barometer SSH", 
+    "units": "m"
+  }, 
+  "SSHDYN": {
+    "long_name": "Dynamic SSH (SSH-SSHIB)", 
+    "units": "m"
+  }, 
   "TFLUX": {
     "long_name": "total heat flux (match heat-content variations), >0 increases theta", 
     "units": "W/m^2"
@@ -226,19 +238,27 @@
     "units": "degC"
   }, 
   "UVEL": {
-    "long_name": "Zonal      Comp of Velocity (m/s)", 
+    "long_name": "X-Comp of Velocity (m/s) (not necessary eastward)", 
     "units": "m/s"
   }, 
   "UVELMASS": {
-    "long_name": "Zonal Geometry-Weighted Comp of Velocity (m/s)", 
+    "long_name": "X-Comp of Geometry-Weighted Velocity (m/s)", 
+    "units": "m/s"
+  }, 
+  "UVELSTAR": {
+    "long_name": "X-Comp of Bolus Velocity (m/s) weighted by hFacW", 
     "units": "m/s"
   }, 
   "VVEL": {
-    "long_name": "Meridional Comp of Velocity (m/s)", 
+    "long_name": "Y-Comp of Velocity (m/s) (not necessary northward)", 
     "units": "m/s"
   }, 
   "VVELMASS": {
-    "long_name": "Meridional Geometry-Weighted Comp of Velocity (m/s)", 
+    "long_name": "Y-Comp of Geometry-Weighted Velocity (m/s)", 
+    "units": "m/s"
+  }, 
+  "VVELSTAR": {
+    "long_name": "Y-Comp of Bolus Velocity (m/s) weighted by hFacS", 
     "units": "m/s"
   }, 
   "WVELMASS": {
@@ -276,6 +296,14 @@
   "oceSPtnd": {
     "long_name": "salt tendency due to salt plume flux >0 increases salinity", 
     "units": "g/m^2/s"
+  }, 
+  "oceTAUE": {
+    "long_name": "eastward surface wind stress, >0 increases eVel",
+    "units": "Pa"
+  }, 
+  "oceTAUN": {
+    "long_name": "northward surf. wind stress, >0 increases nVel",
+    "units": "Pa"
   }, 
   "oceTAUX": {
     "long_name": "zonal surface wind stress, >0 increases uVel", 

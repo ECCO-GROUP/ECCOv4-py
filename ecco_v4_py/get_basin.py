@@ -17,7 +17,7 @@ from .read_bin_llc import read_llc_to_tiles
 # Store the package directory for loading the basins binary
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
-def get_basin_mask(basin_name,mask, basin_path='../binary_data'):
+def get_basin_mask(basin_name, mask, basin_path='../binary_data'):
     """Return mask for ocean basin.
     Note: This mirrors gcmfaces/ecco_v4/v4_basin.m
 
@@ -37,6 +37,7 @@ def get_basin_mask(basin_name,mask, basin_path='../binary_data'):
 
     basin_path : string, default : '../binary_data'
         name of the directory that contains 'basins.data' and 'basins.meta'
+        
         If you don't have basins.data or basins.meta in your 'binary_data' directory
         you can download them from:
             https://github.com/ECCO-GROUP/ECCOv4-py/tree/master/binary_data
@@ -74,6 +75,7 @@ def get_basin_mask(basin_name,mask, basin_path='../binary_data'):
         print ('\n')               
         print ('Download these files and specify their path when calling this subroutine')
         return []
+
 
     # Handle vertical coordinate
     # If input mask is 3D in space, first get mask on top level

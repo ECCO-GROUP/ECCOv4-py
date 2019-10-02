@@ -42,7 +42,7 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
 
     grid_filename : str
         name of model grid file
-        Something like : ECCOv4r3_grid.nc or ECCOv4r4_grid.nc
+        filename should be something like : ECCOv4r3_grid.nc or ECCOv4r4_grid.nc
         
     tiles_to_load : int or list or range, optional, default range(13)
         a list of which tiles to load.  
@@ -88,8 +88,7 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
         files = np.sort(glob.glob(grid_dir + '/*nc'))
     else:
         files = np.sort(glob.glob(grid_dir + '/' + grid_filename))    
-        
-        
+
     if len(files) == 1:
         file = files[0]
         g = []
@@ -124,6 +123,8 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
         # update some metadata for fun.
         g_i = update_ecco_dataset_geospatial_metadata(g_i)
         g_i = update_ecco_dataset_temporal_coverage_metadata(g_i)
+        
+        return g_i
 
     # no files
     else:
@@ -132,9 +133,6 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
         print('Consider passing the grid file directory and grid filename as arguments')
         return []
     
-    return g_i
-
-
 
 #%%
 def load_ecco_var_from_years_nc(data_dir, var_to_load, \

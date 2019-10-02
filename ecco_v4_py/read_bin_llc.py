@@ -197,7 +197,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
        
     if 'iter' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
-        ecco_dataset.tile.attrs['long_name'] = 'model time step'
+        #xmitgcm aleardy has set the long_name for timestep.
+        #ecco_dataset.timestep.attrs['long_name'] = 'model time step'
     # if vars_to_load is an empty list, keep all variables.  otherwise,
     # only keep those variables in the vars_to_load list.
     
