@@ -18,7 +18,7 @@ from ecco_v4_py import vector_calc
 # These are chosen (for now) to match gcmfaces
 METERS_CUBED_TO_SVERDRUPS = 10**-6
 WATTS_TO_PETAWATTS = 10**-15
-RHO_CONST = 1000
+RHO_CONST = 1029
 HEAT_CAPACITY = 4000
 
 def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
@@ -57,7 +57,7 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     # Computes salt transport in m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_vol,y_vol,
-                                      cds=ds.coords.to_dataset(),
+                                      cds=ds,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -104,7 +104,7 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     # Computes heat transport in degC * m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_heat,y_heat,
-                                      cds=ds.coords.to_dataset(),
+                                      cds=ds,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -150,7 +150,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 
     # Computes salt transport in psu * m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_salt,y_salt,
-                                      cds=ds.coords.to_dataset(),
+                                      cds=ds,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -171,7 +171,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 # ---------------------------------------------------------------------
 
 def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds, 
-                             basin_name=None, grid=None):
+                             basin_name=None, grid=None, less_output=True):
     """
     Compute transport of vector quantity at each depth level 
     across latitude(s) defined in lat_vals
@@ -211,6 +211,8 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     # Initialize empty DataArray with coordinates and dims
     ds_out = _initialize_trsp_data_array(cds, lat_vals)
 
+
+    
     # Get basin mask
     if basin_name is not None:
         basin_maskW = get_basin_mask(basin_name,cds['maskW'].isel(k=0))
@@ -219,14 +221,20 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
         basin_maskW = cds['maskW'].isel(k=0)
         basin_maskS = cds['maskS'].isel(k=0)
 
+    # These sums are the same for all lats, therefore precompute to save
+    # time
+    tmp_x = xfld * basin_maskW
+    tmp_y = yfld * basin_maskS
+    
     for lat in lat_vals:
-
+        if not less_output:
+            print ('calculating transport for latitutde ', lat)
         # Compute mask for particular latitude band
         lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, cds['YC'], grid)
 
         # Sum horizontally
-        lat_trsp_x = (xfld * lat_maskW * basin_maskW).sum(dim=['i_g','j','tile'])
-        lat_trsp_y = (yfld * lat_maskS * basin_maskS).sum(dim=['i','j_g','tile'])
+        lat_trsp_x = (tmp_x * lat_maskW).sum(dim=['i_g','j','tile'])
+        lat_trsp_y = (tmp_y * lat_maskS).sum(dim=['i','j_g','tile'])
 
         ds_out['trsp_z'].loc[{'lat':lat}] = lat_trsp_x + lat_trsp_y
 
