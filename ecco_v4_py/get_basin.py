@@ -51,7 +51,7 @@ def get_basin_mask(basin_name,mask):
     available_names = get_available_basin_names()
 
     # Read binary with the masks, from gcmfaces package
-    bin_dir = os.path.join(package_directory,'../bin')
+    bin_dir = os.path.join(package_directory,'../binary_data')
     all_basins = read_llc_to_tiles(bin_dir,'basins.data')
 
     # Handle vertical coordinate
