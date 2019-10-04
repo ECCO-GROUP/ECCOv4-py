@@ -317,7 +317,13 @@ def _rotate_the_grid(lon, lat, rot_1, rot_2, rot_3):
     """
 
     # Get cartesian of 1D view of lat/lon
-    xg, yg, zg = _convert_latlon_to_cartesian(lon.values.ravel(),lat.values.ravel())
+    lon_v = lon.values.ravel()
+    lat_v = lat.values.ravel()
+    if len(lon_v) != len(lat_v):
+        lon_v,lat_v = np.meshgrid(lon_v,lat_v)
+        lon_v = lon_v.ravel()
+        lat_v = lat_v.ravel()
+    xg, yg, zg = _convert_latlon_to_cartesian(lon_v,lat_v)
 
     # These rotations result in:
     #   xg = 0 at pt1
@@ -328,9 +334,9 @@ def _rotate_the_grid(lon, lat, rot_1, rot_2, rot_3):
     xg, yg, zg = _apply_rotation_matrix(rot_3, (xg,yg,zg))
 
     # Remake into LLC xarray DataArray
-    xg = llc_tiles_to_xda(xg, grid_da=lon, less_output=True)
-    yg = llc_tiles_to_xda(yg, grid_da=lat, less_output=True)
-    zg = llc_tiles_to_xda(zg, grid_da=lon, less_output=True)
+    xg = llc_tiles_to_xda(xg, grid_da=lat*lon, less_output=True)
+    yg = llc_tiles_to_xda(yg, grid_da=lat*lon, less_output=True)
+    zg = llc_tiles_to_xda(zg, grid_da=lat*lon, less_output=True)
 
     return xg, yg, zg
 
