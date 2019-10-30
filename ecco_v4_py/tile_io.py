@@ -14,7 +14,9 @@ import xarray as xr
 import glob
 import os
 import re
-
+from pathlib import Path
+from collections import OrderedDict 
+ 
 from .netcdf_product_generation import update_ecco_dataset_geospatial_metadata
 from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_metadata
 
@@ -84,22 +86,17 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
     if not less_output:
         print(grid_filename, grid_dir)
  
-    if len(grid_filename) == 0:
-        files = np.sort(glob.glob(grid_dir + '/*nc'))
-    else:
-        files = np.sort(glob.glob(grid_dir + '/' + grid_filename))    
+    file = Path(grid_dir) / grid_filename
 
-    if len(files) == 1:
-        file = files[0]
-        g = []
+    if file.exists():
     
         if not less_output:
-            print ('--- LOADING model grid file: %s' % files[0])
+            print ('--- LOADING model grid file: %s' % file)
 
         if dask_chunk:
-            g_i = xr.open_dataset(file, chunks=90)
+            g_i = xr.open_dataset(str(file), chunks=90)
         else:
-            g_i = xr.open_dataset(file).load()
+            g_i = xr.open_dataset(str(file)).load()
 
         # pull out a k subset
         if len(k_subset) > 0 :
@@ -123,14 +120,14 @@ def load_ecco_grid_nc(grid_dir, grid_filename=[], \
         # update some metadata for fun.
         g_i = update_ecco_dataset_geospatial_metadata(g_i)
         g_i = update_ecco_dataset_temporal_coverage_metadata(g_i)
-        
+        g_i.attrs = OrderedDict(sorted(g_i.attrs.items()))
+
         return g_i
 
     # no files
     else:
         print('\n\n Attention!!')
-        print('ECCO netcdf grid file not found in ' + grid_dir)
-        print('Consider passing the grid file directory and grid filename as arguments')
+        print('ECCO netcdf grid file not found in ' + str(file))
         return []
     
 
@@ -208,9 +205,11 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
         raise Exception ('tiles_to_load has to be a tuple, int, list or string ' + \
                          'you passed a %s and I cannot handle that' % type(tiles_to_load))
  
-    files = np.sort(glob.glob(data_dir + '/' + var_to_load + '*nc'))
 
-    g = []
+    var_path = Path(data_dir) / var_to_load
+    files = list(var_path.glob('**/*nc'))
+    
+
     
     if not less_output:
         print ('--- LOADING %s FROM YEARS NC: %s' % \
@@ -231,22 +230,33 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
         raise Exception ('years_to_load has to be a tuple, int, list or string ' + \
                          'you passed a %s and I cannot handle that' % type(years_to_load))
 
+    # g will be the DataArray for this variable and all times
+    g = []
     if len(files) > 0:
         if not less_output:
             print ('---found %s nc files here.  loading ....' % var_to_load)
        
         for file in files:
-            file_year = int(str.split(file,'.nc')[0][-4:])
-            var_name_of_file = re.split(r"_\d+",str.split(file,'/')[-1])[0]
+            file_basename =  file.stem
+            if not less_output:
+                print('file basename : ', file_basename)
+                
+            # assumes format is VARNAME_YYYY_other stuff.nc
+            file_year = int(file.stem.split(sep='_')[1])
+            var_name_of_file = file.stem.split(sep='_')[0]
             
             if var_name_of_file == var_to_load:
-                
+                if not less_output:
+                    print('var name matches ', var_name_of_file)
+                    
                 if 'all' in years_to_load or file_year in years_to_load:
-                     
+                    if not less_output:
+                        print ('year in years_to_load', file_year) 
+                   
                     if dask_chunk:
-                        g_i = xr.open_dataset(file, chunks=90)
+                        g_i = xr.open_dataset(str(file), chunks=90)
                     else:
-                        g_i = xr.open_dataset(file).load()
+                        g_i = xr.open_dataset(str(file)).load()
 
                     # pull out a k subset
                     if len(k_subset) > 0 and 'k' in g_i.coords.keys():
@@ -272,6 +282,8 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
             # update some metadata for fun.
             g = update_ecco_dataset_geospatial_metadata(g)
             g = update_ecco_dataset_temporal_coverage_metadata(g)
+            g.attrs = OrderedDict(sorted(g.attrs.items()))
+
     # no files
     else:
         if not less_output:
@@ -383,82 +395,118 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
     if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
         
-    # ecco_dataset to return
-    g = []
 
-    #if 'all' in vars_to_load:
-    var_head_dirs = np.sort(glob.glob(data_root_dir + '/*'))
-    var_names = []
-      
-    # search for variable names in data_root_dir
-    if not less_output:
-        print ('searching for variables in %s ' % data_root_dir)
+    var_path = Path(data_root_dir)
     
-    for var in var_head_dirs:
-        var_names.append(str.split(var,'/')[-1])
-       
-    print ('searching %s for variables ... ' % data_root_dir)
+    files = list(var_path.glob('**/*nc'))
 
-    if len(var_names) == 0:
-       print ('no variables found in %s' % data_root_dir)
-    else:
-       print ('found  %s \n' %  str(var_names))
-
+    all_var_names = []
     
-    if not isinstance(years_to_load, list):
-        years_to_load = [years_to_load]    
+    files_to_load_dict = dict()
     
-    # loop through the variable names found here.
-    for var_to_load in var_names:
-        g_var = []
+    if len(files) == 0:
+        print ('no netcdf files found in this directory or subdirectories')
+        return []
+    
+    # loop through all netcdf files found in subdirectories of 'data_root_dir'
+    for file in files:
+        if not less_output:
+            print('file basename : ', file_stem)
+            
+        # assumes format is VARNAME_YYYY_other stuff.nc
+        file_year = int(file.stem.split(sep='_')[1])
+        var_name_of_file = file.stem.split(sep='_')[0]
+        
+        if not var_name_of_file in all_var_names:
+            all_var_names.append(var_name_of_file)
+            
+        if 'all' in vars_to_load or var_name_of_file in vars_to_load:
+            if 'all' in years_to_load or file_year in years_to_load:
+                
+                # add this file to a new list of files to read 
+                if var_name_of_file not in files_to_load_dict.keys():
+                    files_to_load_dict[var_name_of_file] = [file]
+                else:
+                    # add this file to the existing list of files to read
+                    files_to_load_dict[var_name_of_file].append(file)
 
-        if 'all' in vars_to_load or var_to_load in vars_to_load:
+    # g_all will be a dataset containing all data arrays
+    g_all = []
+    
+    # loop through all variables that we are going to load
+    for var_to_load in files_to_load_dict.keys():
+        
+        # g is a data array that will contain all time levels
+        # for this variable
+        g = []
+        print('loading files of ', var_to_load)
+        
+        # get all filenames corresponding to this variable to load
+        files_for_var = files_to_load_dict[var_to_load]
+        
+        # loop through all of those variables
+        for file in files_for_var:
+         
             if not less_output:
-                print ('trying to load %s ' % var_to_load)
+                print('loading ', str(file))
                 
-            sub_dirs = np.sort(([[x[0] for x in os.walk(data_root_dir)]]))
-
-            
-            # loop through subdirectories look for var_to_load
-            for sub_dir in sub_dirs[0]:
-                if not less_output :
-                    print ('searching for %s in %s ' % (var_to_load, sub_dir))
-                
-                g_i = load_ecco_var_from_years_nc(sub_dir, var_to_load, 
-                                             years_to_load = years_to_load,
-                                             tiles_to_load = tiles_to_load,
-                                             k_subset =  k_subset,
-                                             dask_chunk = dask_chunk,
-                                             less_output =less_output)
-
-                if len(g_i) > 0:
-                    if isinstance(g_var, list):
-                        g_var = g_i
-                    else:
-                        g_var = xr.concat((g_var,g_i),'time')
-                
-            print 
-            
-            # finshed looping through all dirs 
-            if len(g_var) == 0:
-                print ('finished searching for %s ... not found!' % var_to_load) 
+            # g_i is a data arary for one time level of this variable
+            if dask_chunk:
+                g_i = xr.open_dataset(str(file), chunks=90)
             else:
-                print ('finished searching for %s ... success!' % var_to_load) 
-                
-        
-        # if we loaded var_to_load, then add it to g
-        if len(g_var) > 0:
-            # if g is [], make g = g_var
-            if len(g) == 0 :
-                g = g_var
-            
-            # otherwise merge
+                g_i = xr.open_dataset(str(file)).load()
+
+            # pull out a k subset
+            if len(k_subset) > 0 and 'k' in g_i.coords.keys():
+                g_i = g_i.isel(k=k_subset)
+
+            # pull out the tile subset
+            g_i = g_i.isel(tile=tiles_to_load)
+
+            # combine this time level (g_i) with the data array that contains
+            # all time levels (g)
+            if isinstance(g, list):
+                g = g_i
             else:
-                g = xr.merge((g_var,g))
-    # add some metadata
-    if len(g) > 0:
-        g = update_ecco_dataset_geospatial_metadata(g)
-        g = update_ecco_dataset_temporal_coverage_metadata(g)
+                g = xr.concat((g, g_i),'time')
         
-    return g
+
+        # finished looping through files, check to make sure we have something
+        # in g
+        if len(g) == 0:
+            if not less_output:
+                print ('we had files but did not load any matching %s ' % \
+                       var_to_load)
+        
+        else:
+            # update some metadata for fun.
+            g = update_ecco_dataset_geospatial_metadata(g)
+            g = update_ecco_dataset_temporal_coverage_metadata(g)
+     
+            # Add this DataArray to the DataSet g_all
+            # -- if this is the first DataArray, then make g_all, g
+            if len(g_all) == 0:
+                g_all = g
+            
+            # otherwise merge g into g_all
+            else:
+                g_all = xr.merge((g_all,g))
+                
+                # when you merge DataArrays or DataSets some metadata can
+                # be lost.  This bit ensures that all the metadata is carried
+                # over to g_all
+                for g_attr_key in g.attrs.keys():
+                    if g_attr_key not in g_all.attrs.keys():
+                        g_all.attrs[g_attr_key] = g.attrs[g_attr_key]
+    
+    # finished loading all variable DataArrays
+    # update metadata again
+    if len(g_all) > 0:
+        g_all = update_ecco_dataset_geospatial_metadata(g_all)
+        g_all = update_ecco_dataset_temporal_coverage_metadata(g_all)
+        g_all.attrs = OrderedDict(sorted(g_all.attrs.items()))
+    else:
+        print('we ended up with nothing loaded!')
+        
+    return g_all
         
