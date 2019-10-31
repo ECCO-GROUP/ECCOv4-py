@@ -10,7 +10,8 @@ not necessarily in the lat-lon-cap layout. For LLC type data, see read_bin_llc.
 from __future__ import division,print_function
 import numpy as np
 import glob
-
+import os
+from pathlib import Path
 
 #%%
 def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0, 
@@ -64,14 +65,16 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         If the file is not found
 
     """
-    datafile = fdir + '/' + fname
+    #datafile = fdir + '/' + fname
+    data_folder = Path(fdir)
+    datafile = data_folder / fname
     
+    #datafile = os.path.join(fdir, fname)
     if less_output == False:
         print('loading ', fname)
     
     # check to see if file exists.    
-    file = glob.glob(datafile)
-    if len(file) == 0:
+    if datafile.exists() == False:
         raise IOError(fname + ' not found ')
 
     f = open(datafile, 'rb')

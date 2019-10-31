@@ -38,6 +38,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              custom_background = False,
                              background_name = [],
                              background_resolution = [],
+                             radius_of_influence = 100000,
                              **kwargs):
     """Generate a plot of llc data, resampled to lat/lon grid, on specified 
     projection.
@@ -48,10 +49,13 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         give the longitude, latitude values of the grid, and the 2D field to 
         be plotted
     projection_type : string, optional
-        denote the type of projection, options include
+        denote the type of projection, see Cartopy docs.
+        options include
             'robin' - Robinson
             'PlateCaree' - flat 2D projection
             'Mercator'
+            'EqualEarth'
+            'AlbersEqualArea'
             'cyl' - Lambert Cylindrical
             'ortho' - Orthographic
             'stereo' - polar stereographic projection, see lat_lim for choosing
@@ -92,6 +96,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                     row=nrows_val, col=ncols_val,index=index_val)
     less_output : string, optional
         debugging flag, don't print if True
+    raidus_of_influence : float, optional.  Default 100000 m
+        the radius of the circle within which the input data is search for
+        when mapping to the new grid
     """
 
     #%%    
@@ -165,7 +172,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             resample_to_latlon(lons, lats, data, 
                                -90+dy, 90-dy, dy,
                                lon_tmp[0], lon_tmp[1], dx, 
-                               mapping_method='nearest_neighbor')
+                               mapping_method='nearest_neighbor',
+                               radius_of_influence = radius_of_influence)
             
         if isinstance(ax.projection, ccrs.NorthPolarStereo) or \
            isinstance(ax.projection, ccrs.SouthPolarStereo) :
@@ -224,7 +232,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
    
 
     #%%
-    return f, ax, p, cbar
+    return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     
@@ -352,8 +360,9 @@ def plot_global(xx,yy, data,
                          
     
     if not custom_background:     
-        ax.add_feature(cfeature.LAND)
-    ax.coastlines('110m', linewidth=grid_linewidth)
+        ax.add_feature(cfeature.LAND, zorder=100)
+        
+    ax.coastlines('110m', linewidth=grid_linewidth, zorder=101)
         
     cbar = []
     if show_colorbar:
@@ -411,6 +420,21 @@ def _create_projection_axis(projection_type,
         else:
             ax = plt.axes(projection=ccrs.Mercator(central_longitude=user_lon_0))
         show_grid_labels = True
+    elif projection_type == 'AlbersEqualArea':
+        if subplot_grid is not None   :
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.AlbersEqualArea(central_longitude=    user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0))
+        show_grid_labels = False
+
+    elif projection_type == 'EqualEarth':
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.EqualEarth(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.EqualEarth(central_longitude=user_lon_0))
+        show_grid_labels = False
 
     elif projection_type == 'PlateCaree':
         if subplot_grid is not None   :
@@ -467,7 +491,7 @@ def _create_projection_axis(projection_type,
         show_grid_labels = False
         
     else:
-        raise NotImplementedError('projection type must be either "Mercator", "PlateCaree",  "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
+        raise NotImplementedError('projection type must be either "Mercator", "PlateCaree", "AlbersEqualArea", "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
 
     if not less_output:
         print('Projection type: ', projection_type)
