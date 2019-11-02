@@ -5,14 +5,14 @@ from distutils.core import setup
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
-  version = '1.1.5',
+  version = '1.1.6',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty',
   author_email = 'ian.fenty@jpl.nasa.gov',
   url = 'https://github.com/ECCO-GROUP/ECCOv4-py',
   keywords = ['ecco','climate','mitgcm','estimate','circulation','climate'],
   include_package_data=True,
-  data_files=[('ecco_v4_py_binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
+  data_files=[('binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
   install_requires=[
 	'cython',
 	'shapely',
