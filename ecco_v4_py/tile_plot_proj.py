@@ -31,8 +31,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False, 
                              show_grid_lines = True,
                              show_grid_labels = True,
-		 	                 grid_linewidth = 1, 
-	   	 	                 grid_linestyle = '--', 
+		 	                         grid_linewidth = 1, 
+     	   	 	                 grid_linestyle = '--', 
                              subplot_grid=None,
                              less_output=True,
                              custom_background = False,
@@ -187,7 +187,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar=False, 
                              circle_boundary=True,
                              cmap=cmap, 
-                             show_grid_lines=False,
+                             show_grid_lines=show_grid_labels,
                              custom_background = custom_background,
                              background_name = background_name,
                              background_resolution = background_resolution,
@@ -203,24 +203,24 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             plot_type = plot_type,                                       
                             show_colorbar = False,
                             cmap=cmap, 
-			                show_grid_lines = False,
+         			                show_grid_lines = False,
                             custom_background = custom_background,
                             background_name = background_name,
                             background_resolution = background_resolution,
-                            show_grid_labels = False)
+                            show_grid_labels = show_grid_labels)
 			    
                     
         if show_grid_lines :
             ax.gridlines(crs=ccrs.PlateCarree(), 
                                   linewidth=grid_linewidth,
-				  color='black', 	
+                            				  color='black', 	
                                   alpha=0.5, 
-				  linestyle=grid_linestyle, 
-                                  draw_labels = show_grid_labels)
+                            				  linestyle=grid_linestyle, 
+                                  draw_labels = show_grid_labels,zorder=102)
         
-         #%%
-        # ax.add_feature(cfeature.LAND)
-        #ax.add_feature(cfeature.COASTLINE,linewidth=0.5)
+       
+        ax.add_feature(cfeature.LAND, zorder=100)
+        ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
 
     ax= plt.gca()
 
@@ -280,7 +280,7 @@ def plot_pstereo(xx,yy, data,
     if show_grid_lines :
         gl = ax.gridlines(crs=ccrs.PlateCarree(), 
                           linewidth=grid_linewidth, color='black', 
-                          alpha=0.5, linestyle=grid_linestyle)
+                          alpha=0.5, linestyle=grid_linestyle, zorder=102)
     else:
         gl = []
 
@@ -306,8 +306,9 @@ def plot_pstereo(xx,yy, data,
         raise ValueError('plot_type  must be either "pcolormesh" or "contourf"')
 
     if not custom_background:     
-        ax.add_feature(cfeature.LAND)
-    ax.coastlines('110m', linewidth=0.8)
+        ax.add_feature(cfeature.LAND, zorder=100)
+
+    ax.coastlines('110m', linewidth=0.8, zorder=101)
 
     cbar = []
     if show_colorbar:
@@ -327,7 +328,7 @@ def plot_global(xx,yy, data,
                 cmap='jet', 
                 show_grid_lines = True,
                 show_grid_labels = True,
-		        grid_linewidth = 1, 
+      		        grid_linewidth = 1, 
                 custom_background = False,
                 background_name = [],
                 background_resolution = [],
@@ -337,7 +338,7 @@ def plot_global(xx,yy, data,
         gl = ax.gridlines(crs=ccrs.PlateCarree(), 
                           linewidth=1, color='black', 
                           draw_labels = show_grid_labels,
-                          alpha=0.5, linestyle='--')
+                          alpha=0.5, linestyle='--', zorder=102)
     else:
         gl = []
         

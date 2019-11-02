@@ -22,7 +22,7 @@ from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_met
 
 
 #%%
-def load_ecco_grid_nc(grid_dir, grid_filename=[], \
+def load_ecco_grid_nc(grid_dir, grid_filename, \
                       tiles_to_load = 'all', \
                       k_subset = [], \
                       dask_chunk = False,\
@@ -146,9 +146,9 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
     lat-lon-cap (llc) grid are present in this type of file.
 
     Files in this format have names like 
-        /eccov4r3_native_grid_netcdf/mon_mean/THETA_2010.nc
-        /eccov4r3_native_grid_netcdf/day_mean/THETA_2010.nc
-        /eccov4r3_native_grid_netcdf/mon_snapshot/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/mon_mean/THETA/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/day_mean/THETA/THETA_2010.nc
+        /eccov4r3_native_grid_netcdf/mon_snapshot/THETA/THETA_2010.nc
 
     Simply point this routine at a directory with one or more 
     of these files and one or more years of var_to_load variables will
@@ -160,6 +160,7 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
     ----------
     data_dir : str
         path to a directory within which we will look for NetCDF tile files
+        something like: '/eccov4r3_native_grid_netcdf/mon_mean/THETA/'
 
     tiles_to_load : int or list or range, optional, default range(13)
         a list of which tiles to load.  
@@ -206,14 +207,13 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
                          'you passed a %s and I cannot handle that' % type(tiles_to_load))
  
 
-    var_path = Path(data_dir) / var_to_load
+    var_path = Path(data_dir)
     files = list(var_path.glob('**/*nc'))
-    
-
     
     if not less_output:
         print ('--- LOADING %s FROM YEARS NC: %s' % \
-               (var_to_load, data_dir))
+               (var_to_load, var_path))
+        print (files)
     
     if isinstance(years_to_load, str):
         if 'all' not in years_to_load:        
@@ -241,9 +241,17 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
             if not less_output:
                 print('file basename : ', file_basename)
                 
-            # assumes format is VARNAME_YYYY_other stuff.nc
-            file_year = int(file.stem.split(sep='_')[1])
-            var_name_of_file = file.stem.split(sep='_')[0]
+            split_list = file.stem.split(sep='_')
+            file_year_found = False
+            var_name_of_file = []
+            file_year = []
+            for pi, piece in enumerate(split_list):
+                if (is_year(piece)) and (file_year_found == False):
+                    file_year = int(piece)
+                    var_name_of_file = file.stem.split(sep='_' + piece)[0]
+                    file_year_found = True
+                    if not less_output:
+                        print (var_name_of_file, file_year)
             
             if var_name_of_file == var_to_load:
                 if not less_output:
@@ -291,6 +299,13 @@ def load_ecco_var_from_years_nc(data_dir, var_to_load, \
                    (var_to_load, data_dir ))
         
     return g
+
+#%% 
+def is_year(s):
+    try:
+        return int(s) >= 1900
+    except ValueError:
+        return False
 
 #%%
 def recursive_load_ecco_var_from_years_nc(data_root_dir, 
@@ -411,11 +426,24 @@ def recursive_load_ecco_var_from_years_nc(data_root_dir,
     # loop through all netcdf files found in subdirectories of 'data_root_dir'
     for file in files:
         if not less_output:
-            print('file basename : ', file_stem)
-            
+            print('file basename : ', file.stem)
+           
+        # find the variable name and year. 
         # assumes format is VARNAME_YYYY_other stuff.nc
-        file_year = int(file.stem.split(sep='_')[1])
-        var_name_of_file = file.stem.split(sep='_')[0]
+        # we have to deal with the fact that some variables have names with '_' in them
+        # so first we look for the YYYY and then assume everything to the left of that
+        # is the variable name.  e.g., ADVx_TH_1999 =>  ADVx_TH, 1999
+        split_list = file.stem.split(sep='_')
+        file_year_found = False
+        var_name_of_file = []
+        file_year = []
+        for pi, piece in enumerate(split_list):
+            if (is_year(piece)) and (file_year_found == False):
+                file_year = int(piece)
+                var_name_of_file = file.stem.split(sep='_' + piece)[0]
+                file_year_found = True
+                if not less_output:
+                    print (var_name_of_file, file_year)
         
         if not var_name_of_file in all_var_names:
             all_var_names.append(var_name_of_file)
