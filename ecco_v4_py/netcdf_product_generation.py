@@ -21,6 +21,7 @@ import os
 import sys
 import pyresample as pr
 import json
+import pathlib
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -28,12 +29,12 @@ from .resample_to_latlon import resample_to_latlon
 
 #%%    
 def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir, 
-                                                grid_output_dir, 
-                                                meta_variable_specific = [],
-                                                meta_common = [], 
-                                                title_basename='ECCOv4r3_grid_tile_',
-                                                title='ECCOv4R3 MITgcm grid information',
-                                                mds_datatype = '>f4'):
+                                                 grid_output_dir, 
+                                                 meta_variable_specific = [],
+                                                 meta_common = [], 
+                                                 title_basename='ECCOv4r3_grid_tile_',
+                                                 title='ECCOv4R3 MITgcm grid information',
+                                                 mds_datatype = '>f4'):
     
     mds_files = ''
 
