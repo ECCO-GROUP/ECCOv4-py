@@ -308,8 +308,9 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
     use_masks = False
 
     # Test if section name is in available basins
-    if get_section_endpoints(section_name) is not None:
-        use_predefined_section = True
+    if section_name is not None:
+        if get_section_endpoints(section_name) is not None:
+            use_predefined_section = True
 
     # Test if endpoints provided
     if (pt1 is not None and pt2 is not None):
