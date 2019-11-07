@@ -61,8 +61,6 @@ from .tile_plot_proj import plot_proj_to_latlon_grid
 from .tile_plot_proj import plot_pstereo
 from .tile_plot_proj import plot_global
 
-from .test_llc_array_loading_and_conversion import run_read_bin_and_llc_conversion_test
-
 from ecco_v4_py import vector_calc
 
 __all__ = ['calc_meridional_trsp',
@@ -78,6 +76,5 @@ __all__ = ['calc_meridional_trsp',
            'scalar_calc',
            'tile_io', 
            'tile_plot',
-           'tile_plot_proj', 
-           'test_llc_array_loading_and_conversion',
+           'tile_plot_proj',
            'vector_calc']
