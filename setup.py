@@ -5,7 +5,7 @@ from distutils.core import setup
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
-  version = '1.1.6',
+  version = '1.1.8',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty',
   author_email = 'ian.fenty@jpl.nasa.gov',
@@ -30,7 +30,8 @@ setup(
 	'pyproj',
 	'pykdtree',
 	'cartopy',
-  	'xgcm'],
+ 'cmocean',
+	'xgcm'],
   classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Intended Audience :: Science/Research', 

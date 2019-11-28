@@ -156,6 +156,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
         if not less_output:
             print ('loading all model time steps')
 
+        print('read bin_llc:')
+        print(mds_var_dir)
+        print(mds_grid_dir)
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
                                        grid_dir = mds_grid_dir,
                                        read_grid = True,
@@ -322,6 +325,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
         # use the variable specific keys from the meta_variable_specific
         # dictionary
+        if not less_output:
+            print('added metadata to %s ' % ecco_var)
+            
         if ecco_var in meta_variable_specific.keys():
             ecco_dataset[ecco_var].attrs = meta_variable_specific[ecco_var]
 
