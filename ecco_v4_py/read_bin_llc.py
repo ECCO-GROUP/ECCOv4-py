@@ -155,10 +155,10 @@ def load_ecco_vars_from_mds(mds_var_dir,
     if model_time_steps_to_load == 'all':
         if not less_output:
             print ('loading all model time steps')
+            print('read bin_llc:')
+            print(mds_var_dir)
+            print(mds_grid_dir)
 
-        print('read bin_llc:')
-        print(mds_var_dir)
-        print(mds_grid_dir)
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
                                        grid_dir = mds_grid_dir,
                                        read_grid = True,
