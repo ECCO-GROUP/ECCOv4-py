@@ -169,7 +169,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=True,
-                                       llc_method = llc_method)
+                                       llc_method = llc_method,
+                                       ignore_unknown_vars=True)
     
     else:
         if not less_output:
@@ -189,7 +190,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=True,
-                                           llc_method=llc_method)
+                                           llc_method=llc_method,
+                                           ignore_unknown_vars=True)
         else:
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 
