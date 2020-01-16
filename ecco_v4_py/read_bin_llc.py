@@ -159,6 +159,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
             print(mds_var_dir)
             print(mds_grid_dir)
 
+        print('read bin_llc:')
+        print(mds_var_dir)
+        print(mds_grid_dir)
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
                                        grid_dir = mds_grid_dir,
                                        read_grid = True,
@@ -169,7 +172,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=True,
-                                       llc_method = llc_method)
+                                       llc_method = llc_method,
+                                       ignore_unknown_vars=True)
     
     else:
         if not less_output:
@@ -189,7 +193,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=True,
-                                           llc_method=llc_method)
+                                           llc_method=llc_method,
+                                           ignore_unknown_vars=True)
         else:
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 
