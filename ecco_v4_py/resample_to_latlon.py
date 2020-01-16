@@ -49,7 +49,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
 
    # the latitudes to which we will we interpolate
     num_lats = (new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat + 1
-    num_lons = (new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lat + 1
+    num_lons = (new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lon + 1
 
     if (num_lats > 0) and (num_lons > 0):
         # linspace is preferred when using floats!
