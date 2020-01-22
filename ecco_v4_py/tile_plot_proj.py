@@ -52,7 +52,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         denote the type of projection, see Cartopy docs.
         options include
             'robin' - Robinson
-            'PlateCaree' - flat 2D projection
+            'PlateCarree' - flat 2D projection
             'Mercator'
             'EqualEarth'
             'AlbersEqualArea'
@@ -437,7 +437,7 @@ def _create_projection_axis(projection_type,
             ax = plt.axes(projection=ccrs.EqualEarth(central_longitude=user_lon_0))
         show_grid_labels = False
 
-    elif projection_type == 'PlateCaree':
+    elif projection_type == 'PlateCarree':
         if subplot_grid is not None   :
             ax = plt.subplot(row, col, ind,
                     projection=ccrs.PlateCarree(central_longitude=    user_lon_0))
@@ -492,7 +492,7 @@ def _create_projection_axis(projection_type,
         show_grid_labels = False
         
     else:
-        raise NotImplementedError('projection type must be either "Mercator", "PlateCaree", "AlbersEqualArea", "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
+        raise NotImplementedError('projection type must be either "Mercator", "PlateCarree", "AlbersEqualArea", "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
 
     if not less_output:
         print('Projection type: ', projection_type)
