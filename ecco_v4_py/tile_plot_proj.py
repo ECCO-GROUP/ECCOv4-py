@@ -23,7 +23,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              projection_type = 'robin', 
                              plot_type = 'pcolormesh', 
                              user_lon_0 = 0,
+                             user_lat_0 = 0,
                              lat_lim = 50, 
+                             standard_parallels = (20,50),
                              levels = 20, 
                              cmap='jet', 
                              dx=.25, 
@@ -53,6 +55,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         options include
             'robin' - Robinson
             'PlateCarree' - flat 2D projection
+            'LambertConformal'
             'Mercator'
             'EqualEarth'
             'AlbersEqualArea'
@@ -63,9 +66,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                 North or South
     user_lon_0 : float, optional, default 0 degrees
         denote central longitude
-    lat_lim : int, optional
+    user_lat_0 : float, optional, default 0 degrees
+        denote central latitude (for relevant projections only, see Cartopy)
+    lat_lim : int, optional, default 50 degrees
         for stereographic projection, denote the Southern (Northern) bounds for 
-        North (South) polar projection
+        North (South) polar projection or LambertConformal projection
+    standard_parallels : float, optional, default (20,50)
+        one or two latitudes of correct scale (for relevant projectionss only,
+        see Cartopy docs)
     levels : int, optional
         number of contours to plot
     cmap : string or colormap object, optional
@@ -96,7 +104,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                     row=nrows_val, col=ncols_val,index=index_val)
     less_output : string, optional
         debugging flag, don't print if True
-    raidus_of_influence : float, optional.  Default 100000 m
+    radius_of_influence : float, optional.  Default 100000 m
         the radius of the circle within which the input data is search for
         when mapping to the new grid
     """
@@ -157,7 +165,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     # Make projection axis
     (ax,show_grid_labels) = _create_projection_axis(
-            projection_type, user_lon_0, lat_lim, subplot_grid, less_output)
+            projection_type, user_lon_0, user_lat_0, standard_parallels,
+            lat_lim, subplot_grid, less_output)
     
 
     #%%
@@ -377,6 +386,8 @@ def plot_global(xx,yy, data,
 
 def _create_projection_axis(projection_type, 
                             user_lon_0, 
+                            user_lat_0, 
+                            standard_parallels,
                             lat_lim, 
                             subplot_grid, 
                             less_output):
@@ -421,13 +432,33 @@ def _create_projection_axis(projection_type,
         else:
             ax = plt.axes(projection=ccrs.Mercator(central_longitude=user_lon_0))
         show_grid_labels = True
+        
+    elif projection_type == 'LambertConformal':
+        if subplot_grid is not None   :
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.LambertConformal(central_longitude= user_lon_0,
+                                                    central_latitude=user_lat_0,
+                                                    standard_parallels=standard_parallels,
+                                                    cutoff=lat_lim))
+        else:
+            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0,
+                                                    central_latitude=user_lat_0,
+                                                    standard_parallels=standard_parallels,
+                                                    cutoff=lat_lim))
+        show_grid_labels = False
+        
     elif projection_type == 'AlbersEqualArea':
         if subplot_grid is not None   :
             ax = plt.subplot(row, col, ind,
-                    projection=ccrs.AlbersEqualArea(central_longitude=    user_lon_0))
+                    projection=ccrs.AlbersEqualArea(central_longitude= user_lon_0,
+                                                    central_latitude=user_lat_0,
+                                                    standard_parallels=standard_parallels))
         else:
-            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0))
+            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0,
+                                                    central_latitude=user_lat_0,
+                                                    standard_parallels=standard_parallels))
         show_grid_labels = False
+
 
     elif projection_type == 'EqualEarth':
         if subplot_grid is not None:
@@ -464,16 +495,18 @@ def _create_projection_axis(projection_type,
     elif projection_type == 'ortho':
         if subplot_grid is not None:
             ax = plt.subplot(row, col, ind,
-                    projection=ccrs.Orthographic(central_longitude=user_lon_0))
+                    projection=ccrs.Orthographic(central_longitude=user_lon_0,
+                                                 central_latitude=user_lat_0))
         else:
-            ax = plt.axes(projection=ccrs.Orthographic(central_longitude=user_lon_0))
+            ax = plt.axes(projection=ccrs.Orthographic(central_longitude=user_lon_0,
+                                                 central_latitude=user_lat_0))
         show_grid_labels = False
 
     elif projection_type == 'stereo':    
         if lat_lim > 0:
-            stereo_proj = ccrs.NorthPolarStereo()
+            stereo_proj = ccrs.NorthPolarStereo(central_longitude=user_lon_0)
         else:
-            stereo_proj = ccrs.SouthPolarStereo()
+            stereo_proj = ccrs.SouthPolarStereo(central_longitude=user_lon_0)
 
         if subplot_grid is not None:
             ax = plt.subplot(row, col, ind,
