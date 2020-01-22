@@ -23,9 +23,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              projection_type = 'robin', 
                              plot_type = 'pcolormesh', 
                              user_lon_0 = 0,
-                             user_lat_0 = 0,
+                             user_lat_0 = None,
                              lat_lim = 50, 
-                             standard_parallels = (20,50),
+                             parallels = None,
                              levels = 20, 
                              cmap='jet', 
                              dx=.25, 
@@ -66,14 +66,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                 North or South
     user_lon_0 : float, optional, default 0 degrees
         denote central longitude
-    user_lat_0 : float, optional, default 0 degrees
+    user_lat_0 : float, optional, 
         denote central latitude (for relevant projections only, see Cartopy)
     lat_lim : int, optional, default 50 degrees
         for stereographic projection, denote the Southern (Northern) bounds for 
-        North (South) polar projection or LambertConformal projection
-    standard_parallels : float, optional, default (20,50)
-        one or two latitudes of correct scale (for relevant projectionss only,
-        see Cartopy docs)
+        North (South) polar projection or cutoff for LambertConformal projection
+    parallels : float, optional,
+        standard_parallels, one or two latitudes of correct scale 
+        (for relevant projections only, see Cartopy docs)
     levels : int, optional
         number of contours to plot
     cmap : string or colormap object, optional
@@ -165,7 +165,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     # Make projection axis
     (ax,show_grid_labels) = _create_projection_axis(
-            projection_type, user_lon_0, user_lat_0, standard_parallels,
+            projection_type, user_lon_0, user_lat_0, parallels,
             lat_lim, subplot_grid, less_output)
     
 
@@ -212,7 +212,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             plot_type = plot_type,                                       
                             show_colorbar = False,
                             cmap=cmap, 
-         			                show_grid_lines = False,
+         			        show_grid_lines = False,
                             custom_background = custom_background,
                             background_name = background_name,
                             background_resolution = background_resolution,
@@ -387,7 +387,7 @@ def plot_global(xx,yy, data,
 def _create_projection_axis(projection_type, 
                             user_lon_0, 
                             user_lat_0, 
-                            standard_parallels,
+                            parallels,
                             lat_lim, 
                             subplot_grid, 
                             less_output):
@@ -423,111 +423,52 @@ def _create_projection_axis(projection_type,
 
         else:
             raise TypeError('Unexpected subplot_grid type: ',type(subplot_grid))
-
-
-    if projection_type == 'Mercator':
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.Mercator(central_longitude=user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.Mercator(central_longitude=user_lon_0))
-        show_grid_labels = True
-        
-    elif projection_type == 'LambertConformal':
-        if subplot_grid is not None   :
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.LambertConformal(central_longitude= user_lon_0,
-                                                    central_latitude=user_lat_0,
-                                                    standard_parallels=standard_parallels,
-                                                    cutoff=lat_lim))
-        else:
-            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0,
-                                                    central_latitude=user_lat_0,
-                                                    standard_parallels=standard_parallels,
-                                                    cutoff=lat_lim))
-        show_grid_labels = False
-        
-    elif projection_type == 'AlbersEqualArea':
-        if subplot_grid is not None   :
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.AlbersEqualArea(central_longitude= user_lon_0,
-                                                    central_latitude=user_lat_0,
-                                                    standard_parallels=standard_parallels))
-        else:
-            ax = plt.axes(projection=ccrs.AlbersEqualArea(central_longitude=user_lon_0,
-                                                    central_latitude=user_lat_0,
-                                                    standard_parallels=standard_parallels))
-        show_grid_labels = False
-
-
-    elif projection_type == 'EqualEarth':
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.EqualEarth(central_longitude=user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.EqualEarth(central_longitude=user_lon_0))
-        show_grid_labels = False
-
-    elif projection_type == 'PlateCarree':
-        if subplot_grid is not None   :
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.PlateCarree(central_longitude=    user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=user_lon_0))
-        show_grid_labels = True
-
-    elif projection_type == 'cyl':
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.LambertCylindrical(central_longitude=user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.LambertCylindrical(central_longitude=user_lon_0))
-        show_grid_labels = False
-
-    elif projection_type == 'robin':    
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.Robinson(central_longitude=user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.Robinson(central_longitude=user_lon_0))
-        show_grid_labels = False
-
-    elif projection_type == 'ortho':
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.Orthographic(central_longitude=user_lon_0,
-                                                 central_latitude=user_lat_0))
-        else:
-            ax = plt.axes(projection=ccrs.Orthographic(central_longitude=user_lon_0,
-                                                 central_latitude=user_lat_0))
-        show_grid_labels = False
-
-    elif projection_type == 'stereo':    
-        if lat_lim > 0:
-            stereo_proj = ccrs.NorthPolarStereo(central_longitude=user_lon_0)
-        else:
-            stereo_proj = ccrs.SouthPolarStereo(central_longitude=user_lon_0)
-
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=stereo_proj)
-        else:
-            ax = plt.axes(projection=stereo_proj)
-
-        show_grid_labels = False
-
-    elif projection_type == 'InterruptedGoodeHomolosine':
-        if subplot_grid is not None:
-            ax = plt.subplot(row, col, ind,
-                    projection=ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
-        else:
-            ax = plt.axes(projection=ccrs.InterruptedGoodeHomolosine(central_longitude=user_lon_0))
-        show_grid_labels = False
-        
     else:
-        raise NotImplementedError('projection type must be either "Mercator", "PlateCarree", "AlbersEqualArea", "cyl", "robin", "ortho", "stereo", or "InterruptedGoodeHomolosine"')
+        row = 1
+        col = 1
+        ind = 1
 
+    # Build dictionary of projection_types mapped to Cartopy calls
+    proj_dict = {'Mercator':ccrs.Mercator,
+             'LambertConformal':ccrs.LambertConformal,
+             'AlbersEqualArea':ccrs.AlbersEqualArea,
+             'EqualEarth':ccrs.EqualEarth,
+             'PlateCarree':ccrs.PlateCarree,
+             'cyl':ccrs.LambertCylindrical,
+             'robin':ccrs.Robinson,
+             'ortho': ccrs.Orthographic,
+             'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
+             }
+    # stereo special cases
+    if projection_type == 'stereo':
+        if lat_lim>0:
+            proj_dict['stereo']=ccrs.NorthPolarStereo
+        else :
+            proj_dict['stereo']=ccrs.SouthPolarStereo
+            
+    if projection_type not in proj_dict:
+        raise NotImplementedError('projection type must be in ',proj_dict.keys())
+    
+    # Build dictionary for projection arguments
+    proj_args={}
+    if user_lon_0 is not None :
+        proj_args['central_longitude']=user_lon_0
+    if user_lat_0 is not None :
+        proj_args['central_latitude']=user_lat_0
+    if (projection_type == 'LambertConformal') & (lat_lim is not None) :
+        proj_args['cutoff']=lat_lim
+    if parallels is not None :
+        proj_args['standard_parallels']=parallels
+        
+    ax = plt.subplot(row, col, ind,
+                    projection=proj_dict[projection_type](**proj_args))
+    
+    if (projection_type == 'Mercator') | (projection_type== 'PlateCarree'):
+        show_grid_labels = True
+    else:
+        show_grid_labels = False
+        
     if not less_output:
         print('Projection type: ', projection_type)
-
+    
     return (ax,show_grid_labels)
