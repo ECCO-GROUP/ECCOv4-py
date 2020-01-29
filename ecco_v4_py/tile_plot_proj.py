@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.path as mpath
 import cartopy.crs as ccrs
+from cartopy._crs import PROJ4_VERSION
 import cartopy.feature as cfeature
 from .resample_to_latlon import resample_to_latlon
 
@@ -27,7 +28,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              lat_lim = 50, 
                              parallels = None,
                              levels = 20, 
-                             cmap='viridis', 
+                             cmap=None, 
                              dx=.25, 
                              dy=.25,
                              show_colorbar = False, 
@@ -77,7 +78,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     levels : int, optional
         number of contours to plot
     cmap : string or colormap object, optional
-        denotes to colormap
+        denotes to colormap. Default is 'viridis' for data without sign change,
+        and 'RdBu_r' for "diverging" data (i.e. positive and negative)
     dx, dy : float, optional
         latitude, longitude spacing for grid resampling
     show_colorbar : logical, optional, default False
@@ -89,7 +91,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     grid_linestyle : string, optional, default = '--'
 	pattern of grid lines,
     cmin, cmax : float, optional
-        minimum and maximum values for colorbar, default is min/max of data
+        minimum and maximum values for colorbar, default is: min/max of data
+        if no sign change, otherwise cmax = max(abs(data)), cmin = -cmax
+        i.e. centered about zero
     subplot_grid : dict or list, optional
         specifying placement on subplot as
             dict:
@@ -110,8 +114,16 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     """
 
     #%%    
+    # If data span positive/negative, default to normalize about 0
+    # otherwise, regular (sequential). Assign cmap accordingly.
     cmin = np.nanmin(data)
     cmax = np.nanmax(data)
+    if cmin*cmax<0:
+        cmax=np.nanmax(np.abs(data))
+        cmin=-cmax
+        cmap = 'RdBu_r' if cmap is None else cmap
+    else:
+        cmap = 'viridis' if cmap is None else cmap
 
     for key in kwargs:
         if key == "cmin":
@@ -256,13 +268,20 @@ def plot_pstereo(xx,yy, data,
                  circle_boundary = False, 
 		         grid_linewidth = 1, 
 		         grid_linestyle = '--', 
-                 cmap='jet', 
+                 cmap=None, 
                  show_grid_lines=False,
                  custom_background = False,
                  background_name = [],
                  background_resolution = [],
                  levels = 20,
                  less_output=True):
+
+    # assign cmap default
+    if cmap is None:
+        if cmin*cmax<0:
+            cmap = 'RdBu_r'
+        else:
+            cmap = 'viridis'
 
                             
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
@@ -334,7 +353,7 @@ def plot_global(xx,yy, data,
                 cmin, cmax, ax, 
                 plot_type = 'pcolormesh', 
                 show_colorbar=False, 
-                cmap='jet', 
+                cmap=None, 
                 show_grid_lines = True,
                 show_grid_labels = True,
       		        grid_linewidth = 1, 
@@ -342,6 +361,13 @@ def plot_global(xx,yy, data,
                 background_name = [],
                 background_resolution = [],
                 levels=20):
+
+    # assign cmap default
+    if cmap is None:
+        if cmin*cmax<0:
+            cmap = 'RdBu_r'
+        else:
+            cmap = 'viridis'
 
     if show_grid_lines :
         gl = ax.gridlines(crs=ccrs.PlateCarree(), 
@@ -432,13 +458,17 @@ def _create_projection_axis(projection_type,
     proj_dict = {'Mercator':ccrs.Mercator,
              'LambertConformal':ccrs.LambertConformal,
              'AlbersEqualArea':ccrs.AlbersEqualArea,
-             'EqualEarth':ccrs.EqualEarth,
              'PlateCarree':ccrs.PlateCarree,
              'cyl':ccrs.LambertCylindrical,
              'robin':ccrs.Robinson,
              'ortho': ccrs.Orthographic,
              'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
              }
+
+    # This projection requires proj4 v.>= 5.2.0
+    if PROJ4_VERSION>=(5,2,0):
+        proj_dict['EqualEarth']=ccrs.EqualEarth
+
     # stereo special cases
     if projection_type == 'stereo':
         if lat_lim>0:
