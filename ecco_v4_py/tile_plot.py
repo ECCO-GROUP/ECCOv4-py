@@ -290,6 +290,7 @@ def plot_tiles(tiles, cmap='jet',
     
     
     # loop through the axes array and plot tiles where tile_order != -1
+    cur_arr = np.zeros((360,360)) 
     for i, ax in enumerate(axarr.ravel()):
         ax.axis('off')
 
@@ -322,12 +323,20 @@ def plot_tiles(tiles, cmap='jet',
                     cur_tile_num > 6):
                     
                     cur_tile = np.rot90(cur_tile)
+
                 
                     
                 im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                              origin='lower')
             
-    
+            colnum = 4-1-int(i/4)
+            rownum = i%4 
+            rownump1 = int(rownum + 1)
+            colnump1 = int(colnum + 1)
+            print(type(rownum), type(colnum), type(rownump1))
+            #cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
+            print('i=',i,rownum, colnum)
+            cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
             ax.set_aspect('equal')
             ax.axis('on')
             if show_tile_labels:
@@ -351,7 +360,7 @@ def plot_tiles(tiles, cmap='jet',
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    return f
+    return f, cur_arr
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
