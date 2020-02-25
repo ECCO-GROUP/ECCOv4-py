@@ -283,7 +283,7 @@ def months2days(nmon=288, baseyear=1992, basemon=1):
 
 #%%
 
-def get_llc_grid(ds):
+def get_llc_grid(ds,domain='ecco'):
     """
     Define xgcm Grid object for the LLC grid
     See example usage in the xgcm documentation:
@@ -302,7 +302,6 @@ def get_llc_grid(ds):
 
     """
 
-    domain = 'ecco'
     if 'domain' in ds.attrs:
         domain = ds.attrs['domain']
 
