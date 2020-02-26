@@ -336,7 +336,9 @@ def plot_tiles(tiles, cmap='jet',
             print(type(rownum), type(colnum), type(rownump1))
             #cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
             print('i=',i,rownum, colnum)
-            cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
+            
+            if rownum*colnum>0:
+                cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
             ax.set_aspect('equal')
             ax.axis('on')
             if show_tile_labels:
