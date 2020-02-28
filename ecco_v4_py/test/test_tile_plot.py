@@ -73,3 +73,15 @@ def test_plot_single_tile(vdict):
 
         ecco.plot_tile(nparr[t,...], **vdict)
         ecco.plot_tile(xda.sel(tile=t), **vdict)
+
+def test_plot_tiles_array():
+    """a crude test to make sure the array being created
+    matches the original"""
+
+    nparr = get_test_array(is_xda=False)
+    xda = get_test_array(is_xda=True)
+
+    for arr_expected in [nparr,xda]:
+        f,arr_test = ecco.plot_tiles(arr_expected)
+        assert np.nansum(arr_test)==float(np.nansum(arr_expected))
+

@@ -330,8 +330,8 @@ def plot_tiles(tiles, cmap=None,
             if not less_output:
                 print('i=',i,rownum, colnum)
             
-            if rownum*colnum>0 and get_array:
-                cur_arr[colnum*90:colnump1*90, rownum*90:rownump1*90] = cur_tile
+            if cur_tile_num>=0 and get_array:
+                cur_arr[colnum*nx:colnump1*nx, rownum*nx:rownump1*nx] = cur_tile
 
     # show the colorbar
     if show_colorbar:
