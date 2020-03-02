@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import warnings
 from pathlib import Path
 import numpy as np
+import matplotlib.pyplot as plt
 import pytest
 import ecco_v4_py as ecco
 
@@ -50,6 +51,7 @@ def test_plot_tiles(vdict):
     # run plotting routine
     for arr in [nparr,xda]:
         ecco.plot_tiles(arr, **vdict)
+        plt.close()
 
 @pytest.mark.parametrize("vdict",[
         {}, #defaults
@@ -72,7 +74,11 @@ def test_plot_single_tile(vdict):
     for t in xda.tile.values:
 
         ecco.plot_tile(nparr[t,...], **vdict)
+        plt.close()
+
         ecco.plot_tile(xda.sel(tile=t), **vdict)
+        plt.close()
+
 
 def test_plot_tiles_array():
     """a crude test to make sure the array being created
@@ -82,6 +88,6 @@ def test_plot_tiles_array():
     xda = get_test_array(is_xda=True)
 
     for arr_expected in [nparr,xda]:
-        f,arr_test = ecco.plot_tiles(arr_expected)
+        _,arr_test = ecco.plot_tiles(arr_expected)
         assert np.nansum(arr_test)==float(np.nansum(arr_expected))
-
+        plt.close()
