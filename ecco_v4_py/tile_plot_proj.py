@@ -18,6 +18,7 @@ from cartopy._crs import PROJ4_VERSION
 import cartopy.feature as cfeature
 from .resample_to_latlon import resample_to_latlon
 
+from .plot_utils import assign_colormap
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 def plot_proj_to_latlon_grid(lons, lats, data, 
@@ -113,17 +114,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         when mapping to the new grid
     """
 
-    #%%    
-    # If data span positive/negative, default to normalize about 0
-    # otherwise, regular (sequential). Assign cmap accordingly.
-    cmin = np.nanmin(data)
-    cmax = np.nanmax(data)
-    if cmin*cmax<0:
-        cmax=np.nanmax(np.abs(data))
-        cmin=-cmax
-        cmap = 'RdBu_r' if cmap is None else cmap
-    else:
-        cmap = 'viridis' if cmap is None else cmap
+    cmap, (cmin,cmax) = assign_colormap(data,cmap)
 
     for key in kwargs:
         if key == "cmin":
