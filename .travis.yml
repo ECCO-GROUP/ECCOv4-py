@@ -1,0 +1,46 @@
+# Based on xgcm's .travis.yml and
+# https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html 
+language: python
+sudo: false # use container based build
+notifications:
+  email: false
+
+matrix:
+  fast_finish: true
+  include:
+  - python: 3.7
+    env: CONDA_ENV=py37
+
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+    #  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda list
+
+install:
+  - conda env create --file ci/environment-$CONDA_ENV.yml
+  - source activate test_env_ecco
+  - python -c "import xarray; print(xarray.__version__)"
+
+# note from xgcm version:   
+# if we do this, the package gets installed into
+# /home/travis/build/xgcm/xgcm/build/lib/xgcm
+#  - python setup.py install
+  - pip install -e .
+# this puts the package into
+# /home/travis/build/xgcm/xgcm/xgcm
+# That turns out to be necessary for py.test to correctly collect the tests
+# and for coverage to work properly.
+# It is very complicated and confusing.
+# ^^ wow I'm glad I didn't have to figure that out.
+
+script:
+  - py.test ecco_v4_py -v --cov=ecco_v4_py --cov-config .coveragerc
+
+after_success:
+  - codecov --token=5abbcfb9-fcf6-431d-bda6-6e5b5e8132c8

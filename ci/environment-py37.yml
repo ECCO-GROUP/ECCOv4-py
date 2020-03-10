@@ -1,0 +1,20 @@
+# following xgcm ci environment specs
+name: test_env_ecco
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - xarray
+  - dask
+  - numpy
+  - scipy
+  - pytest
+  - future
+  - xmitgcm
+  - xgcm
+  - pytest 
+  - codecov
+  - pytest-cov
+  - pyresample
+  - cartopy
+  - docrep
