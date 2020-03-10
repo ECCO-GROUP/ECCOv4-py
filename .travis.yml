@@ -40,7 +40,7 @@ install:
 # ^^ wow I'm glad I didn't have to figure that out.
 
 script:
-  - py.test ecco_v4_py -v --cov=ecco_v4_py --cov-config .coveragerc
+  - py.test ecco_v4_py -v --cov=ecco_v4_py --cov-config .coveragerc --ignore=ecco_v4_py/test/test_generate_ecco_netcdf_product.py
 
 after_success:
   - codecov --token=5abbcfb9-fcf6-431d-bda6-6e5b5e8132c8
