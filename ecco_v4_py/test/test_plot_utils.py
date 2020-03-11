@@ -11,12 +11,10 @@ import ecco_v4_py as ecco
 from ecco_v4_py.plot_utils import assign_colormap
 
 # Define bin directory for test reading
-_PKG_DIR = Path.cwd().resolve().parent.parent
+_PKG_DIR = Path(__file__).resolve().parent.parent.parent
 _DATA_DIR = _PKG_DIR.joinpath('binary_data')
 
 _TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']
-_TEST_NK = [1, 50, 50]
-_TEST_RECS = [1, 1, 3]
 
 def get_test_array(is_xda=False):
     """define a numpy and xarray DataArray for testing"""
