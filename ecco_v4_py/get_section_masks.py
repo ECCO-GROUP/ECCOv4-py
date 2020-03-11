@@ -185,7 +185,7 @@ def get_available_sections():
 # Main function to compute section masks 
 # -------------------------------------------------------------------------------
 
-def get_section_line_masks(pt1, pt2, cds):
+def get_section_line_masks(pt1, pt2, cds, grid=None):
     """Compute 2D mask with 1's along great circle line 
     from lat/lon1 -> lat/lon2
 
@@ -195,6 +195,8 @@ def get_section_line_masks(pt1, pt2, cds):
         [longitude, latitude] or (longitude, latitude) of endpoints
     cds : xarray Dataset
         containing grid coordinate information, at least XC, YC
+    grid : xgcm grid object
+        see ecco_utils.get_llc_grid
 
     Returns
     -------
@@ -239,7 +241,7 @@ def get_section_line_masks(pt1, pt2, cds):
     xc, yc, zc = _rotate_the_grid(cds.XC, cds.YC, rot_1, rot_2, rot_3)
 
     # Interpolate for x,y to west and south edges
-    grid = get_llc_grid(cds)
+    grid = get_llc_grid(cds) if grid is None else grid
     xw = grid.interp(xc, 'X', boundary='fill')
     yw = grid.interp(yc, 'X', boundary='fill')
     xs = grid.interp(xc, 'Y', boundary='fill')
