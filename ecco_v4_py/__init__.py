@@ -8,6 +8,7 @@ from .calc_section_trsp import calc_section_vol_trsp, \
 
 from .calc_stf import calc_meridional_stf, calc_section_stf
 
+from .ecco_utils import make_1D_latlon_bounds_from_ecco_dataset
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 from .ecco_utils import make_time_bounds_from_ds64
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64

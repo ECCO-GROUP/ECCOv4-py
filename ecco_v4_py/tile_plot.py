@@ -102,7 +102,8 @@ def plot_tiles(tiles, cmap='jet',
                show_cbar_label=False, 
                show_tile_labels= True,
                cbar_label = '', 
-               fig_size = 9,  **kwargs):
+               fig_size = 9, 
+               **kwargs):
     """
 
     Plots the 13 tiles of the lat-lon-cap (LLC) grid

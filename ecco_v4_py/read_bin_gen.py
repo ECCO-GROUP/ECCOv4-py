@@ -101,6 +101,11 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         nk = int(length_arr_k / (ni*nj))
 
         if less_output == False:
+            print('load binary array')
+            print('nk = ', nk)
+            print('nl = ', nl)
+            print('length_arr_k ', length_arr_k)
+            print('ni, nj ', ni, nj)
             print('loading all 2D records.  nk =',nk)
         
         # reshape the array to 2D records

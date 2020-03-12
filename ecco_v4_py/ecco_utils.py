@@ -18,6 +18,46 @@ import xgcm
 
 
 #%%
+def make_1D_latlon_bounds_from_ecco_dataset(ecco_dataset, dlat, dlon):
+
+    lat_1D = ecco_dataset.latitude.values
+    lon_1D = ecco_dataset.longitude.values
+
+    lat_1D_bnds = np.zeros((len(lat_1D), 2))
+    lon_1D_bnds = np.zeros((len(lon_1D), 2))
+
+#    print('make 1d latlon bounds')
+#    print(lat_1D.shape)
+#    print(lon_1D.shape)
+#    print(lat_1D_bnds.shape)
+#    print(lon_1D_bnds.shape)
+
+#    print(ecco_dataset.latitude)
+#    print(ecco_dataset.longitude)
+    for i in range(len(lat_1D)):
+        lat_1D_bnds[i,0] = lat_1D[i] - dlat/2
+        lat_1D_bnds[i,1] = lat_1D[i] + dlat/2
+
+    for i in range(len(lon_1D)):
+        lon_1D_bnds[i,0] = lon_1D[i] - dlon/2
+        lon_1D_bnds[i,1] = lon_1D[i] + dlon/2
+
+    # lat_bnds_ds = xr.Dataset({'latitude_bnds': (['latitude', 'nv'], lat_1D_bnds)},
+    #                           coords={'latitude': ecco_dataset.latitude})  # ,
+    # lon_bnds_ds = xr.Dataset({'longitude_bnds': (['longitude', 'nv'], lon_1D_bnds)},
+    #                          coords={'longitude': ecco_dataset.longitude})  # ,
+
+    lat_bnds_da = xr.DataArray(lat_1D_bnds, dims = ["latitude","nv"],
+                               coords = {'latitude' : ecco_dataset.latitude})
+    lon_bnds_da = xr.DataArray(lon_1D_bnds, dims = ["longitude","nv"],
+                               coords = {'longitude' : ecco_dataset.longitude})
+
+    lat_bnds_da.name = 'latitude_bnds'
+    lon_bnds_da.name = 'longitude_bnds'
+
+    print(lat_bnds_da)
+    print(lon_bnds_da)
+    return lat_bnds_da, lon_bnds_da
 
 def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
                                                         output_freq_code):

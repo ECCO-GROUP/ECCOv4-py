@@ -142,12 +142,18 @@
     "units": "m/s"
   }, 
   "OBP": {
-    "long_name": "Ocean Bottom Pressure adjusted for global steric height change", 
-    "units": "m"
+    "long_name": "Ocean Bottom Pressure",
+    "units": "m",
+    "standard_name" : "sea_water_pressure_due_to_sea_water",
+    "comments" : "Ocean bottom pressure excluding the contribution from global mean atmospheric pressure, suitable for comparisons with GRACE data. OBP is model ocean bottom pressure in equivalent sea level in meters, calculated by dividing PHIBOT by gravity (9.81 m s-2), and correcting for a) spurious mass fluxes incurred by density changes in the Boussinesq volume-conserving model  (Greatbatch correction) (see sterGloH) and b) global mean atmospheric pressure variations. Use OBP for comparisons with ocean bottom pressure data products that have been corrected for global mean atmospheric pressure variations.  GRACE data typically ARE corrected for global mean atmospheric pressure variations.  In contrast, ocean bottom pressure gauge data typically ARE NOT corrected for global mean atmospheric pressure variations.",
+    "keywords" : "Water Pressure"
   }, 
   "OBPNOPAB": {
-    "long_name": "OBP with Global Mean Air-Pressure Removed",
-    "units": "m"
+    "long_name": "Ocean bottom pressure including global mean atmospheric pressure",
+    "standard_name": "Ocean bottom pressure sea_water_pressure_at_sea_floor",
+    "units": "m",
+    "comments" : "Ocean bottom pressure including the contribution from global mean atmospheric pressure, suitable for comparisons with ocean bottom pressure gauge data. OBPGMAP is model ocean bottom pressure in equivalent sea level in meters, calculated by dividing PHIBOT by gravity (9.81 m s-2) and correcting for spurious mass fluxes incurred by density changes in the Boussinesq volume-conserving model (Greatbatch correction) (see sterGloH).  Use OBPGMAP for comparisons with ocean bottom pressure data products that have NOT been corrected for global mean atmospheric pressure variations.  GRACE data typically ARE corrected for global mean atmospheric pressure variations.  In contrast, ocean bottom pressure gauge data typically ARE NOT corrected for global mean atmospheric pressure variations.",
+    "keywords" : "Water Pressure"
   }, 
   "PHIBOT": {
     "long_name": "Bottom Pressure Pot.(p/rho) Anomaly", 
@@ -164,7 +170,9 @@
   "SALT": {
     "long_name": "Salinity", 
     "standard_name": "sea_water_salinity", 
-    "units": "psu"
+    "units": "psu",
+    "comments": "none",
+    "keywords" : "SALINITY/DENSITY"
   }, 
   "SFLUX": {
     "long_name": "total salt flux (match salt-content variations), >0 increases salt", 
@@ -235,7 +243,9 @@
   "THETA": {
     "long_name": "Potential Temperature", 
     "standard_name": "sea_water_potential_temperature", 
-    "units": "degC"
+    "units": "degree_C", 
+    "comments" : "Note: the equation of state is a modified UNESCO formula by Jackett and McDougall (1995), which uses the model variable potential temperature as input assuming a horizontally and temporally constant pressure of $p_0=-g \rho_{0} z$.",
+    "keywords" : "POTENTIAL TEMPERATURE, OCEAN TEMPERATURE"
   }, 
   "UVEL": {
     "long_name": "X-Comp of Velocity (m/s) (not necessary eastward)", 

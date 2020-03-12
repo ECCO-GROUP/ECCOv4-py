@@ -59,6 +59,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             'cyl' - Lambert Cylindrical
             'ortho' - Orthographic
             'stereo' - polar stereographic projection, see lat_lim for choosing
+            'Sinusoidal' -        Sinusoidal    
             'InterruptedGoodeHomolosine'
                 North or South
     user_lon_0 : float, optional, default 0 degrees
@@ -219,7 +220,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                                   draw_labels = show_grid_labels,zorder=102)
         
        
-        ax.add_feature(cfeature.LAND, zorder=100)
+        ax.add_feature(cfeature.LAND, zorder=100, facecolor='black')
         ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
 
     ax= plt.gca()
@@ -483,6 +484,14 @@ def _create_projection_axis(projection_type,
 
         show_grid_labels = False
 
+    elif projection_type == 'Sinusoidal':
+        if subplot_grid is not None:
+            ax = plt.subplot(row, col, ind,
+                    projection=ccrs.Sinusoidal(central_longitude=user_lon_0))
+        else:
+            ax = plt.axes(projection=ccrs.Sinusoidal(central_longitude=user_lon_0))
+        show_grid_labels = False
+        
     elif projection_type == 'InterruptedGoodeHomolosine':
         if subplot_grid is not None:
             ax = plt.subplot(row, col, ind,

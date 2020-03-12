@@ -33,7 +33,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             mds_files=None,
                             vars_to_load = 'all', 
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
-                            model_time_steps_to_load = 'all',
+                            time_steps_to_load = 'all',
                             output_freq_code = '', 
                             meta_variable_specific=dict(),
                             meta_common=dict(),
@@ -89,7 +89,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
     tiles_to_load : int or list of ints, optional, default range(13)
         an int or list of ints indicating which tiles to load
 
-    model_time_steps_to_load : int or list of ints, optional, default 'all'
+    time_steps_to_load : int or list of ints, optional, default 'all'
         an int or list of ints indicating which model time steps to load
 
         Note : the model time step indicates the time step when the the file was written.
@@ -130,7 +130,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
 
     """
-
+    #%%
     # range object is different between python 2 and 3
     if sys.version_info[0] >= 3 and isinstance(tiles_to_load, range):
         tiles_to_load = list(tiles_to_load)
@@ -152,7 +152,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
         str(ecco_v4_start_min)  + ':' + str(ecco_v4_start_sec)
 
 
-    if model_time_steps_to_load == 'all':
+    if time_steps_to_load == 'all':
         if not less_output:
             print ('loading all model time steps')
             print('read bin_llc:')
@@ -173,31 +173,40 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=True,
                                        llc_method = llc_method,
-                                       ignore_unknown_vars=True)
-    
+                                       ignore_unknown_vars=True)    
     else:
         if not less_output:
             print ('loading subset of  model time steps')
 
-        if isinstance(model_time_steps_to_load, int):
-            model_time_steps_to_load = [model_time_steps_to_load]
+        if isinstance(time_steps_to_load, int):
+            time_steps_to_load = [time_steps_to_load]
         
-        if isinstance(model_time_steps_to_load, list):
-            ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
+        if isinstance(time_steps_to_load, list):
+            if not less_output:
+                print('data_dir = ', mds_var_dir)
+                print('grid_dir = ', mds_grid_dir)
+                print('prefix = ', mds_files)
+                print('iters = ' , time_steps_to_load)
+
+            ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                            grid_dir = mds_grid_dir,
                                            read_grid = True,
                                            prefix = mds_files, 
                                            geometry = 'llc', 
-                                           iters = model_time_steps_to_load,
+                                           iters = time_steps_to_load,
                                            ref_date = ref_date, 
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=True,
                                            llc_method=llc_method,
                                            ignore_unknown_vars=True)
+            if not less_output:
+                print( 'loaded ecco dataset')
         else:
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
+            
 
+    #%%
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'face': 'tile'})
@@ -217,11 +226,11 @@ def load_ecco_vars_from_mds(mds_var_dir,
         vars_to_load = [vars_to_load]
 
     if not less_output:
-        print ('vars to load ', vars_to_load)
+        print ('\n vars to load ', vars_to_load)
     
     if 'all' not in vars_to_load:
         if not less_output:
-            print ('loading subset of variables: ', vars_to_load)
+            print ('\nloading subset of variables: ', vars_to_load)
     
         # remove variables that are not on the vars_to_load_list
         for ecco_var in ecco_dataset.keys():
@@ -234,25 +243,31 @@ def load_ecco_vars_from_mds(mds_var_dir,
                 vars_loaded.append(ecco_var)
 
         if not less_output:
-            print ('loaded  : ', vars_loaded)
-            print ('ignored : ', vars_ignored)
+            print ('\n loaded  : ', vars_loaded)
+            print ('\n ignored : ', vars_ignored)
     
     else:
         if not less_output:
-            print ('loaded all variables  : ', ecco_dataset.keys())
+            print ('\n loaded all variables  : ', ecco_dataset.keys())
         
     # keep tiles in the 'tiles_to_load' list.
     if not isinstance(tiles_to_load, list) and not isinstance(tiles_to_load,range):
         tiles_to_load = [tiles_to_load]
 
     if not less_output:
-        print ('subsetting tiles to ', tiles_to_load)
+        print ('\n subsetting tiles to ', tiles_to_load)
 
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
+
+
+    if not less_output:
+        print('\n ecco dataset after loading and subsetting')
+        print(ecco_dataset)
     
+    #%%
     #ecco_dataset = ecco_dataset.isel(time=0)
     if not less_output:
-        print ('creating time bounds .... ')
+        print ('\n creating time bounds .... ')
 
     if 'AVG' in output_freq_code and \
         'time_bnds' not in ecco_dataset.keys():
@@ -264,20 +279,37 @@ def load_ecco_vars_from_mds(mds_var_dir,
             make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset,\
                                                                 output_freq_code)
         
-        ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
+        if not less_output:
+            print('\n time bounds')
+            print(time_bnds_ds)
+            print('\n center times')
+            print(center_times)
+        
+        if not less_output:
+            print('\n merging ecco_dataset with time bnds ds')
+            
+        # for some reason there was a conflict over the values of timestep
+        # even though to eye they were the same.  This hack seems to 
+        # solve the problem but I don't know why.
+        ecco_dataset.timestep.values = time_bnds_ds.timestep.values
+        
+        ecco_dataset = xr.merge((time_bnds_ds, ecco_dataset), join='override')
+        #else:
+        #ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
+        
+
         if 'time_bnds-no-units' in meta_common:
             ecco_dataset.time_bnds.attrs=meta_common['time_bnds-no-units']
 
         ecco_dataset = ecco_dataset.set_coords('time_bnds')
 
         if not less_output:
-            print ('time bounds -----')
-            print (time_bnds_ds)
-            print ('center times -----')
-            print (center_times)
-            print ('ecco dataset time values type', type(ecco_dataset.time.values))
-            print ('ecco dataset time_bnds typ   ', type(ecco_dataset.time_bnds))
-            print ('ecco dataset time_bnds       ', ecco_dataset.time_bnds)
+            print('post merge')
+            print(ecco_dataset)
+            print ('ecco dataset time');
+            print(ecco_dataset.time)
+            print ('ecco dataset time bnds');
+            print(ecco_dataset.time_bnds)
 
         if isinstance(ecco_dataset.time.values, np.datetime64):
             if not less_output:
@@ -407,6 +439,9 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         a numpy array of dimension nl x nk x 13*llc x llc 
 
     """
+    if not(less_output):
+        print(llc, nk, nl, skip, filetype)
+        
     data_compact = load_binary_array(fdir, fname, llc, 13*llc, nk=nk, nl=nl, 
                                      skip=skip, filetype = filetype, 
                                      less_output = less_output) 
