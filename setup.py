@@ -17,7 +17,6 @@ setup(
   data_files=[('binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
   install_requires=[
 	'dask[complete]',
-	'datetime',
 	'python-dateutil',
 	'matplotlib',
 	'numpy',
