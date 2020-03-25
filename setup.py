@@ -1,6 +1,4 @@
-import setuptools
-
-from distutils.core import setup
+from setuptools import setup
 
 setup(
   name = 'ecco_v4_py',
@@ -14,10 +12,6 @@ setup(
   include_package_data=True,
   data_files=[('binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
   install_requires=[
-	'cython',
-	'shapely',
-	'proj',
-	'six',
 	'dask[complete]',
 	'datetime',
 	'python-dateutil',
@@ -26,12 +20,9 @@ setup(
 	'pyresample',
 	'xarray',
 	'xmitgcm',
-	'pyyaml',
-	'pyproj',
-	'pykdtree',
 	'cartopy',
- 'cmocean',
 	'xgcm'],
+  tests_require=['pytest','coverage'],
   classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Intended Audience :: Science/Research', 
