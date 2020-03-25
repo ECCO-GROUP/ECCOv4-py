@@ -1,5 +1,9 @@
 from setuptools import setup
 
+def README():
+    with open('README.md') as f:
+        return f.read()
+
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
@@ -35,5 +39,7 @@ setup(
       'Programming Language :: Python',
       'Programming Language :: Python :: 3.7',
       'Topic :: Scientific/Engineering :: Physics'
-  ]
+  ],
+  long_description=README(),
+  long_description_content_type='text/markdown'
 )
