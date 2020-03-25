@@ -21,8 +21,12 @@ setup(
 	'xarray',
 	'xmitgcm',
 	'cartopy',
-	'xgcm'],
+	'xgcm',
+        'future',
+        'numpy',
+        'pathlib'],
   tests_require=['pytest','coverage'],
+  license='MIT',
   classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Intended Audience :: Science/Research', 
