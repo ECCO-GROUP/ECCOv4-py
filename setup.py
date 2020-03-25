@@ -27,7 +27,6 @@ setup(
 	'cartopy',
 	'xgcm',
         'future',
-        'numpy',
         'pathlib'],
   tests_require=['pytest','coverage'],
   license='MIT',
