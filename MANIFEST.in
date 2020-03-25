@@ -1,3 +1,5 @@
-graft ecco_v4_py meta_json bin
+graft ecco_v4_py 
+graft meta_json 
+graft binary_data
 global-exclude *py[cod] __pycache__ *so
 include LICENSE.txt
