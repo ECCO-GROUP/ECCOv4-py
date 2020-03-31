@@ -16,13 +16,21 @@ _DATA_DIR = _PKG_DIR.joinpath('binary_data')
 
 _TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']
 
-def get_test_array(is_xda=False):
-    """define a numpy and xarray DataArray for testing"""
+def get_test_array(is_xda=False,sequential_data=True):
+    """define a numpy and xarray DataArray for testing,
+    For divergent data, set sequential_data=False
+    """
 
     # read in as numpy array
-    test_arr = ecco.read_llc_to_tiles(fdir=_DATA_DIR,
-                                      fname=_TEST_FILES[0],
-                                      less_output=True)
+    if sequential_data:
+        test_arr = ecco.read_llc_to_tiles(fdir=_DATA_DIR,
+                                          fname=_TEST_FILES[0],
+                                          less_output=True)
+    else:
+        test_arr = ecco.read_llc_to_tiles(fdir=_DATA_DIR,
+                                          fname=_TEST_FILES[2],
+                                          less_output=True,
+                                          skip=2)
 
     if is_xda:
         test_arr = ecco.llc_tiles_to_xda(test_arr,var_type='c',less_output=True)
@@ -32,6 +40,14 @@ def get_test_array(is_xda=False):
 # ----------------------------------------------------------------
 # tests
 # ----------------------------------------------------------------
+@pytest.mark.parametrize("test_arr,cmap_expected",
+    [(get_test_array(is_xda=True,sequential_data=False),'RdBu_r'),
+     (get_test_array(is_xda=True,sequential_data=True),'viridis')])
+def test_cmap_defaults(test_arr,cmap_expected):
+    cmap_test,_ = assign_colormap(test_arr)
+    assert cmap_test==cmap_expected
+
+
 @pytest.mark.parametrize("arr",[
         get_test_array(is_xda=False),
         get_test_array(is_xda=True)
