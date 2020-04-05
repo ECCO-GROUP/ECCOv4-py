@@ -4,7 +4,6 @@ Some helper functions for plotting
 
 import numpy as np
 import xarray as xr
-import dask
 
 def assign_colormap(fld,user_cmap=None):
     """assign a default colormap based on input field
