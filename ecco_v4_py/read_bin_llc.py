@@ -29,7 +29,7 @@ from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
 
 
 def load_ecco_vars_from_mds(mds_var_dir, 
-                            mds_grid_dir,
+                            mds_grid_dir=None,
                             mds_files=None,
                             vars_to_load = 'all', 
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
@@ -71,9 +71,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
         directory where the .data/.meta files are stored
     
 
-    mds_grid_dir : str
+    mds_grid_dir : str, optional
         the directory where the model binary (.data) grid fields
-        are stored
+        are stored, default is same directory as mds_var_dir
     
     mds_files   : str or list or None, optional
         either: a string or list of file names to load,
