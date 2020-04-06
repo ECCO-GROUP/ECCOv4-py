@@ -16,7 +16,7 @@ from .test_common import get_test_array_2d
         {}, #defaults
         {'cmap':'plasma'},
         {'layout':'latlon', 
-          'rotate_to_latlon':False},
+          'rotate_to_latlon':True},
         {'layout':'latlon',
          'rotate_to_latlon':False,
          'Arctic_cap_tile_location':5},
@@ -32,7 +32,11 @@ from .test_common import get_test_array_2d
          'cbar_label':'something good'},
         {'show_tile_labels':False},
         {'fig_size':20},
-        {'less_output':False}
+        {'less_output':False},
+        {'show_tile_labels':True,
+         'show_colorbar':True},
+        {'show_tile_labels':True,
+         'show_colorbar':False}
     ])
 @pytest.mark.parametrize("is_xda",[True,False])
 def test_plot_tiles(llc_mds_datadirs,vdict,is_xda):
