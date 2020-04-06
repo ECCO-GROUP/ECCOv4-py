@@ -14,7 +14,10 @@ def get_test_array_2d(llc_mds_datadirs,is_xda=True):
             model_time_steps_to_load=expected['test_iternum'],
             mds_files=expected['diagnostics'][0])
 
-    xda = ds['ETAN'].isel(time=0)
+    if 'time' in ds.dims:
+        ds = ds.isel(time=0)
+
+    xda = ds['ETAN']
 
     if is_xda:
         return xda
