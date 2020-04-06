@@ -13,9 +13,8 @@ def get_test_array_2d(llc_mds_datadirs,is_xda=True):
     ds = ecco.load_ecco_vars_from_mds(dirname,
             model_time_steps_to_load=expected['test_iternum'],
             mds_files=expected['diagnostics'][0])
-
-    if 'time' in ds.dims:
-        ds = ds.isel(time=0)
+    print(ds)
+    print(ds['ETAN'])
 
     xda = ds['ETAN']
 
