@@ -21,7 +21,7 @@ import os
 import sys
 import pyresample as pr
 import json
-import pathlib
+from pathlib import Path
 
 from .read_bin_llc import load_ecco_vars_from_mds
 from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
@@ -30,20 +30,30 @@ from .resample_to_latlon import resample_to_latlon
 #%%    
 def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir, 
                                                  grid_output_dir, 
-                                                 meta_variable_specific = [],
-                                                 meta_common = [], 
-                                                 title_basename='ECCOv4r3_grid_tile_',
-                                                 title='ECCOv4R3 MITgcm grid information',
-                                                 mds_datatype = '>f4'):
+                                                 meta_variable_specific = dict(),
+                                                 meta_common = dict(), 
+                                                 title_basename='ECCO-GRID',
+                                                 title='ECCOv4 MITgcm grid information',
+                                                 mds_datatype = '>f4',
+                                                 less_output=True):
+    
+    # grid input dir and grid output dir should be of type pathlib.PosixPath
     
     mds_files = ''
 
-    grid =  load_ecco_vars_from_mds(grid_input_dir, 
+    if isinstance(grid_input_dir, str):
+        grid_input_dir = Path(grid_input_dir)
+    if isinstance(grid_output_dir, str):
+        grid_output_dir = Path(grid_output_dir)
+        
+    print(str(grid_input_dir))
+    grid =  load_ecco_vars_from_mds(str(grid_input_dir), 
+                                    str(grid_input_dir),
                                     mds_files, 
-                                    grid_input_dir,
                                     meta_variable_specific = meta_variable_specific,
                                     meta_common = meta_common,
-                                    mds_datatype = mds_datatype)
+                                    mds_datatype = mds_datatype,
+                                    less_output=less_output)
 
     print(grid)
     
@@ -53,17 +63,32 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
             
     grid.attrs['title'] = title
     
-    # create the path if it does not exist/
-    if not os.path.exists(grid_output_dir):
-        os.makedirs(grid_output_dir)
 
+    if not grid_output_dir.exists():
+        try:
+            grid_output_dir.mkdir()
+        except:
+            print ('cannot make %s ' % grid_output_dir)    
+
+
+    new_fname = grid_output_dir / (title_basename + '.nc')
+    if not less_output:
+        print('making single file grid netcdf')
+        print(str(new_fname))
+    
+    grid.to_netcdf(str(new_fname))
+    
+    if not less_output:
+        print('making 13 file grid netcdf')
+        
     for i in range(13):
         tmp = grid.sel(tile=i)
-        new_fname = grid_output_dir + '/' + title_basename + \
-                      str(i).zfill(2) + '.nc'
-        print (new_fname)
+        tmp2 = title_basename  + '_' + str(i).zfill(2) + '.nc'
+        new_fname = grid_output_dir  / tmp2
+        if not less_output:
+            print (new_fname)
         
-        tmp.to_netcdf(new_fname)
+        tmp.to_netcdf(str(new_fname))
         
     return grid
 
@@ -72,15 +97,17 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
 #%%
 def get_time_steps_from_mds_files(mds_var_dir, mds_file):
    
-    mds_search = mds_var_dir + '/' + mds_file + '*meta'
+    if isinstance(mds_var_dir, str):
+        mds_var_dir = Path(mds_var_dir)
     
-    tmp_files = np.sort(glob.glob(mds_search))
+    tmp_files = np.sort(list(mds_var_dir.glob(mds_file + '*meta')))
     
     time_steps = []
     
+    print ('get time steps')
+    print (tmp_files)
     for i in range(len(tmp_files)):
-        time_step =  int(tmp_files[i][-15:-5])
-        time_steps.append(time_step)
+        time_steps.append(int(tmp_files[i].stem[-10:]))
     
     return time_steps
 #%%
@@ -97,7 +124,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                                                      meta_common = dict(),
                                                      mds_datatype = '>f4',
                                                      verbose=True,
-                                                     method = 'time_interval_and_combined_tiles'):
+                                                     method = 'time_interval_and_combined_tiles',
+                                                     less_output=True):
 
     #%%
     # force mds_files_to_load to be a list (if str is passed)
@@ -115,6 +143,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
     # loop through each mds file in mds_files_to_load
     for mds_file in mds_files_to_load:
         
+        if not less_output:
+            print(mds_file)
         # if time steps to load is empty, load all time steps
         if len(time_steps_to_load ) == 0:
             # go through each file, pull out the time step, add the time step to a list,
@@ -130,7 +160,7 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
        
         # get metadata for the first file and determine which variables
         # are present
-        meta = xm.utils.parse_meta_file(mds_var_dir + '/' + first_meta_fname)
+        meta = xm.utils.parse_meta_file(str(mds_var_dir / first_meta_fname))
         vars_here =  meta['fldList']
         
         if not isinstance(vars_to_load, list):
@@ -223,11 +253,12 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                     # create the new file path name
                         if 'MON' in output_freq_code:
     
-                            fname = var + '_' +  str(year) + '_' + str(mon).zfill(2) + '.nc'
+                            fname = var + '_' +  str(year) + '_' + \
+                                str(mon).zfill(2) + '.nc'
                 
-                            newpath = output_dir + '/' + var + '/' + \
-                                str(year) + '/'
-                        
+                            newpath = output_dir  /  var /  \
+                                str(year) 
+                                
                         elif ('WEEK' in output_freq_code) or \
                              ('DAY' in output_freq_code):
                                                     
@@ -239,15 +270,18 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                             d1 = datetime.datetime(year, mon, day)
                             doy = (d1-d0).days + 1
                             
-                            newpath = output_dir + '/' + var + '/' + \
-                                str(year) + '/' + str(doy).zfill(3)
+                            if not less_output:
+                                print('--- making one file per time record')
+                                print(output_dir)
+                                
+                            newpath = output_dir / var / str(year) / \
+                                str(doy).zfill(3)
                                                
                         elif 'YEAR' in output_freq_code:
                           
                              fname = var + '_' + str(year) + '.nc'
             
-                             newpath = output_dir + '/' + var + '/' + \
-                                str(year) 
+                             newpath = output_dir  /  var  / str(year) 
                             
                         else:
                             print ('no valid output frequency code specified')
@@ -260,12 +294,12 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                             d1 = datetime.datetime(year, mon, day)
                             doy = (d1-d0).days + 1
                             
-                            newpath = output_dir + '/' + var + '/' + \
-                                str(year) + '/' + str(doy).zfill(3)
+                            newpath = output_dir  /  var /  \
+                                str(year)  / str(doy).zfill(3)
         
                         # create the path if it does not exist/
-                        if not os.path.exists(newpath):
-                            os.makedirs(newpath)
+                        if not newpath.exists():
+                            newpath.mkdir(parents=True, exist_ok=True)
                      
                         # convert the data array to a dataset.
                         tmp = var_ds.to_dataset()
@@ -285,8 +319,8 @@ def create_nc_variable_files_on_native_grid_from_mds(mds_var_dir,
                         
                         # save to netcdf.  it's that simple.
                         if(verbose):                        
-                            print ('saving to %s' % newpath + '/' + fname)
-                        tmp.to_netcdf(newpath + '/' + fname, engine='netcdf4')
+                            print ('saving to %s' % str(newpath  /  fname))
+                        tmp.to_netcdf(str(newpath  /  fname), engine='netcdf4')
                         
                 # METHOD 'TIME_INTERVAL_AND_SEPARATED_TILES'
                 # --> MAKES ONE FILE PER TIME RECORD PER TILE
