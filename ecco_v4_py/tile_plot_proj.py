@@ -292,8 +292,8 @@ def plot_pstereo(xx,yy, data,
     
     if custom_background:
         ax.background_img(name=background_name, resolution=background_resolution)
-        
-    p=[]    
+
+    p=[]
     if plot_type == 'pcolormesh':
         p = ax.pcolormesh(xx, yy, data, transform=data_crs, \
                           vmin=cmin, vmax=cmax, cmap=cmap)
@@ -302,8 +302,11 @@ def plot_pstereo(xx,yy, data,
         p = ax.contourf(xx, yy, data, levels, transform=data_crs,  \
                  vmin=cmin, vmax=cmax, cmap=cmap)
 
+    elif plot_type == 'points':
+        p = ax.plot(xx, yy,  'k.', transform=data_crs)
+
     else:
-        raise ValueError('plot_type  must be either "pcolormesh" or "contourf"')
+        raise ValueError('plot_type  must be either "pcolormesh", "contourf", or "points"')
 
     if not custom_background:     
         ax.add_feature(cfeature.LAND, zorder=100)
