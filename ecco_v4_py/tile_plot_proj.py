@@ -48,6 +48,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     lons, lats, data : xarray DataArray    : 
         give the longitude, latitude values of the grid, and the 2D field to 
         be plotted
+    
     projection_type : string, optional
         denote the type of projection, see Cartopy docs.
         options include
@@ -61,27 +62,41 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             'stereo' - polar stereographic projection, see lat_lim for choosing
             'InterruptedGoodeHomolosine'
                 North or South
+    
     user_lon_0 : float, optional, default 0 degrees
         denote central longitude
+    
     lat_lim : int, optional
         for stereographic projection, denote the Southern (Northern) bounds for 
         North (South) polar projection
+    
     levels : int, optional
         number of contours to plot
+    
     cmap : string or colormap object, optional
         denotes to colormap
+    
     dx, dy : float, optional
         latitude, longitude spacing for grid resampling
+    
     show_colorbar : logical, optional, default False
-	show a colorbar or not,
+	
+    show a colorbar or not,
+    
     show_grid_lines : logical, optional
         True only possible for Mercator or PlateCarree projections
+    
     grid_linewidth : float, optional, default 1.0
-	width of grid lines
+	
+    width of grid lines
+    
     grid_linestyle : string, optional, default = '--'
-	pattern of grid lines,
+	
+    pattern of grid lines,
+    
     cmin, cmax : float, optional
         minimum and maximum values for colorbar, default is min/max of data
+    
     subplot_grid : dict or list, optional
         specifying placement on subplot as
             dict:
@@ -94,9 +109,11 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
                 matplotlib.pyplot.subplot(
                     row=nrows_val, col=ncols_val,index=index_val)
+                    
     less_output : string, optional
         debugging flag, don't print if True
-    raidus_of_influence : float, optional.  Default 100000 m
+    
+    radius_of_influence : float, optional.  Default 100000 m
         the radius of the circle within which the input data is search for
         when mapping to the new grid
     """

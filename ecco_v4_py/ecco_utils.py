@@ -272,7 +272,7 @@ def months2days(nmon=288, baseyear=1992, basemon=1):
     #center time of each month is the mean of the time bounds.    
     time_days = np.mean(time_days_bnds,axis=1)
 
-    ansi_datetmp = np.array([basetime + datetime.timedelta(days=time_days[i]) for i in xrange(nmon)])
+    ansi_datetmp = np.array([basetime + datetime.timedelta(days=time_days[i]) for i in range(nmon)])
     ansi_date = [str.replace(ansi_datetmp[i].isoformat(),'T',' ') for i in range(nmon)]
 
     return time_days, time_days_bnds, ansi_date
