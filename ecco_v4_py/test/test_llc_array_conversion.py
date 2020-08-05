@@ -1,17 +1,31 @@
 
 from __future__ import division, print_function
-import os
+import warnings
+from pathlib import Path
 import numpy as np
+import pytest
 import ecco_v4_py as ecco
 
 # Define bin directory for test reading
-_PKG_DIR = os.path.dirname(os.path.abspath(__file__))
-_DATA_DIR = os.path.join(_PKG_DIR,'../../bin')
+_PKG_DIR = Path(__file__).resolve().parent.parent.parent
+_DATA_DIR = _PKG_DIR.joinpath('binary_data')
 
 _TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']
 _TEST_NK = [1, 50, 50]
 _TEST_RECS = [1, 1, 3]
 
+
+# Look for files #
+##################
+if not _DATA_DIR.joinpath(_TEST_FILES[0]).is_file():
+
+    warnings.warn('\n\nCannot find necessary binaries in ' + str(_DATA_DIR) + '\n' +\
+    'You can download all *.meta/data files needed for testing here:\n' +\
+    '   https://github.com/ECCO-GROUP/ECCOv4-py/tree/master/binary_data \n' +\
+    ' or \n' +\
+    '   https://figshare.com/articles/Binary_files_for_the_ecco-v4-py_Python_package_/9932162 \n' +\
+    'Download these files to ecco_v4_py/../binary_data/')
+    pytest.skip("Test files not available.",allow_module_level=True)
 
 # Test convert from tiles #
 ###########################

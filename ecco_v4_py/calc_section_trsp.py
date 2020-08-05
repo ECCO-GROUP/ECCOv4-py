@@ -21,7 +21,7 @@ from .get_section_masks import get_available_sections, \
 # Define constants
 METERS_CUBED_TO_SVERDRUPS = 10**-6
 WATTS_TO_PETAWATTS = 10**-15
-RHO_CONST = 1000
+RHO_CONST = 1029
 HEAT_CAPACITY = 4000
 
 def calc_section_vol_trsp(ds,
@@ -308,8 +308,9 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
     use_masks = False
 
     # Test if section name is in available basins
-    if get_section_endpoints(section_name) is not None:
-        use_predefined_section = True
+    if section_name is not None:
+        if get_section_endpoints(section_name) is not None:
+            use_predefined_section = True
 
     # Test if endpoints provided
     if (pt1 is not None and pt2 is not None):

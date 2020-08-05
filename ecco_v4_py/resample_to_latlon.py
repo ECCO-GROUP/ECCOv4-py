@@ -48,13 +48,13 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                                             lats=orig_lats_1d)
 
    # the latitudes to which we will we interpolate
-    num_lats = (new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat + 1
-    num_lons = (new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lat + 1
+    num_lats = int((new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat) + 1
+    num_lons = int((new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lat) + 1
 
     if (num_lats > 0) and (num_lons > 0):
         # linspace is preferred when using floats!
-        lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=num_lats)
-        lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=num_lons)
+        lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=int(num_lats))
+        lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=int(num_lons))
 
         new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
 
