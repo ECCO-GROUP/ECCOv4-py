@@ -1,6 +1,8 @@
-import setuptools
+from setuptools import setup
 
-from distutils.core import setup
+def README():
+    with open('README.md') as f:
+        return f.read()
 
 setup(
   name = 'ecco_v4_py',
@@ -14,24 +16,19 @@ setup(
   include_package_data=True,
   data_files=[('binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
   install_requires=[
-	'cython',
-	'shapely',
-	'proj',
-	'six',
 	'dask[complete]',
-	'datetime',
 	'python-dateutil',
 	'matplotlib',
 	'numpy',
 	'pyresample',
 	'xarray',
 	'xmitgcm',
-	'pyyaml',
-	'pyproj',
-	'pykdtree',
 	'cartopy',
- 'cmocean',
-	'xgcm'],
+	'xgcm',
+        'future',
+        'pathlib'],
+  tests_require=['pytest','coverage'],
+  license='MIT',
   classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Intended Audience :: Science/Research', 
@@ -40,5 +37,7 @@ setup(
       'Programming Language :: Python',
       'Programming Language :: Python :: 3.7',
       'Topic :: Scientific/Engineering :: Physics'
-  ]
+  ],
+  long_description=README(),
+  long_description_content_type='text/markdown'
 )

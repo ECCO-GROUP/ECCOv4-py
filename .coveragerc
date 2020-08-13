@@ -1,0 +1,14 @@
+# Useful links in setting up:
+# https://github.com/codecov/example-python
+# https://coverage.readthedocs.io/en/latest/config.html
+# also, I looked at xgcm/xmitgcm as "templates"
+[run]
+branch = True
+
+[report]
+exclude_lines =
+    raise NotImplementedError
+    if __name__ == .__main__.:
+ignore_errors = True 
+omit = ecco_v4_py/test/*
+       ecco_v4_py/__init__.py
