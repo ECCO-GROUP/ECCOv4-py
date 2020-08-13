@@ -71,7 +71,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     
     #datafile = os.path.join(fdir, fname)
     if less_output == False:
-        print('loading ', fname)
+        print('load_binary_array: loading file', datafile)
     
     # check to see if file exists.    
     if datafile.exists() == False:
@@ -85,7 +85,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         f.seek(ni*nj*skip*dt.itemsize)
 
     if (ni <= 0) or (nj <= 0):
-        print('ni and nj must be > 1')
+        print('load_binary_array: ni and nj must be > 1')
         return []
 
     # load all 2D records
@@ -101,7 +101,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         nk = int(length_arr_k / (ni*nj))
 
         if less_output == False:
-            print('loading all 2D records.  nk =',nk)
+            print('load_binary_array: loading all 2D records.  nk =',nk)
         
         # reshape the array to 2D records
         if nk > 1: # we have more than one 2D record, make 3D field
@@ -113,7 +113,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     # read a specific number of records (nk*nl)
     else:
         if (nk <= 0) or (nl <= 0):
-            print('nk and nl must be > 0.  If they are singleton dimensions, use 1')
+            print('load_binary_array: nk and nl must be > 0.  If they are singleton dimensions, use 1')
             return []
 
         # read in nk*nl 2D records
@@ -133,9 +133,9 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
             data = np.reshape(arr_k,(nj, ni))
     
     f.close()
-       
-    
+
     if less_output == False:
-        print('data shape ', data.shape)
+        print('load_binary_array: data array shape ', data.shape)
+        print('load_binary_array: data array type ', data.dtype)
 
     return data

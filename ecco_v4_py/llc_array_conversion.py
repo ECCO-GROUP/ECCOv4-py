@@ -140,62 +140,48 @@ def llc_compact_to_faces(data_compact, less_output = False):
     # final dimension is always of length llc
     llc = dims[-1]
 
+    # dtype of compact array
+    arr_dtype = data_compact.dtype
+
     if less_output == False:
-        print('dims, num_dims, llc ', dims, num_dims, llc)
+        print('llc_compact_to_faces: dims, llc ', dims, llc)
+        print('llc_compact_to_faces: data_compact array type ', data_compact.dtype)
 
     if num_dims == 2: # we have a single 2D slices (y, x)
-        f1 = np.zeros((3*llc, llc))
-        f2 = np.zeros((3*llc, llc))
-        f3 = np.zeros((llc, llc))
-        f4 = np.zeros((llc, 3*llc))
-        f5 = np.zeros((llc, 3*llc))
-
-        if less_output == False:
-            print ('2 dimensions')
-            print('f3 shape ', f3.shape)
-            print('f5 shape ', f5.shape)
+        f1 = np.zeros((3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((llc, 3*llc), dtype=arr_dtype)
 
     elif num_dims == 3: # we have 3D slices (time or depth, y, x)
         nk = dims[0]
         
-        f1 = np.zeros((nk, 3*llc, llc))
-        f2 = np.zeros((nk, 3*llc, llc))
-        f3 = np.zeros((nk, llc, llc))
-        f4 = np.zeros((nk, llc, 3*llc))
-        f5 = np.zeros((nk, llc, 3*llc))
-
-        if less_output == False:
-            print ('3 dimensions')
-            print('nk ', nk)
-            print('f3 shape ', f3.shape)
-            print('f5 shape ', f5.shape)
+        f1 = np.zeros((nk, 3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((nk, 3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((nk, llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((nk, llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((nk, llc, 3*llc), dtype=arr_dtype)
 
     elif num_dims == 4: # we have a 4D slice (time or depth, time or depth, y, x)
         nl = dims[0]
         nk = dims[1]
 
-        f1 = np.zeros((nl, nk, 3*llc, llc))
-        f2 = np.zeros((nl, nk, 3*llc, llc))
-        f3 = np.zeros((nl, nk, llc, llc))
-        f4 = np.zeros((nl, nk, llc, 3*llc))
-        f5 = np.zeros((nl, nk, llc, 3*llc))
-
-        if less_output == False:
-            print ('4 dimensions')
-            print('nl, nk ', nl, nk)
-            print('f5 shape ', f5.shape)
+        f1 = np.zeros((nl, nk, 3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((nl, nk, 3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((nl, nk, llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((nl, nk, llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((nl, nk, llc, 3*llc), dtype=arr_dtype)
 
     else:
-        print ('can only handle compact arrays that have 2, 3, or 4 dimensions!')
+        print ('llc_compact_to_faces: can only handle compact arrays of 2, 3, or 4 dimensions!')
         return []
 
     # map the data from the compact format to the five face arrays
 
     # -- 2D case
     if num_dims == 2:
-        if less_output == False:
-            print ('2D, data_compact shape ', data_compact.shape)
-
+        
         f1 = data_compact[:3*llc,:]
         f2 = data_compact[3*llc:6*llc,:]
         f3 = data_compact[6*llc:7*llc,:]
@@ -219,9 +205,7 @@ def llc_compact_to_faces(data_compact, less_output = False):
     # -- 3D case
     elif num_dims == 3:
         # loop over k
-        if less_output == False:
-            print ('3D, data_compact shape ', data_compact.shape)
-
+        
         for k in range(nk):
             f1[k,:] = data_compact[k,:3*llc,:]
             f2[k,:] = data_compact[k,3*llc:6*llc,:]
@@ -335,6 +319,9 @@ def llc_faces_to_tiles(F, less_output=False):
     dims = f3.shape
     num_dims = len(dims)
     
+    # dtype of compact array
+    arr_dtype = f1.dtype
+
     # final dimension of face 1 is always of length llc
     ni_3 = f3.shape[-1]
     nj_3 = f3.shape[-2]
@@ -343,27 +330,28 @@ def llc_faces_to_tiles(F, less_output=False):
     # 
 
     if num_dims == 2: # we have a single 2D slices (y, x)
-        data_tiles = np.zeros((13, llc, llc))
+        data_tiles = np.zeros((13, llc, llc), dtype=arr_dtype)
 
 
     elif num_dims == 3: # we have 3D slices (time or depth, y, x)
         nk = dims[0]
-        data_tiles = np.zeros((nk, 13, llc, llc))
+        data_tiles = np.zeros((nk, 13, llc, llc), dtype=arr_dtype)
 
 
     elif num_dims == 4: # we have a 4D slice (time or depth, time or depth, y, x)
         nl = dims[0]
         nk = dims[1]
 
-        data_tiles = np.zeros((nl, nk, 13, llc, llc))
+        data_tiles = np.zeros((nl, nk, 13, llc, llc), dtype=arr_dtype)
     
     else:
-        print ('can only handle face arrays that have 2, 3, or 4 dimensions!')
+        print ('llc_faces_to_tiles: can only handle face arrays that have 2, 3, or 4 dimensions!')
         return []
 
     # llc is the length of the second dimension
     if less_output == False:
-        print ('data_tiles shape ', data_tiles.shape)
+        print ('llc_faces_to_tiles: data_tiles shape ', data_tiles.shape)
+        print ('llc_faces_to_tiles: data_tiles dtype ', data_tiles.dtype)
 
 
     # map the data from the faces format to the 13 tile arrays
@@ -421,9 +409,6 @@ def llc_faces_to_tiles(F, less_output=False):
                 data_tiles[l,k,11,:] = f5[l,k,:,llc*1:llc*2]
                 data_tiles[l,k,12,:] = f5[l,k,:,llc*2:]
 
-
-
-
     return data_tiles
 
 
@@ -472,38 +457,41 @@ def llc_tiles_to_faces(data_tiles, less_output=False):
     # tiles is always just before (y,x) dims
     num_tiles = dims[-3]
 
+    # data type of original data_tiles
+    arr_dtype = data_tiles.dtype
+
     if less_output == False:
-        print('num tiles, ', num_tiles)
+        print('llc_tiles_to_faces: num_tiles, ', num_tiles)
 
     if num_dims == 3: # we have a 13 2D slices (tile, y, x)
-        f1 = np.zeros((3*llc, llc))
-        f2 = np.zeros((3*llc, llc))
-        f3 = np.zeros((llc, llc))
-        f4 = np.zeros((llc, 3*llc))
-        f5 = np.zeros((llc, 3*llc))
+        f1 = np.zeros((3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((llc, 3*llc), dtype=arr_dtype)
 
     elif num_dims == 4: # 13 3D slices (time or depth, tile, y, x)
 
         nk = dims[0]
         
-        f1 = np.zeros((nk, 3*llc, llc))
-        f2 = np.zeros((nk, 3*llc, llc))
-        f3 = np.zeros((nk, llc, llc))
-        f4 = np.zeros((nk, llc, 3*llc))
-        f5 = np.zeros((nk, llc, 3*llc))
+        f1 = np.zeros((nk, 3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((nk, 3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((nk, llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((nk, llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((nk, llc, 3*llc), dtype=arr_dtype)
 
     elif num_dims == 5: # 4D slice (time or depth, time or depth, tile, y, x)
         nl = dims[0]
         nk = dims[1]
 
-        f1 = np.zeros((nl,nk, 3*llc, llc))
-        f2 = np.zeros((nl,nk, 3*llc, llc))
-        f3 = np.zeros((nl,nk, llc, llc))
-        f4 = np.zeros((nl,nk, llc, 3*llc))
-        f5 = np.zeros((nl,nk, llc, 3*llc))
+        f1 = np.zeros((nl,nk, 3*llc, llc), dtype=arr_dtype)
+        f2 = np.zeros((nl,nk, 3*llc, llc), dtype=arr_dtype)
+        f3 = np.zeros((nl,nk, llc, llc), dtype=arr_dtype)
+        f4 = np.zeros((nl,nk, llc, 3*llc), dtype=arr_dtype)
+        f5 = np.zeros((nl,nk, llc, 3*llc), dtype=arr_dtype)
 
     else:
-        print ('can only handle tiles that have 2, 3, or 4 dimensions!')
+        print ('llc_tiles_to_faces: can only handle tiles that have 2, 3, or 4 dimensions!')
         return []
 
     # Map data on the tiles to the faces
@@ -635,27 +623,30 @@ def llc_faces_to_compact(F, less_output=True):
     dims = f3.shape
     num_dims = len(dims)
 
+    # data type of original faces
+    arr_dtype = f1.dtype
+
     # the final dimension is always the llc # 
     llc = dims[-1]
 
     # initialize the 'data_compact' array
     if num_dims == 2: # we have a 2D slice (x,y)
-        data_compact = np.zeros((13*llc, llc))
+        data_compact = np.zeros((13*llc, llc), dtype=arr_dtype)
 
     elif num_dims == 3: # 3D slice (x, y, time or depth)
         nk = dims[0]
-        data_compact = np.zeros((nk, 13*llc, llc))
+        data_compact = np.zeros((nk, 13*llc, llc), dtype=arr_dtype)
 
     elif num_dims == 4: # 4D slice (x,y,time and depth)
         nl = dims[0]
         nk = dims[1]
-        data_compact = np.zeros((nl, nk, 13*llc, llc))
+        data_compact = np.zeros((nl, nk, 13*llc, llc), dtype=arr_dtype)
     else:
-        print ('can only handle faces that have 2, 3, or 4 dimensions!')
+        print ('llc_faces_to_compact: can only handle faces that have 2, 3, or 4 dimensions!')
         return []
 
     if less_output == False:
-        print ('shape of face 3 ', f3.shape)
+        print ('llc_faces_to_compact: face 3 shape', f3.shape)
 
     if num_dims == 2:
         
@@ -675,7 +666,7 @@ def llc_faces_to_compact(F, less_output=True):
     
     elif num_dims == 3:
         # loop through k indicies
-        print ('size of data compact ', data_compact.shape)
+        print ('llc_faces_to_compact: data_compact array shape', data_compact.shape)
        
         for k in range(nk):
             data_compact[k,:3*llc,:]      = f1[k,:]
@@ -716,7 +707,8 @@ def llc_faces_to_compact(F, less_output=True):
 
 
     if less_output == False:
-        print ('shape of data_compact ', data_compact.shape)
+        print ('llc_faces_to_compact: data_compact array shape', data_compact.shape)
+        print ('llc_faces_to_compact: data_compact array dtype', data_compact.dtype)
 
     return data_compact
 
@@ -756,6 +748,7 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
     ----------
     data_tiles : numpy or dask+numpy array
         see above for specified dimension order
+    
     var_type : string, optional
         Note: only optional if grid_da is provided! 
         specification for where on the grid the variable lives
@@ -763,12 +756,16 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
         'w' - west grid cell edge, e.g. dxG, zonal velocity, ...
         's' - south grid cell edge, e.g. dyG, meridional velocity, ...
         'z' - southwest grid cell edge, zeta/vorticity point, e.g. rAz
+    
     grid_da : xarray DataArray, optional
         a DataArray or Dataset with the grid coordinates already loaded
+    
     less_output : boolean, optional
         A debugging flag.  False = less debugging output
+    
     dim4 : string, optional
         Specify the third dimension, either 'depth' or 'time'
+    
     dim5 : string, optional
         Specify the fourth dimension, either 'depth' or 'time'
 
@@ -800,10 +797,11 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
         if len(data_tiles.shape)==1:
             data_tiles = np.reshape(data_tiles, np.shape(grid_da.values))
 
+        # don't copy over attributes from grid_da.  Let user specify own attributes
         da = xr.DataArray(data=data_tiles,
                           coords=grid_da.coords.variables,
                           dims=grid_da.dims,
-                          attrs=grid_da.attrs)
+                          attrs=dict())
         return da
 
     # Provide dims and coords based on grid location

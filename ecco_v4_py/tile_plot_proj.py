@@ -182,6 +182,12 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     if num_deg_B > 0:
         lon_tmp_d['B'] = [B_left_limit, B_right_limit]
 
+    if projection_type == 'stereo' and user_lat_0 == None:
+        if lat_lim > 0:
+            user_lat_0 = 90
+        else:
+            user_lat_0 = -90
+
     # Make projection axis
     (ax,show_grid_labels) = _create_projection_axis(
             projection_type, user_lon_0, user_lat_0, parallels,
@@ -440,6 +446,12 @@ def _create_projection_axis(projection_type,
         supported for PlateCarree and Mercator projections
     """
 
+    if not less_output:
+        print('_create_projection_axis: projection_type', projection_type)
+        print('_create_projection_axis: user_lon_0, user_lat_0', user_lon_0, user_lat_0)
+        print('_create_projection_axis: parallels', parallels)
+        print('_create_projection_axis: lat_lim', lat_lim)
+
     # initialize (optional) subplot variables
     row = []
     col = []
@@ -491,9 +503,9 @@ def _create_projection_axis(projection_type,
     
     # Build dictionary for projection arguments
     proj_args={}
-    if user_lon_0 is not None :
+    if user_lon_0 is not None and projection_type is not 'stereo':
         proj_args['central_longitude']=user_lon_0
-    if user_lat_0 is not None :
+    if user_lat_0 is not None and projection_type is not 'stereo':
         proj_args['central_latitude']=user_lat_0
     if (projection_type == 'LambertConformal') & (lat_lim is not None) :
         proj_args['cutoff']=lat_lim
