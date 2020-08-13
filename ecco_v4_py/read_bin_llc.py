@@ -494,7 +494,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         full_filename = '%s/%s' % (fdir,fname)
 
         if not less_output:
-            print('full_filename: ',full_filename)
+            print('read_llc_to_tiles: full_filename: ',full_filename)
         
         # Handle "skipped" records by reading up until that record, and
         # dropping preceding records afterward
@@ -541,9 +541,6 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
         data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
 
-    if not less_output:
-        print('data_tiles shape = ',data_tiles.shape)
-        
     # return the array
     return data_tiles
 
