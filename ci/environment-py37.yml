@@ -18,3 +18,5 @@ dependencies:
   - pyresample
   - cartopy
   - docrep
+  - fsspec
+  - aiohttp
