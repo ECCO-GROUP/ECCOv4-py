@@ -11,12 +11,12 @@ dependencies:
   - pytest
   - future
   - xmitgcm
-  - xgcm>=0.5.0
+  - xgcm
   - pytest 
   - codecov
   - pytest-cov
   - pyresample
   - cartopy
-  - docrep<=0.2.7
+  - docrep
   - fsspec
   - aiohttp
