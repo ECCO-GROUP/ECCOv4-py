@@ -9,6 +9,7 @@ branch = True
 exclude_lines =
     raise NotImplementedError
     if __name__ == .__main__.:
+    if not less_output:
 ignore_errors = True 
 omit = ecco_v4_py/test/*
        ecco_v4_py/__init__.py
