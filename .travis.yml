@@ -10,6 +10,8 @@ matrix:
   include:
   - python: 3.7
     env: CONDA_ENV=py37
+  - python: 3.8
+    env: CONDA_ENV=py38
 
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
