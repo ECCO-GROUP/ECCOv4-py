@@ -53,6 +53,6 @@ def test_cminmax_dtype(arr):
     """make cmin/cmax are floats"""
 
     _, (cmin,cmax) = assign_colormap(arr,user_cmap=None)
-        
-    assert isinstance(cmin,float)
-    assert isinstance(cmax,float)
+
+    assert isinstance(cmin,float) or isinstance(cmin,np.float32)
+    assert isinstance(cmax,float) or isinstance(cmin,np.float32)
