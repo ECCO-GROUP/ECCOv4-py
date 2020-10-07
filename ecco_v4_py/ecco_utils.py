@@ -349,9 +349,9 @@ def get_llc_grid(ds,domain='ecco'):
                     2:{'X':((1,'Y',False),(3,'X',False)),
                        'Y':(None,(4,'X',False))},
                     3:{'X':((2,'X',False),None),
-                       'Y':(None,(4,'Y',False))},
+                       'Y':(None,None)},
                     4:{'X':((2,'Y',False),(5,'X',False)),
-                       'Y':((3,'Y',False),(1,'X',False))},
+                       'Y':(None,(1,'X',False))},
                     5:{'X':((4,'X',False),None),
                        'Y':(None,(0,'X',False))}
                    }}
