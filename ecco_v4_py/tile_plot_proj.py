@@ -303,11 +303,11 @@ def plot_pstereo(xx,yy, data,
 
 
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
-        ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
+        ax.set_extent([-179.5, 180, lat_lim, 90], ccrs.PlateCarree())
         if not less_output:
             print('North Polar Projection')
     elif isinstance(ax.projection, ccrs.SouthPolarStereo):
-        ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
+        ax.set_extent([-179.5, 180, -90, lat_lim], ccrs.PlateCarree())
         if not less_output:
             print('South Polar Projection')
     else:
@@ -512,7 +512,7 @@ def _create_projection_axis(projection_type,
 
     # Build dictionary for projection arguments
     proj_args={}
-    if user_lon_0 is not None and projection_type != 'stereo':
+    if user_lon_0 is not None:
         proj_args['central_longitude']=user_lon_0
     if user_lat_0 is not None and projection_type != 'stereo':
         proj_args['central_latitude']=user_lat_0
