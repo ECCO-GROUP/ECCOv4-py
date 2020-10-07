@@ -87,7 +87,8 @@ def calc_section_vol_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
+    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+                                              grid=grid)
 
     # Define volumetric transport
     x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
@@ -146,7 +147,8 @@ def calc_section_heat_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
+    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+                                              grid=grid)
 
     # Define heat transport
     x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
@@ -205,7 +207,8 @@ def calc_section_salt_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
+    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+                                              grid=grid)
 
     # Define salt transport
     x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
@@ -291,7 +294,7 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
 # Helper functions for the computing volume, heat, and salt transport
 # -------------------------------------------------------------------------------
 
-def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
+def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,grid=None):
     """Handle inputs for computing volume, heat, or salt transport across
     a section
 
@@ -331,13 +334,11 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
         if use_endpoints or use_masks:
             raise TypeError('Cannot provide more than one method for defining section')
         pt1, pt2 = get_section_endpoints(section_name)
-        _, maskW, maskS = get_section_line_masks(pt1, pt2, ds)
     else:
         # Secondly, try to use endpoints or mask
         if use_endpoints and use_masks:
             raise TypeError('Cannot provide more than one method for defining section')
-        elif use_endpoints:
-            _, maskW, maskS = get_section_line_masks(pt1, pt2, ds)
+    _, maskW, maskS = get_section_line_masks(pt1, pt2, ds, grid=grid)
 
     return maskW, maskS
 

@@ -130,7 +130,8 @@ def calc_section_stf(ds,
     trsp_x = ds['UVELMASS'] * ds['drF'] * ds['dyG']
     trsp_y = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
+    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+                                              grid=grid)
 
     # Creates an empty streamfunction
     ds_out = section_trsp_at_depth(trsp_x, trsp_y,
