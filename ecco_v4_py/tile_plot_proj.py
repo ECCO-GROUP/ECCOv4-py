@@ -269,6 +269,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)
+        label=''
+        if 'long_name' in data.attrs:
+            label = data.long_name
+        elif data.name is not None:
+            label = data.name
+        if 'units' in data.attrs:
+            label+= ' ['+data.units+']'
+        cbar.set_label(label)
 
     #%%
     return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection
@@ -281,7 +289,7 @@ def plot_pstereo(xx,yy, data,
                  cmin, cmax, ax,
                  plot_type = 'pcolormesh',
                  show_colorbar=False,
-                 circle_boundary = False, 
+                 circle_boundary = False,
                  grid_linewidth = 1,
                  grid_linestyle = '--',
                  cmap=None,
