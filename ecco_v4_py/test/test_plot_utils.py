@@ -17,9 +17,10 @@ from ecco_v4_py.plot_utils import assign_colormap
     [(True,'viridis'),
      (False,'RdBu_r'),
      (False,'inferno')])
-def test_cmap(llc_mds_datadirs,is_xda,sequential_data,cmap_expected):
+def test_cmap(get_test_array_2d,is_xda,sequential_data,cmap_expected):
 
-    test_arr = get_test_array_2d(llc_mds_datadirs,is_xda)
+    test_arr = get_test_array_2d
+    test_arr = test_arr if is_xda else test_arr.values
 
     if sequential_data:
         test_arr = np.abs(test_arr)
@@ -32,13 +33,12 @@ def test_cmap(llc_mds_datadirs,is_xda,sequential_data,cmap_expected):
     assert cmap_test==cmap_expected
 
 @pytest.mark.parametrize("is_xda",[True,False])
-def test_cminmax_dtype(llc_mds_datadirs,is_xda):
+def test_cminmax_dtype(get_test_array_2d,is_xda):
     """make cmin/cmax are floats"""
 
-    test_arr = get_test_array_2d(llc_mds_datadirs,is_xda)
+    test_arr = get_test_array_2d
+    test_arr = test_arr if is_xda else test_arr.values
     _, (cmin,cmax) = assign_colormap(test_arr)
-
-    print(type(cmin))
 
     assert isinstance(cmin,float) or isinstance(cmin,np.float32)
     assert isinstance(cmax,float) or isinstance(cmax,np.float32)
