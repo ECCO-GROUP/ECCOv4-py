@@ -9,13 +9,12 @@ import matplotlib.pyplot as plt
 import pytest
 import ecco_v4_py as ecco
 
-from xmitgcm.test.test_xmitgcm_common import llc_mds_datadirs
-from .test_common import get_test_array_2d
+from .test_common import llc_mds_datadirs,get_test_array_2d
 
 @pytest.mark.parametrize("vdict",[
         {}, #defaults
         {'cmap':'plasma'},
-        {'layout':'latlon', 
+        {'layout':'latlon',
           'rotate_to_latlon':True},
         {'layout':'latlon',
          'rotate_to_latlon':False,
@@ -39,10 +38,11 @@ from .test_common import get_test_array_2d
          'show_colorbar':False}
     ])
 @pytest.mark.parametrize("is_xda",[True,False])
-def test_plot_tiles(llc_mds_datadirs,vdict,is_xda):
+def test_plot_tiles(get_test_array_2d,vdict,is_xda):
     """Run through various options and make sure nothing is broken"""
 
-    test_arr = get_test_array_2d(llc_mds_datadirs,is_xda=is_xda)
+    test_arr = get_test_array_2d
+    test_arr = test_arr if is_xda else test_arr.values
     ecco.plot_tiles(test_arr,**vdict)
     plt.close()
 
@@ -57,11 +57,12 @@ def test_plot_tiles(llc_mds_datadirs,vdict,is_xda):
         {'less_output':False}
     ])
 @pytest.mark.parametrize("is_xda",[True,False])
-def test_plot_single_tile(llc_mds_datadirs,vdict,is_xda):
+def test_plot_single_tile(get_test_array_2d,vdict,is_xda):
     """plot a single tile"""
 
     # read in array
-    test_arr = get_test_array_2d(llc_mds_datadirs,is_xda=is_xda)
+    test_arr = get_test_array_2d
+    test_arr = test_arr if is_xda else test_arr.values
 
     # run plotting routine on each tile
     for t in np.arange(test_arr.shape[0]):
@@ -70,11 +71,12 @@ def test_plot_single_tile(llc_mds_datadirs,vdict,is_xda):
 
 
 @pytest.mark.parametrize("is_xda",[True,False])
-def test_plot_tiles_array(llc_mds_datadirs,is_xda):
+def test_plot_tiles_array(get_test_array_2d,is_xda):
     """a crude test to make sure the array being created
     matches the original"""
 
-    arr_expected = get_test_array_2d(llc_mds_datadirs,is_xda=is_xda)
+    arr_expected = get_test_array_2d
+    arr_expected = arr_expected if is_xda else arr_expected.values
     _,arr_test = ecco.plot_tiles(arr_expected)
     assert np.allclose(np.nansum(arr_test),float(np.nansum(arr_expected)))
     plt.close()
