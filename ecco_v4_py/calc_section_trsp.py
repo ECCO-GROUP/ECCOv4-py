@@ -28,7 +28,11 @@ def calc_section_vol_trsp(ds,
                           pt1=None, pt2=None,
                           section_name=None,
                           maskW=None, maskS=None,
+<<<<<<< HEAD
                           grid=None):
+=======
+                          coords=None, grid=None):
+>>>>>>> can supply coords separately, no grid to section trsp at depth
     """Compute volumetric transport across section in Sverdrups
     There are 3 ways to call this function:
 
@@ -68,6 +72,9 @@ def calc_section_vol_trsp(ds,
         name for the section. If predefined value, section mask is defined
         via get_section_endpoints
         otherwise, adds name to returned DataArray
+    coords : xarray Dataset
+        separate dataset containing the coordinate information
+        XC, YC, drF, dyG, dxG
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
         see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
@@ -87,17 +94,17 @@ def calc_section_vol_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+    coords = coords if coords is not None else ds[['drF','dyG','dxG','XC','YC','Z']]
+    maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
     # Define volumetric transport
-    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
-    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
+    x_vol = ds['UVELMASS'] * coords['drF'] * coords['dyG']
+    y_vol = ds['VVELMASS'] * coords['drF'] * coords['dxG']
 
     # Computes salt transport in m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
-                                   cds=ds.coords.to_dataset(),
-                                   grid=grid)
+                                   coords=coords)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'vol_trsp_z'})
@@ -122,7 +129,7 @@ def calc_section_heat_trsp(ds,
                            pt1=None, pt2=None,
                            section_name=None,
                            maskW=None, maskS=None,
-                           grid=None):
+                           coords=None,grid=None):
     """Compute heat transport across section in PW
     Inputs and usage are same as calc_section_vol_trsp.
     The only differences are:
@@ -147,6 +154,7 @@ def calc_section_heat_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
+    coords = coords if coords is not None else ds[['XC','YC','Z']]
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
@@ -156,8 +164,7 @@ def calc_section_heat_trsp(ds,
 
     # Computes salt transport in degC * m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_heat,y_heat,maskW,maskS,
-                                   cds=ds.coords.to_dataset(),
-                                   grid=grid)
+                                   coords=coords)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'heat_trsp_z'})
@@ -182,7 +189,7 @@ def calc_section_salt_trsp(ds,
                            pt1=None, pt2=None,
                            section_name=None,
                            maskW=None, maskS=None,
-                           grid=None):
+                           coords=None, grid=None):
     """Compute salt transport across section in psu*Sv
     Inputs and usage are same as calc_section_vol_trsp.
     The only differences are:
@@ -207,6 +214,7 @@ def calc_section_salt_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
+    coords = coords if coords is not None else ds[['XC','YC','Z']]
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
@@ -216,8 +224,7 @@ def calc_section_salt_trsp(ds,
 
     # Computes salt transport in psu * m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_salt,y_salt,maskW,maskS,
-                                   cds=ds.coords.to_dataset(),
-                                   grid=grid)
+                                   coords=coords)
 
     # Rename to useful data array name
     ds_out = ds_out.rename({'trsp_z': 'salt_trsp_z'})
@@ -242,8 +249,7 @@ def calc_section_salt_trsp(ds,
 # Main function for computing standard transport quantities
 # -------------------------------------------------------------------------------
 
-def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
-                          grid=None):
+def section_trsp_at_depth(xfld, yfld, maskW, maskS, coords):
     """
     Compute transport of vector quantity at each depth level
     across latitude(s) defined in lat_vals
@@ -254,7 +260,7 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
         3D spatial (+ time, optional) field at west and south grid cell edge
     maskW, maskS : xarray DataArray
         defines the section to define transport across
-    cds : xarray Dataset
+    coords : xarray Dataset
         with all LLC90 coordinates, including: maskW/S, YC
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see utils.get_llc_grid
@@ -269,11 +275,8 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
                 and 'k' (depth)
     """
 
-    if grid is None:
-        grid = get_llc_grid(cds)
-
     # Initialize empty DataArray with coordinates and dims
-    ds_out = _initialize_section_trsp_data_array(cds)
+    ds_out = _initialize_section_trsp_data_array(coords)
 
     # Apply section mask and sum horizontally
     maskW = maskW.where(cds['maskW']) if 'maskW' in cds else maskW
@@ -342,12 +345,12 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,grid=None):
 
     return maskW, maskS
 
-def _initialize_section_trsp_data_array(cds):
+def _initialize_section_trsp_data_array(coords):
     """Create an xarray DataArray with time, depth, and latitude dims
 
     Parameters
     ----------
-    cds : xarray Dataset
+    coords : xarray Dataset
         contains LLC coordinates 'k' and (optionally) 'time'
 
     Returns
@@ -369,7 +372,7 @@ def _initialize_section_trsp_data_array(cds):
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')
-    xds['Z'] = cds['Z']
+    xds['Z'] = coords['Z']
     xds = xds.set_coords('Z')
 
     return xds
