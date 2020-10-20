@@ -8,8 +8,7 @@ import numpy as np
 import pytest
 import ecco_v4_py as ecco
 
-from .test_common import get_test_array_2d
-from xmitgcm.test.test_xmitgcm_common import llc_mds_datadirs
+from .test_common import llc_mds_datadirs,get_test_array_2d
 from ecco_v4_py.plot_utils import assign_colormap
 
 @pytest.mark.parametrize("is_xda",[True,False])

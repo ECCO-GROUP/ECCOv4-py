@@ -31,11 +31,9 @@ def get_test_vectors(llc_mds_datadirs):
     # read in array
     ds = ecco.load_ecco_vars_from_mds(dirname,
             model_time_steps_to_load=expected['test_iternum'],
-            mds_files=expected['diagnostics'][0])
-
-    ds = ds[['UVELMASS','VVELMASS']]
+            mds_files=['U','V'])
 
     if 'time' in ds.dims:
-        ds = ds.isel(time=0)
+        ds = ds.isel(time=-1)
 
     return ds
