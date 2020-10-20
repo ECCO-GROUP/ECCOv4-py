@@ -19,6 +19,20 @@ def test_no_angles(get_test_vectors):
     with pytest.raises(KeyError):
         vector_calc.UEVNfromUXVY(ds['U'],ds['V'],ds)
 
+def test_optional_grid(get_test_vectors):
+    """simple, make sure we can optionally provide grid..."""
+
+    ds = get_test_vectors
+    grid = get_llc_grid(ds)
+
+    uX = xr.ones_like(ds['U'].isel(k=0)).load();
+    vY = xr.ones_like(ds['V'].isel(k=0)).load();
+
+    u1,v1 = vector_calc.UEVNfromUXVY(uX,vY,ds)
+    u2,v2 = vector_calc.UEVNfromUXVY(uX,vY,ds,grid)
+    assert (u1==u2).all()
+    assert (v1==v2).all()
+
 def test_uevn_from_uxvy(get_test_vectors):
     """make sure grid loc is correct... etc...
     test by feeding right combo of 1, -1's
