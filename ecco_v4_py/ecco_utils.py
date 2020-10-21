@@ -17,8 +17,6 @@ import dateutil
 import xgcm
 
 
-#%%
-
 def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
                                                         output_freq_code):
     """
@@ -90,12 +88,9 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
          
     #print ('-- tb shape ', time_bnds.shape)
     #print ('-- tb type  ', type(time_bnds))
-    time_bnds_ds = xr.Dataset({'time_bnds': (['time','nv'], time_bnds)},
-                             coords={'time':ecco_dataset.time}) #,
-                                     #'nv':range(2)})
     
-    #print ('tbds ' , time_bnds_ds.time_bnds.shape)
-    #print ('tbds ', time_bnds_ds.time_bnds.shape)
+    time_bnds_ds = xr.Dataset({'time_bnds': (['time','nv'], time_bnds)},
+                               coords={'time':ecco_dataset.time}) #,
     
     return time_bnds_ds, center_times
 
@@ -138,8 +133,8 @@ def make_time_bounds_from_ds64(rec_avg_end, output_freq_code):
         
         
         rec_avg_end_as_dt = datetime.datetime(rec_year, rec_mon, 
-                                                  rec_day, rec_hour,
-                                                  rec_min, rec_sec)
+                                              rec_day, rec_hour,
+                                              rec_min, rec_sec)
         
         if output_freq_code     == 'AVG_MON':
             rec_avg_start =  rec_avg_end_as_dt - \

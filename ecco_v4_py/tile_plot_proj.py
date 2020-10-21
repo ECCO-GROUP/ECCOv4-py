@@ -35,8 +35,10 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False, 
                              show_grid_lines = True,
                              show_grid_labels = True,
-		 	                         grid_linewidth = 1, 
-     	   	 	                 grid_linestyle = '--', 
+                             show_coastline =True,
+                             show_land = True,
+                             grid_linewidth = 1, 
+                             grid_linestyle = '--', 
                              subplot_grid=None,
                              less_output=True,
                              custom_background = False,
@@ -93,16 +95,16 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         latitude, longitude spacing for grid resampling
     
     show_colorbar : logical, optional, default False
-	    show a colorbar or not,
+      show a colorbar or not,
     
     show_grid_lines : logical, optional
         True only possible for Mercator or PlateCarree projections
     
     grid_linewidth : float, optional, default 1.0
-	    width of grid lines
+      width of grid lines
     
     grid_linestyle : string, optional, default = '--'
-	    pattern of grid lines,
+      pattern of grid lines,
     
     cmin, cmax : float, optional
         minimum and maximum values for colorbar, default is: min/max of data
@@ -162,7 +164,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         B_left_limit =  0
         B_right_limit = 180
         center_lon = 0
-	
+  
         if not less_output:
             print('user_lon_0 ==-180 or 180')
    
@@ -219,6 +221,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              cmin, cmax, ax,
                              plot_type = plot_type,
                              show_colorbar=False, 
+                             show_coastline = show_coastline,
+                             show_land = show_land,
                              circle_boundary=True,
                              cmap=cmap, 
                              show_grid_lines=show_grid_labels,
@@ -237,24 +241,28 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             plot_type = plot_type,                                       
                             show_colorbar = False,
                             cmap=cmap, 
-         			        show_grid_lines = False,
+                            show_grid_lines = False,
+                            show_coastline = show_coastline,
+                            show_land = show_land,
                             custom_background = custom_background,
                             background_name = background_name,
                             background_resolution = background_resolution,
                             show_grid_labels = show_grid_labels)
-			    
+          
                     
         if show_grid_lines :
             ax.gridlines(crs=ccrs.PlateCarree(), 
                                   linewidth=grid_linewidth,
-                            				  color='black', 	
+                                      color='black',  
                                   alpha=0.5, 
-                            				  linestyle=grid_linestyle, 
+                                      linestyle=grid_linestyle, 
                                   draw_labels = show_grid_labels,zorder=102)
         
-       
-        ax.add_feature(cfeature.LAND, zorder=100)
-        ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
+        if show_land: 
+            ax.add_feature(cfeature.LAND, zorder=100)
+
+        if show_coastline:
+            ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
 
     ax= plt.gca()
 
@@ -279,8 +287,8 @@ def plot_pstereo(xx,yy, data,
                  plot_type = 'pcolormesh', 
                  show_colorbar=False, 
                  circle_boundary = False, 
-		         grid_linewidth = 1, 
-		         grid_linestyle = '--', 
+                 grid_linewidth = 1, 
+                 grid_linestyle = '--', 
                  cmap=None, 
                  show_grid_lines=False,
                  custom_background = False,
@@ -349,10 +357,11 @@ def plot_pstereo(xx,yy, data,
     else:
         raise ValueError('plot_type  must be either "pcolormesh", "contourf", or "points"')
 
-    if not custom_background:     
+    if show_land and not custom_background:
         ax.add_feature(cfeature.LAND, zorder=100)
 
-    ax.coastlines('110m', linewidth=0.8, zorder=101)
+    if show_coastline:
+        ax.coastlines('110m', linewidth=0.8, zorder=101)
 
     cbar = []
     if show_colorbar:
@@ -372,7 +381,9 @@ def plot_global(xx,yy, data,
                 cmap=None, 
                 show_grid_lines = True,
                 show_grid_labels = True,
-      		        grid_linewidth = 1, 
+                show_coastline = True,
+                show_land = True, 
+                grid_linewidth = 1, 
                 custom_background = False,
                 background_name = [],
                 background_resolution = [],
@@ -411,10 +422,11 @@ def plot_global(xx,yy, data,
         raise ValueError('plot_type  must be either "pcolormesh" or "contourf"') 
                          
     
-    if not custom_background:     
+    if show_land and not custom_background:     
         ax.add_feature(cfeature.LAND, zorder=100)
-        
-    ax.coastlines('110m', linewidth=grid_linewidth, zorder=101)
+    
+    if show_coastline:    
+        ax.coastlines('110m', linewidth=grid_linewidth, zorder=101)
         
     cbar = []
     if show_colorbar:
