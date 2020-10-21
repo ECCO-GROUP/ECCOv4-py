@@ -28,11 +28,7 @@ def calc_section_vol_trsp(ds,
                           pt1=None, pt2=None,
                           section_name=None,
                           maskW=None, maskS=None,
-<<<<<<< HEAD
-                          grid=None):
-=======
                           coords=None, grid=None):
->>>>>>> can supply coords separately, no grid to section trsp at depth
     """Compute volumetric transport across section in Sverdrups
     There are 3 ways to call this function:
 
@@ -364,7 +360,7 @@ def _initialize_section_trsp_data_array(coords):
                 the original depth coordinate
     """
 
-    coords = OrderedDict()
+    ddict = OrderedDict()
     dims = ()
 
     xda = xr.zeros_like(cds['k'])
