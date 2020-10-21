@@ -95,16 +95,16 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         latitude, longitude spacing for grid resampling
     
     show_colorbar : logical, optional, default False
-      show a colorbar or not,
+        show a colorbar or not,
     
     show_grid_lines : logical, optional
         True only possible for Mercator or PlateCarree projections
     
     grid_linewidth : float, optional, default 1.0
-      width of grid lines
+        width of grid lines
     
     grid_linestyle : string, optional, default = '--'
-      pattern of grid lines,
+        pattern of grid lines,
     
     cmin, cmax : float, optional
         minimum and maximum values for colorbar, default is: min/max of data
@@ -154,7 +154,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         B_left_limit =  -180
         B_right_limit = user_lon_0
         center_lon = A_left_limit + 180
-       
+
         if not less_output:
             print ('-180 < user_lon_0 < 180')
  
@@ -164,7 +164,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         B_left_limit =  0
         B_right_limit = 180
         center_lon = 0
-  
+
         if not less_output:
             print('user_lon_0 ==-180 or 180')
    
@@ -248,14 +248,13 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             background_name = background_name,
                             background_resolution = background_resolution,
                             show_grid_labels = show_grid_labels)
-          
                     
         if show_grid_lines :
             ax.gridlines(crs=ccrs.PlateCarree(), 
                                   linewidth=grid_linewidth,
-                                      color='black',  
+                                  color='black',  
                                   alpha=0.5, 
-                                      linestyle=grid_linestyle, 
+                                  linestyle=grid_linestyle, 
                                   draw_labels = show_grid_labels,zorder=102)
         
         if show_land: 
