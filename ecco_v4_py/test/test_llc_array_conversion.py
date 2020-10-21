@@ -7,7 +7,7 @@ import pytest
 import ecco_v4_py as ecco
 
 # Define bin directory for test reading
-_PKG_DIR = Path.cwd().resolve().parent.parent
+_PKG_DIR = Path(__file__).resolve().parent.parent.parent
 _DATA_DIR = _PKG_DIR.joinpath('binary_data')
 
 _TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']

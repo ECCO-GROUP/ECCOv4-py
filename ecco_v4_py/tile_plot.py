@@ -13,6 +13,7 @@ The llc layout is used for ECCO v4.
 
 from __future__ import division, print_function
 import numpy as np
+import warnings
 import matplotlib.pylab as plt
 import xarray as xr
 from distutils.util import strtobool
@@ -20,8 +21,10 @@ import pyresample as pr
 import xmitgcm
 import dask
 
-def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False, 
-              cbar_label = '', **kwargs):
+from .plot_utils import assign_colormap
+
+def plot_tile(tile, cmap=None, show_colorbar=False,  show_cbar_label=False, 
+              cbar_label = '', less_output=True, **kwargs):
     """
 
     Plots a single tile of the lat-lon-cap (LLC) grid
@@ -31,7 +34,8 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     tile : ndarray
         a single 2D tile of dimension llc x llc 
 
-    cmap : colormap, optional, default jet
+    cmap : colormap, optional
+        see plot_utils.assign_colormap for default
         a colormap for the figure
   
     show_colorbar : boolean, optional, default False
@@ -41,8 +45,8 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
         boolean, show a label on the colorbar
         Default: False
         
-    less_output : boolean, default False
-        A debugging flag.  False = less debugging output
+    less_output : boolean, default True
+        A debugging flag.  True = less debugging output
                 
     cmin/cmax : floats, optional, default calculate using the min/max of the data
         the minimum and maximum values to use for the colormap
@@ -58,9 +62,8 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
 
     """
 
-    # by default take the min and max of the values
-    cmin = np.nanmin(tile)
-    cmax = np.nanmax(tile)
+    # get default cmap and colormap min/max
+    cmap, (cmin,cmax) = assign_colormap(tile,cmap)
     
     fig_num = -1
     #%%
@@ -95,7 +98,7 @@ def plot_tile(tile, cmap='jet', show_colorbar=False,  show_cbar_label=False,
     return f
     
     
-def plot_tiles(tiles, cmap='jet', 
+def plot_tiles(tiles, cmap=None, 
                layout='llc', rotate_to_latlon=False,
                Arctic_cap_tile_location = 2,
                show_colorbar=False,  
@@ -103,6 +106,8 @@ def plot_tiles(tiles, cmap='jet',
                show_tile_labels= True,
                cbar_label = '', 
                fig_size = 9, 
+               fig_size = 9,  
+               less_output=True,
                **kwargs):
     """
 
@@ -116,7 +121,8 @@ def plot_tiles(tiles, cmap='jet',
             - If *xarray DataArray* or *dask Array* tiles are accessed via *tiles.sel(tile=n)*
             - If *numpy ndarray* tiles are acceed via [tile,:,:] and thus n must be 13.
 
-    cmap : matplotlib.colors.Colormap, optional, default: jet
+    cmap : matplotlib.colors.Colormap, optional
+        see plot_utils.assign_colormap for default
         a colormap for the figure
 
     layout : string, optional, default 'llc'
@@ -152,8 +158,8 @@ def plot_tiles(tiles, cmap='jet',
     cbar_label : str, optional, default '' (empty string)
         the label to use for the colorbar
       
-    less_output : boolean, optional, default False
-        A debugging flag.  False = less debugging output
+    less_output : boolean, optional, default True
+        A debugging flag.  True = less debugging output
                 
     cmin/cmax : floats, optional, default calculate using the min/max of the data
         the minimum and maximum values to use for the colormap
@@ -166,29 +172,25 @@ def plot_tiles(tiles, cmap='jet',
         
     Returns
     -------
-    f : Figure
-        
+    f : matplotlib figure object
 
+    cur_arr : numpy ndarray
+        numpy array of size:
+            (llc*nrows, llc*ncols)
+        where llc is the size of tile for llc geometry (e.g. 90)
+        nrows, ncols refers to the subplot size
+        For now, only implemented for llc90, otherwise None is returned
     """
 
-    # by default take the min and max of the values
-    
+    # processing for dask array (?)
     if isinstance(tiles, dask.array.core.Array):
         tiles = np.asarray(tiles.squeeze())
-        
-    
-    if type(tiles) == np.ndarray:
-        cmin = np.nanmin(tiles)
-        cmax = np.nanmax(tiles)
-                    
-    elif isinstance(tiles, dask.array.core.Array) or \
-         isinstance(tiles, xr.core.dataarray.DataArray):
-        cmin = np.nanmin(tiles.values)
-        cmax = np.nanmax(tiles.values)
-        
-             
-    fig_num = -1
+
+    # get default colormap
+    cmap, (cmin,cmax) = assign_colormap(tiles,cmap)
+
     #%%
+    fig_num = -1
     for key in kwargs:
         if key == "cmin":
             cmin = kwargs[key]
@@ -199,9 +201,15 @@ def plot_tiles(tiles, cmap='jet',
         else:
             print("unrecognized argument ", key)
 
+    # if llc90, return array otherwise not implemented
+    get_array = True
+    nx = tiles.shape[-1]
+    if nx != 90:
+        get_array = False
+        warnings.warn('Will not return array for non llc90 data')
 
+    # set sizing for subplots
     fac1 = 1; fac2=1
-
     if show_tile_labels and show_colorbar:
         fac2 = 1.15
 
@@ -212,11 +220,9 @@ def plot_tiles(tiles, cmap='jet',
             fac2 = 9.06/9
         
     if layout == 'llc' :
-        if fig_num > 0:
-            f, axarr = plt.subplots(5, 5, num=fig_num)
-        else:
-            f, axarr = plt.subplots(5, 5)
-            
+        nrows=5
+        ncols=5
+
         # plotting of the tiles happens in a 5x5 grid
         # which tile to plot for any one of the 25 spots is indicated with a list
         # a value of negative one means do not plot anything in that spot.
@@ -227,17 +233,14 @@ def plot_tiles(tiles, cmap='jet',
                                 0,  3, -1, -1, -1])
 
     elif layout == 'latlon':
-        if fig_num > 0:
-            f, axarr = plt.subplots(4, 4, num=fig_num)
-        else:
-            f, axarr = plt.subplots(4, 4)
-                  
+        ncols = 4
+        nrows = 4
+
         # plotting of the tiles happens in a 4x4 grid
         # which tile to plot for any one of the 16 spots is indicated with a list
         # a value of negative one means do not plot anything in that spot.
         # the top row will have the Arctic tile.  You can choose where the 
         # Arctic tile goes.  By default it goes in the second column.
-
         if Arctic_cap_tile_location not in [2,5,7,10]:
             print('Arctic Cap Alignment is not one of 2,5,7,10, using 2')
             Arctic_cap_tile_location  = 2    
@@ -262,42 +265,26 @@ def plot_tiles(tiles, cmap='jet',
         # one would use np.concatenate()
         tile_order = tile_order_top_row + tile_order_bottom_rows
 
+    # create fig object
+    if fig_num > 0:
+        f, axarr = plt.subplots(nrows, ncols, num=fig_num)
+    else:
+        f, axarr = plt.subplots(nrows, ncols)
+
     #%%
-    #print(fac1, fac2)
     f.set_size_inches(fac1*fig_size, fig_size*fac2)
 
     if show_tile_labels==False:
         f.subplots_adjust(wspace=0, hspace=0)
     
-    #print(f.get_size_inches())
-
-    #if tile_start_index == -1 and type(tiles) == xr.core.dataarray.DataArray:
-    #    min_tile_num = np.min(tiles.tile.values)
-    #    max_tile_num = np.max(tiles.tile.values)
-
-    #    print (min_tile_num, max_tile_num)
-        
-        #if min_tile_num == 0 and max_tile_num == 12:
-        #    tile_start_index = 0
-        #elif min_tile_num == 1 and max_tile_num == 13:
-        #    tile_start_index = 1
-        #else:
-        #    print ('I cannot guess which index you use for the first tile, 0')
-        #    print ('or 1, using 0')
-        #    tile_start_index = 0
-        
-    #    print ('ts1 = ',  tile_start_index)
-
-    
-    
     # loop through the axes array and plot tiles where tile_order != -1
+    cur_arr = np.zeros((nrows*nx,ncols*nx)) if get_array else None
     for i, ax in enumerate(axarr.ravel()):
         ax.axis('off')
 
         cur_tile_num = tile_order[i]
-        
         have_tile = False
-        #print i, cur_tile_num
+
         if cur_tile_num >= 0:
             if type(tiles) == np.ndarray:
                 have_tile = True
@@ -323,12 +310,11 @@ def plot_tiles(tiles, cmap='jet',
                     cur_tile_num > 6):
                     
                     cur_tile = np.rot90(cur_tile)
-                
                     
                 im=ax.imshow(cur_tile, vmin=cmin, vmax=cmax, cmap=cmap, 
                              origin='lower')
-            
-    
+
+            # axis handling
             ax.set_aspect('equal')
             ax.axis('on')
             if show_tile_labels:
@@ -336,6 +322,17 @@ def plot_tiles(tiles, cmap='jet',
                 
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
+
+            # Generate array from this process
+            colnum = ncols-1-int(i/ncols)
+            rownum = i%nrows
+            rownump1 = int(rownum + 1)
+            colnump1 = int(colnum + 1)
+            if not less_output:
+                print('i=',i,rownum, colnum)
+            
+            if cur_tile_num>=0 and get_array:
+                cur_arr[colnum*nx:colnump1*nx, rownum*nx:rownump1*nx] = cur_tile
 
     # show the colorbar
     if show_colorbar:
@@ -352,7 +349,7 @@ def plot_tiles(tiles, cmap='jet',
         if show_cbar_label:
             cbar.set_label(cbar_label)
 
-    return f
+    return f, cur_arr
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
