@@ -25,7 +25,8 @@ def test_trsp_ds(get_test_ds):
             (None,None,None,None,None,TypeError),
             ("drakepassage",[-173,65.5],[-164,65.5],None,None,TypeError),
             ("drakepassage",None,None,True,True,TypeError),
-            ("drakepassage",[-173,65.5],[-164,65.5],True,True,TypeError)
+            (None,[-173,65.5],[-164,65.5],True,True,TypeError)
+            ("noname",None,None,None,None,TypeError)
         ])
 def test_vol_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     """compute a volume transport"""
@@ -77,7 +78,8 @@ def test_vol_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
             (None,None,None,None,None,TypeError),
             ("drakepassage",[-173,65.5],[-164,65.5],None,None,TypeError),
             ("drakepassage",None,None,True,True,TypeError),
-            ("drakepassage",[-173,65.5],[-164,65.5],True,True,TypeError)
+            (None,[-173,65.5],[-164,65.5],True,True,TypeError)
+            ("noname",None,None,None,None,TypeError)
         ])
 def test_heat_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     """compute heat transport"""
@@ -131,7 +133,8 @@ def test_heat_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
             (None,None,None,None,None,TypeError),
             ("drakepassage",[-173,65.5],[-164,65.5],None,None,TypeError),
             ("drakepassage",None,None,True,True,TypeError),
-            ("drakepassage",[-173,65.5],[-164,65.5],True,True,TypeError)
+            (None,[-173,65.5],[-164,65.5],True,True,TypeError)
+            ("noname",None,None,None,None,TypeError)
         ])
 def test_salt_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     """compute salt transport"""
