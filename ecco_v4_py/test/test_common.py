@@ -48,5 +48,3 @@ def get_test_vectors(llc_mds_datadirs):
         ds = ds.isel(time=-1)
 
     return ds
-
-
