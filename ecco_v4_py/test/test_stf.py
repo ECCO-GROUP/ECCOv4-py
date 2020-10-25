@@ -45,3 +45,62 @@ def test_meridional_stf(get_test_vectors,lats,basin,doFlip):
         if doFlip:
             expected = -1*expected.isel(k=slice(None,None,-1))
         xr.testing.assert_allclose(test,expected)
+
+@pytest.mark.parametrize("name, pt1, pt2, maskW, maskS, expArr",
+        [
+            ("drakepassage",None,None,None,None,None),
+            (None,[-173,65.5],[-164,65.5],None,None,None),
+            (None,None,None,True,True,None),
+            (None,None,None,None,None,TypeError),
+            ("drakepassage",[-173,65.5],[-164,65.5],None,None,TypeError),
+            ("drakepassage",None,None,True,True,TypeError),
+            (None,[-173,65.5],[-164,65.5],True,True,TypeError),
+            ("noname",None,None,None,None,TypeError)
+        ])
+def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
+    """compute streamfunction across section"""
+
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'].load(),ds['V'].load())
+    ds = ds.rename({'U':'UVELMASS','V':'VVELMASS'})
+
+    if maskW is not None and maskS is not None:
+        if maskW and maskS:
+            maskW,maskS = ecco_v4_py.vector_calc.get_latitude_masks(30,ds['YC'],grid)
+
+    if expArr is None:
+        trsp = ecco_v4_py.calc_section_stf(ds,
+                        pt1=pt1,pt2=pt2,
+                        maskW=maskW,maskS=maskS,
+                        section_name=name,
+                        grid=grid)
+
+        maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
+                        pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
+                        section_name=name)
+
+        trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(ds['maskW']).sum(dim=['i_g','j','tile'])
+        trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(ds['maskS']).sum(dim=['i','j_g','tile'])
+
+        test = trsp.psi_moc.reset_coords(drop=True)
+        expected = (1e-6*(trspx+trspy)).reset_coords(drop=True)
+        if doFlip:
+            expected = expected.isel(k=slice(None,None,-1))
+        expected=expected.cumsum(dim='k')
+        if doFlip:
+            expected = -1*expected.isel(k=slice(None,None,-1))
+        xr.testing.assert_allclose(test,expected)
+
+    else:
+        with pytest.raises(expArr):
+            trsp = ecco_v4_py.calc_section_stf(ds,
+                            pt1=pt1,pt2=pt2,
+                            maskW=maskW,maskS=maskS,
+                            section_name=name,
+                            grid=grid)
+
+            maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
+                            pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
+                            section_name=name)
