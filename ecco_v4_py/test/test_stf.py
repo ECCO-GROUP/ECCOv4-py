@@ -57,7 +57,8 @@ def test_meridional_stf(get_test_vectors,lats,basin,doFlip):
             (None,[-173,65.5],[-164,65.5],True,True,TypeError),
             ("noname",None,None,None,None,TypeError)
         ])
-def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
+@pytest.mark.parametrize("doFlip",[True,False])
+def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr,doFlip):
     """compute streamfunction across section"""
 
     ds = get_test_vectors
@@ -75,7 +76,7 @@ def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
                         pt1=pt1,pt2=pt2,
                         maskW=maskW,maskS=maskS,
                         section_name=name,
-                        grid=grid)
+                        doFlip=doFlip,grid=grid)
 
         maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
                         pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
@@ -99,7 +100,7 @@ def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
                             pt1=pt1,pt2=pt2,
                             maskW=maskW,maskS=maskS,
                             section_name=name,
-                            grid=grid)
+                            doFlip=doFlip,grid=grid)
 
             maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
                             pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
