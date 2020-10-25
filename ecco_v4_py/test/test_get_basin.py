@@ -42,7 +42,7 @@ def test_3d(get_test_vectors):
     maskK = ds['maskC']
     maskL = grid.interp(maskK,'Z',to='left',boundary='fill')
     maskU = grid.interp(maskK,'Z',to='right',boundary='fill')
-    maskKp1 = ds.maskC.isel(k=0).broadcast_like(ds.W)
+    maskKp1 = ds.maskC.isel(k=0).broadcast_like(ds.k_p1)
     for mask in [maskK,maskL,maskU,maskKp1]:
         ecco_v4_py.get_basin_mask('atl',mask)
 
