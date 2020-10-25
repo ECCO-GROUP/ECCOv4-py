@@ -41,23 +41,7 @@ def test_uevn_from_uxvy(get_test_vectors):
 
     ds = get_test_vectors
 
-    uX = xr.ones_like(ds['U'].isel(k=0)).load();
-    vY = xr.ones_like(ds['V'].isel(k=0)).load();
-    for t in ds.tile.values:
-        if t<6:
-            valx = 1
-            valy = 1
-        elif t == 6:
-            valx = 0
-            valy = 0
-        else:
-            valx = -1
-            valy = 1
-
-        uX.loc[{'tile':t}] = valx
-        vY.loc[{'tile':t}] = valy
-
-
+    uX,vY = get_fake_vectors(ds['U'],ds['V'])
     uE,vN = vector_calc.UEVNfromUXVY(uX,vY,ds)
 
     assert set(('i','j')).issubset(uE.dims)
@@ -96,3 +80,20 @@ def test_latitude_masks(get_test_vectors):
 
         assert (yW-lat < dLat).where(ds['maskW'].isel(k=0) & (maskW!=0)).all().values
         assert (yS-lat < dLat).where(ds['maskS'].isel(k=0) & (maskS!=0)).all().values
+def get_fake_vectors(fldx,fldy):
+    fldx.load();
+    fldy.load();
+    for t in fldx.tile.values:
+        if t<6:
+            valx = 1.
+            valy = 1.
+        elif t == 6:
+            valx = 0.
+            valy = 0.
+        else:
+            valx = -1.
+            valy = 1.
+
+        fldx.loc[{'tile':t}] = valx
+        fldy.loc[{'tile':t}] = valy
+    return fldx, fldy

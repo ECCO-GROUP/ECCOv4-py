@@ -8,7 +8,7 @@ import pytest
 import ecco_v4_py
 
 from .test_common import llc_mds_datadirs, get_test_ds, get_test_vectors
-from .test_meridional_trsp import get_fake_vectors
+from .test_vector_calc import get_fake_vectors
 
 def test_trsp_ds(get_test_ds):
     """stupid simple"""
@@ -34,7 +34,7 @@ def test_vol_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     ds = get_test_vectors
     grid = ecco_v4_py.get_llc_grid(ds)
 
-    ds['U'],ds['V'] = get_fake_vectors(ds['U'].load(),ds['V'].load())
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
     ds = ds.rename({'U':'UVELMASS','V':'VVELMASS'})
 
     if maskW is not None and maskS is not None:
@@ -87,7 +87,7 @@ def test_heat_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     ds = get_test_vectors
     grid = ecco_v4_py.get_llc_grid(ds)
 
-    ds['U'],ds['V'] = get_fake_vectors(ds['U'].load(),ds['V'].load())
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
     ds = ds.rename({'U':'ADVx_TH','V':'ADVy_TH'})
     ds['DFxE_TH'] = ds['ADVx_TH'].copy()
     ds['DFyE_TH'] = ds['ADVy_TH'].copy()
@@ -142,7 +142,7 @@ def test_salt_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
     ds = get_test_vectors
     grid = ecco_v4_py.get_llc_grid(ds)
 
-    ds['U'],ds['V'] = get_fake_vectors(ds['U'].load(),ds['V'].load())
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
     ds = ds.rename({'U':'ADVx_SLT','V':'ADVy_SLT'})
     ds['DFxE_SLT'] = ds['ADVx_SLT'].copy()
     ds['DFyE_SLT'] = ds['ADVy_SLT'].copy()
