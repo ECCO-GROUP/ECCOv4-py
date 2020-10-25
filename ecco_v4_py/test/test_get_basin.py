@@ -1,6 +1,8 @@
 import os
+import shutil
 import numpy as np
 import ecco_v4_py
+import pytest
 
 from .test_common import llc_mds_datadirs, get_test_ds, get_test_vectors
 
@@ -11,7 +13,7 @@ def test_each_basin_masks(get_test_ds):
     """
 
     ds = get_test_ds
-    all_basins = ecco_v4_py.read_llc_to_tiles(os.path.join(_test_dir,'../../binary_data'),'basins.data',less_output=True)
+    all_basins = ecco_v4_py.read_llc_to_tiles(os.path.join(_test_dir,'..','..','binary_data'),'basins.data',less_output=True)
     ext_names = ['atlExt','pacExt','indExt']
     for i,basin in enumerate(ecco_v4_py.get_available_basin_names(),start=1):
         mask = ecco_v4_py.get_basin_mask(basin,ds.maskC.isel(k=0))
@@ -44,3 +46,22 @@ def test_3d(get_test_vectors):
     for mask in [maskK,maskL,maskU,maskKp1]:
         ecco_v4_py.get_basin_mask('atl',mask)
 
+def test_bin_dir_is_here(get_test_ds,hide_bin_dir):
+
+    hide_bin_dir
+    ds = get_test_ds
+    with pytest.raises(OSError):
+        ecco_v4_py.get_basin_mask('atl',ds.maskC.isel(k=0))
+
+
+
+@pytest.fixture(scope='function')
+def hide_bin_dir():
+
+    bin_path = os.path.join(_test_dir,'..','..','binary_data')
+    tmp_path = os.path.join(_test_dir,'..','..','tmp_bin')
+    shutil.move(bin_path,tmp_path)
+
+    yield
+
+    shutil.move(tmp_path,bin_path)
