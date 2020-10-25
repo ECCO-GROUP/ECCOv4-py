@@ -2,7 +2,7 @@ import os
 import numpy as np
 import ecco_v4_py
 
-from .test_common import llc_mds_datadirs, get_test_ds
+from .test_common import llc_mds_datadirs, get_test_ds, get_test_vectors
 
 _test_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,3 +31,16 @@ def test_ext_basin_masks(get_test_ds):
         maskE = ecco_v4_py.get_basin_mask(ext,ds.maskC.isel(k=0))
         maskI = ecco_v4_py.get_basin_mask(ind,ds.maskC.isel(k=0))
         assert np.all(maskE==maskI)
+
+def test_3d(get_test_vectors):
+    """check that vertical coordinate"""
+
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+    maskK = ds['maskC']
+    maskL = grid.interp(maskK,'Z',to='left',boundary='fill')
+    maskU = grid.interp(maskK,'Z',to='right',boundary='fill')
+    maskKp1 = ds.maskC.isel(k=0).broadcast_like(ds.W)
+    for mask in [maskK,maskL,maskU,maskKp1]:
+        ecco_v4_py.get_basin_mask('atl',mask)
+
