@@ -205,30 +205,26 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     if grid is None:
         grid = get_llc_grid(cds)
 
-    if np.isscalar(lat_vals):
-        lat_vals = [lat_vals]
-
     # Initialize empty DataArray with coordinates and dims
     ds_out = _initialize_trsp_data_array(cds, lat_vals)
 
-
-
     # Get basin mask
     if basin_name is not None:
-        basin_maskW = get_basin_mask(basin_name,cds['maskW'].isel(k=0))
-        basin_maskS = get_basin_mask(basin_name,cds['maskS'].isel(k=0))
+        maskW = get_basin_mask(basin_name,cds['maskW'])
+        maskS = get_basin_mask(basin_name,cds['maskS'])
     else:
-        basin_maskW = cds['maskW'].isel(k=0)
-        basin_maskS = cds['maskS'].isel(k=0)
+        maskW = cds['maskW']
+        maskS = cds['maskS']
 
     # These sums are the same for all lats, therefore precompute to save
     # time
-    tmp_x = xfld * basin_maskW
-    tmp_y = yfld * basin_maskS
+    tmp_x = xfld.where(maskW)
+    tmp_y = yfld.where(maskS)
 
-    for lat in lat_vals:
+    for lat in ds_out.lat.values:
         if not less_output:
             print ('calculating transport for latitutde ', lat)
+
         # Compute mask for particular latitude band
         lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, cds['YC'], grid)
 

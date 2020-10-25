@@ -30,19 +30,28 @@ def test_vol_trsp(get_test_vectors,lats):
 
     trsp = ecco_v4_py.calc_meridional_vol_trsp(ds,lats,grid=grid)
 
+    lats = [lats] if np.isscalar(lats) else lats
+    for lat in lats:
+        maskW,maskS = ecco_v4_py.vector_calc.get_latitude_masks(lat,ds['YC'],grid)
+
+        trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(ds['maskW']).sum(dim=['i_g','j','tile'])
+        trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(ds['maskS']).sum(dim=['i','j_g','tile'])
+        test = trsp.sel(lat=lat).vol_trsp_z.reset_coords(drop=True)
+        expected = (10**-6*(trspx+trspy)).reset_coords(drop=True)
+        xr.testing.assert_allclose(test,expected)
 
 
 def get_fake_vectors(fldx,fldy):
     for t in fldx.tile.values:
         if t<6:
-            valx = 1
-            valy = 1
+            valx = 1.
+            valy = 1.
         elif t == 6:
-            valx = 0
-            valy = 0
+            valx = 0.
+            valy = 0.
         else:
-            valx = -1
-            valy = 1
+            valx = -1.
+            valy = 1.
 
         fldx.loc[{'tile':t}] = valx
         fldy.loc[{'tile':t}] = valy
