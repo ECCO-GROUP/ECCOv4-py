@@ -6,8 +6,7 @@ import xarray as xr
 import pytest
 import ecco_v4_py
 
-
-
+from .test_common import llc_mds_datadirs, get_test_ds
 
 @pytest.mark.parametrize("mytype",['xda','nparr','list','single'])
 def test_extract_dates(mytype):
@@ -34,3 +33,7 @@ def test_extract_dates(mytype):
         test = test.values if mytype=='xda' else test
 
         assert np.all(test==expected)
+
+def test_get_grid(get_test_ds):
+    """make sure we can make a grid ... that's it"""
+    grid = ecco_v4_py.get_llc_grid(get_test_ds)
