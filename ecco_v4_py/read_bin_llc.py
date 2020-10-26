@@ -225,7 +225,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
             if ecco_var not in vars_to_load:
                 vars_ignored.append(ecco_var)
-                ecco_dataset = ecco_dataset.drop(ecco_var)
+                ecco_dataset = ecco_dataset.drop_vars(ecco_var)
 
             else:
                 vars_loaded.append(ecco_var)
@@ -279,19 +279,19 @@ def load_ecco_vars_from_mds(mds_var_dir,
         if isinstance(ecco_dataset.time.values, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
-            ecco_dataset.time.values = center_times
+            ecco_dataset['time'].values = center_times
 
         elif isinstance(center_times, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
             center_times = np.array(center_times)
-            ecco_dataset.time.values[:] = center_times
+            ecco_dataset['time'].values[:] = center_times
 
         elif isinstance(ecco_dataset.time.values, np.ndarray) and \
              isinstance(center_times, np.ndarray):
             if not less_output:
                 print ('replacing time.values....')
-            ecco_dataset.time.values = center_times
+            ecco_dataset['time'] = center_times
 
         if 'ecco-v4-time-average-center-no-units' in meta_common:
             ecco_dataset.time.attrs = \
@@ -308,11 +308,11 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     #%% DROP SOME EXTRA FIELDS THAT DO NOT NEED TO BE IN THE DATASET
     if 'maskCtrlS' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlS')
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlS')
     if 'maskCtrlW' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlW')
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlW')
     if 'maskCtrlC' in ecco_dataset.coords.keys():
-        ecco_dataset=ecco_dataset.drop('maskCtrlC')
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlC')
 
     # UPDATE THE VARIABLE SPECIFIC METADATA USING THE 'META_VARSPECIFIC' DICT.
     # if it exists...
