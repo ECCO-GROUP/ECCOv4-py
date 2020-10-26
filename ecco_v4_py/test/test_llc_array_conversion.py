@@ -3,10 +3,11 @@ from __future__ import division, print_function
 import warnings
 from pathlib import Path
 import numpy as np
+import xarray as xr
 import pytest
 import ecco_v4_py as ecco
 
-from .test_common import llc_mds_datadirs
+from .test_common import llc_mds_datadirs,get_test_ds
 
 # Define bin directory for test reading
 _PKG_DIR = Path(__file__).resolve().parent.parent.parent
@@ -31,7 +32,8 @@ def test_convert_tiles_to_faces(llc_mds_datadirs,mydir,fname,nk,nl):
     data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
                                         fname=fname,
                                         llc=90, nk=nk, nl=nl, filetype='>f4',
-                                        less_output=False)
+                                        less_output=False,use_xmitgcm=False)
+
     data_faces = ecco.read_llc_to_faces(fdir=mydir,
                                         fname=fname,
                                         llc=90, nk=nk, nl=nl, filetype='>f4',
@@ -53,7 +55,8 @@ def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
     data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
                                         fname=fname,
                                         llc=90, nk=nk, nl=nl, filetype='>f4',
-                                        less_output=False)
+                                        less_output=False,
+                                        use_xmitgcm=False)
     data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
@@ -61,6 +64,43 @@ def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
 
     data_converted = ecco.llc_tiles_to_compact(data_tiles)
     assert np.all(np.equal( data_converted, data_compact ))
+
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d])
+@pytest.mark.parametrize("grid_da",[None,True])
+def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl,grid_da):
+
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
+
+    ds = get_test_ds
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False,
+                                        use_xmitgcm=False)
+
+    if grid_da:
+        grid_da = ds['Depth'] if nk==1 else ds['hFacC']
+        if nl>1:
+            recdim = xr.DataArray(np.arange(nl),{'time':np.arange(nl)},('time',))
+            grid_da = grid_da.broadcast_like(recdim)
+    if nk>1 and nl>1:
+        d4='depth'
+        d5='time'
+    elif nk>1 and nl==1:
+        d4='depth'
+        d5=None
+    elif nl>1:
+        d4='time'
+        d5=None
+    else:
+        d4=None
+        d5=None
+
+    xda = ecco.llc_tiles_to_xda(np.squeeze(data_tiles),var_type='c',grid_da=grid_da,
+                           less_output=False,dim4=d4,dim5=d5)
+
+    assert np.all(xda.values == np.squeeze(data_tiles))
 
 # Test convert from compact #
 #############################
@@ -149,3 +189,5 @@ def test_convert_faces_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
 
     data_converted = ecco.llc_faces_to_compact(data_faces)
     assert np.all(np.equal( data_converted, data_compact ))
+
+
