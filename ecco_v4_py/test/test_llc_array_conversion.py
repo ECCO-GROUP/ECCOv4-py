@@ -191,3 +191,28 @@ def test_convert_faces_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
     assert np.all(np.equal( data_converted, data_compact ))
 
 
+# Tests handling recognized unacceptable array sizes
+@pytest.mark.parametrize("myfunc",
+        [   ecco.llc_compact_to_faces,
+            ecco.llc_faces_to_tiles,
+            ecco.llc_tiles_to_faces,
+            ecco.llc_faces_to_compact
+        ])
+def test_5d(myfunc):
+    """this should create a pseudo error... print something and return
+    an empty list"""
+
+    arr = np.zeros((6,1,1,1,1,1))
+    test = myfunc(arr)
+    assert test==[]
+
+# These all raise errors, for different reasons
+@pytest.mark.parametrize("test, var_type",[
+        (np.zeros(2), 'c'),
+        (np.zeros((1,1,1,1,1)),'c'),
+        (np.zeros((1,1,1)),None),
+        (np.zeros((1,1,1)),'f')]
+def test_xda5d(test,var_type):
+    myerr = TypeError if var_type!='f' and test.shape!=(1,1,1) else NotImplementedError
+    with pytest.raises(myerr):
+        ecco.llc_tiles_to_xda(test,var_type=var_type)
