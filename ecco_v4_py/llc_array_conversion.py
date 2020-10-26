@@ -733,9 +733,15 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=True,
         >> xda = llc_tiles_to_xda(data_tiles=array, var_type='c',
                                   dim4='depth', dim5='time')
 
+    or equivalently
+
+        >> xda = llc_tiles_to_xda(data_tiles=array, var_type='c',
+                                  dim4='k', dim5='time')
+
+    since 'depth' has been coded to revert to vertical coordinate 'k'...
+
     Note:
-    1. for the 3D case, dim5 is not necessary, and dim4 can be either
-    'time' or 'depth'
+    1. for the 3D case, dim5 is not necessary
     2. for the 2D case, dim4 and dim5 are not necessary
 
     Special case!
@@ -763,12 +769,8 @@ def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=True,
     less_output : boolean, optional
         A debugging flag.  False = less debugging output
 
-    dim4 : string, optional
-        Specify the third dimension, either 'depth' or 'time'
-
-    dim5 : string, optional
-        Specify the fourth dimension, either 'depth' or 'time'
-
+    dim4, dim5 : string, optional
+        Specify name of fourth and fifth dimension, e.g. 'depth', 'k', or 'time'
 
     Returns
     -------
@@ -845,10 +847,8 @@ def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False,dim4=None,d
         possible to implement 'k_u' for e.g. vertical velocity ... at some point
     less_output : boolean, optional
         debugging flag, False => print more
-    dim4 : string, optional
-        Specify the third dimension, either 'depth' or 'time'
-    dim5 : string, optional
-        Specify the third dimension, either 'depth' or 'time'
+    dim4, dim5 : string, optional
+        Specify name of fourth and fifth dimension, e.g. 'depth', 'k', or 'time'
 
     Returns
     -------
@@ -875,17 +875,6 @@ def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False,dim4=None,d
             raise TypeError("Please specify 5th dimension as dim5='depth' or dim5='time'")
         d_5 = np.arange(data_shape[-5])
 
-    # Determine how to handle fourth dimension
-    if dim4 == 'depth':
-        fourthDimIsDepth = True
-    else:
-        fourthDimIsDepth = False
-
-    # We can't say much about tile or time dimension
-    tile_attrs = OrderedDict([('standard_name','face_index')])
-    time_attrs = OrderedDict([('standard_name','time'),
-                              ('long_name','Time'),('axis','T')])
-
     # Create dims tuple, which will at least have
     # e.g. ('tile','j','i') for a 'c' variable
     dims = ('tile',jVar,iVar)
@@ -893,40 +882,34 @@ def _make_data_array(data_tiles, iVar, jVar, kVar, less_output=False,dim4=None,d
     # Coordinates will be a dictionary of 1 dimensional xarray DataArrays
     # each with their own set of attributes
     coords = OrderedDict()
-
     if Ndims>3:
-        if fourthDimIsDepth:
-            # Only add depth
-            dims = (kVar,) + dims
-            k_da = xr.DataArray(data=d_4, coords={kVar: d_4},
-                                dims=(kVar,), attrs=dimensions[kVar]['attrs'])
-            coords[kVar] = k_da
-
+        if dim4=='depth':
+            mydim = kVar
         else:
-            # Only add time
-            dims = ('time',) + dims
-            time_da = xr.DataArray(data=d_4, coords={'time': d_4},
-                                   dims=('time',), attrs=time_attrs)
-            coords['time'] = time_da
+            mydim = dim4
+
+        dims = (mydim,) + dims
+        attrs = dimensions[mydim] if mydim in dimensions else {}
+        xda4 = xr.DataArray(data=d_4, coords={mydim: d_4},
+                            dims=(mydim,),attrs=attrs)
+        coords[mydim] = xda4
 
     if Ndims>4:
-        if fourthDimIsDepth:
-            # Now add time
-            dims = ('time',) + dims
-            time_da = xr.DataArray(data=d_5, coords={'time': d_5},
-                                   dims=('time',), attrs=time_attrs)
-            coords['time'] = time_da
-
+        if dim5=='depth':
+            mydim = kVar
         else:
-            # Now add depth
-            dims = (kVar,) + dims
-            k_da = xr.DataArray(data=d_5, coords={kVar: d_5},
-                                dims=(kVar,), attrs=dimensions[kVar]['attrs'])
-            coords[kVar] = k_da
+            mydim = dim5
+
+        dims = (mydim,) + dims
+        attrs = dimensions[mydim] if mydim in dimensions else {}
+        xda5 = xr.DataArray(data=d_5, coords={mydim: d_5},
+                            dims=(mydim,),attrs=attrs)
+        coords[mydim] = xda5
 
     # Now add the standard coordinates
     tile_da = xr.DataArray(data=tiles, coords={'tile': tiles},
-                           dims=('tile',), attrs=tile_attrs)
+                           dims=('tile',),
+                           attrs=OrderedDict([('standard_name','tile_index')]))
     j_da = xr.DataArray(data=j,coords={jVar: j},dims=(jVar,),
                         attrs=dimensions[jVar]['attrs'])
     i_da = xr.DataArray(data=i, coords={iVar: i}, dims=(iVar,),

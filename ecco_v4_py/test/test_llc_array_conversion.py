@@ -65,9 +65,11 @@ def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
     data_converted = ecco.llc_tiles_to_compact(data_tiles)
     assert np.all(np.equal( data_converted, data_compact ))
 
-@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d])
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
 @pytest.mark.parametrize("grid_da",[None,True])
-def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl,grid_da):
+@pytest.mark.parametrize("var_type",['c','w','s','z'])
+def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl,
+                              grid_da, var_type):
 
     if mydir == 'xmitgcm':
         mydir,_ = llc_mds_datadirs
@@ -80,7 +82,10 @@ def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl,gri
                                         use_xmitgcm=False)
 
     if grid_da:
-        grid_da = ds['Depth'] if nk==1 else ds['hFacC']
+        grid_da = ds[f'hFac{var_type.upper()}'].isel(k=0) if var_type != 'z' else ds['XG']
+        if nk>1:
+            recdim = xr.DataArray(np.arange(nk),{'k':np.arange(nk)},('k',))
+            grid_da = grid_da.broadcast_like(recdim)
         if nl>1:
             recdim = xr.DataArray(np.arange(nl),{'time':np.arange(nl)},('time',))
             grid_da = grid_da.broadcast_like(recdim)
@@ -211,8 +216,13 @@ def test_5d(myfunc):
         (np.zeros(2), 'c'),
         (np.zeros((1,1,1,1,1)),'c'),
         (np.zeros((1,1,1)),None),
-        (np.zeros((1,1,1)),'f')]
+        (np.zeros((1,1,1)),'f'),
+        (np.zeros((1,1,1,1)),'c'),
+        (np.zeros((1,1,1,1)),'w'),
+        (np.zeros((1,1,1,1)),'s'),
+        (np.zeros((1,1,1,1)),'z'),
+        ])
 def test_xda5d(test,var_type):
-    myerr = TypeError if var_type!='f' and test.shape!=(1,1,1) else NotImplementedError
+    myerr = NotImplementedError if var_type=='f' and test.shape==(1,1,1) else TypeError
     with pytest.raises(myerr):
         ecco.llc_tiles_to_xda(test,var_type=var_type)
