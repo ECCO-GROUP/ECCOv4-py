@@ -6,145 +6,146 @@ import numpy as np
 import pytest
 import ecco_v4_py as ecco
 
+from .test_common import llc_mds_datadirs
+
 # Define bin directory for test reading
 _PKG_DIR = Path(__file__).resolve().parent.parent.parent
 _DATA_DIR = _PKG_DIR.joinpath('binary_data')
 
-_TEST_FILES = ['basins.data', 'hFacC.data', 'state_3d_set1.0000000732.data']
-_TEST_NK = [1, 50, 50]
-_TEST_RECS = [1, 1, 3]
-
-
-# Look for files #
-##################
-if not _DATA_DIR.joinpath(_TEST_FILES[0]).is_file():
-
-    warnings.warn('\n\nCannot find necessary binaries in ' + str(_DATA_DIR) + '\n' +\
-    'You can download all *.meta/data files needed for testing here:\n' +\
-    '   https://github.com/ECCO-GROUP/ECCOv4-py/tree/master/binary_data \n' +\
-    ' or \n' +\
-    '   https://figshare.com/articles/Binary_files_for_the_ecco-v4-py_Python_package_/9932162 \n' +\
-    'Download these files to ecco_v4_py/../binary_data/')
-    pytest.skip("Test files not available.",allow_module_level=True)
+_basin =    (_PKG_DIR.joinpath('binary_data'),'basins.data',1,1)
+_hfac  =    ('xmitgcm','hFacC.data',50,1)
+_state2d  = ('xmitgcm','state_2d_set1.0000000008.data',1,25)
+_state3d  = ('xmitgcm','state_2d_set1.0000000008.data',5,5)
 
 # Test convert from tiles #
 ###########################
-def test_convert_tiles_to_faces():
-    """Read in tiles data, convert to faces. 
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_tiles_to_faces(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in tiles data, convert to faces.
     Verify this equals reading in face data
     """
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_tiles = ecco.read_llc_to_tiles(fdir=_DATA_DIR, 
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl, filetype='>f4',
-                                            less_output=False)
-        data_faces = ecco.read_llc_to_faces(fdir=_DATA_DIR, 
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl, filetype='>f4',
-                                            less_output=False)
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
 
-        data_converted = ecco.llc_tiles_to_faces(data_tiles)
-        for f in range(1,len(data_faces)+1):
-            assert np.all(np.equal( data_converted[f], data_faces[f] ))
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
+    data_faces = ecco.read_llc_to_faces(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
 
-def test_convert_tiles_to_compact():
-    """Read in tiles data, convert to compact. 
+    data_converted = ecco.llc_tiles_to_faces(data_tiles)
+    for f in range(1,len(data_faces)+1):
+        assert np.all(np.equal( data_converted[f], data_faces[f] ))
+
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in tiles data, convert to compact.
     Verify this equals reading in compact data
     """
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_tiles = ecco.read_llc_to_tiles(fdir=_DATA_DIR, 
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
+
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
+    data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
                                             less_output=False)
-        data_compact = ecco.read_llc_to_compact(fdir=_DATA_DIR, 
-                                                fname=fname,
-                                                llc=90, nk=nk, nl=nl, filetype='>f4',
-                                                less_output=False)
 
-        data_converted = ecco.llc_tiles_to_compact(data_tiles)
-        assert np.all(np.equal( data_converted, data_compact ))
+    data_converted = ecco.llc_tiles_to_compact(data_tiles)
+    assert np.all(np.equal( data_converted, data_compact ))
 
 # Test convert from compact #
 #############################
-def test_convert_compact_to_faces():
-    """Read in compact data, convert to faces. 
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_compact_to_faces(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in compact data, convert to faces.
     Verify this equals reading in face data
     """
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_compact = ecco.read_llc_to_compact(fdir=_DATA_DIR, 
-                                                fname=fname,
-                                                llc=90, nk=nk, nl=nl, filetype='>f4',
-                                                less_output=False)
-        data_faces = ecco.read_llc_to_faces(fdir=_DATA_DIR, 
+    data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
                                             less_output=False)
+    data_faces = ecco.read_llc_to_faces(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
 
-        data_converted = ecco.llc_compact_to_faces(data_compact)
-        for f in range(1,len(data_faces)+1):
-            assert np.all(np.equal( data_converted[f], data_faces[f] ))
+    data_converted = ecco.llc_compact_to_faces(data_compact)
+    for f in range(1,len(data_faces)+1):
+        assert np.all(np.equal( data_converted[f], data_faces[f] ))
 
-def test_convert_compact_to_tiles():
-    """Read in compact data, convert to tiles. 
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_compact_to_tiles(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in compact data, convert to tiles.
     Verify this equals reading in face data
     """
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_compact = ecco.read_llc_to_compact(fdir=_DATA_DIR, 
-                                                fname=fname,
-                                                llc=90, nk=nk, nl=nl, filetype='>f4',
-                                                less_output=False)
-        data_tiles = ecco.read_llc_to_tiles(fdir=_DATA_DIR, 
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
+
+    data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
                                             less_output=False)
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
 
-        data_converted = ecco.llc_compact_to_tiles(data_compact)
-        assert np.all(np.equal( data_converted, data_tiles ))
+    data_converted = ecco.llc_compact_to_tiles(data_compact)
+    assert np.all(np.equal( data_converted, data_tiles ))
 
 # Test convert from faces #
 ###########################
-def test_convert_faces_to_tiles():
-    """Read in faces data, convert to tiles. 
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_faces_to_tiles(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in faces data, convert to tiles.
     Verify this equals reading in face data
     """
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_faces = ecco.read_llc_to_faces(fdir=_DATA_DIR, 
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl, filetype='>f4',
-                                            less_output=False)
-        data_tiles = ecco.read_llc_to_tiles(fdir=_DATA_DIR, 
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl, filetype='>f4',
-                                            less_output=False)
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
 
-        data_converted = ecco.llc_faces_to_tiles(data_faces)
-        assert np.all(np.equal( data_converted, data_tiles ))
+    data_faces = ecco.read_llc_to_faces(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
 
-def test_convert_faces_to_compact():
-    """Read in faces data, convert to compact. 
+    data_converted = ecco.llc_faces_to_tiles(data_faces)
+    assert np.all(np.equal( data_converted, data_tiles ))
+
+@pytest.mark.parametrize("mydir, fname, nk, nl",[_basin,_hfac,_state2d,_state3d])
+def test_convert_faces_to_compact(llc_mds_datadirs,mydir,fname,nk,nl):
+    """Read in faces data, convert to compact.
     Verify this equals reading in compact data
     """
 
-    # Loop through 2D, 3D, 4D cases
-    for fname, nk, nl in zip(_TEST_FILES, _TEST_NK, _TEST_RECS):
-        data_faces = ecco.read_llc_to_faces(fdir=_DATA_DIR, 
+    if mydir == 'xmitgcm':
+        mydir,_ = llc_mds_datadirs
+
+    data_faces = ecco.read_llc_to_faces(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        less_output=False)
+    data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
                                             less_output=False)
-        data_compact = ecco.read_llc_to_compact(fdir=_DATA_DIR, 
-                                                fname=fname,
-                                                llc=90, nk=nk, nl=nl, filetype='>f4',
-                                                less_output=False)
 
-        data_converted = ecco.llc_faces_to_compact(data_faces)
-        assert np.all(np.equal( data_converted, data_compact ))
+    data_converted = ecco.llc_faces_to_compact(data_faces)
+    assert np.all(np.equal( data_converted, data_compact ))
