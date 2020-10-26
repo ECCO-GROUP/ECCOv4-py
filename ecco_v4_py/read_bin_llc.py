@@ -510,8 +510,10 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
         # Handle cases of single or multiple records, and skip>0
         if skip>0:
-            if nk>1:
-                raise NotImplementedError('this logic is not worth figuring out, use xmitgcm=False')
+            if nk>1 and nl>1:
+                data_tiles = np.reshape(data_tiles,(nk*nrecs,)+data_tiles.shape[-3:])
+                data_tiles = data_tiles[skip:skip+nl*nk]
+                data_tiles = np.reshape(data_tiles,(nl,nk)+data_tiles.shape[-3:])
             else:
                 data_tiles = data_tiles[skip:skip+nl,...]
 

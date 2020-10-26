@@ -34,32 +34,23 @@ def test_convert_tiles_to_faces(llc_mds_datadirs,mydir,fname,nk,nl,skip,
     if mydir == 'xmitgcm':
         mydir,_ = llc_mds_datadirs
 
-    if skip>0 and nk>1 and use_xmitgcm:
-        with pytest.raises(NotImplementedError):
-            data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
                                         fname=fname,
-                                        llc=90, nk=nk, nl=nl, filetype='>f4',
+                                        llc=90, nk=nk, nl=nl,
                                         skip=skip,
-                                        less_output=False,
-                                        use_xmitgcm=use_xmitgcm)
-    else:
-        data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl,
-                                            skip=skip,
-                                            filetype='>f4',
-                                            less_output=False,use_xmitgcm=False)
+                                        filetype='>f4',
+                                        less_output=False,use_xmitgcm=False)
 
-        data_faces = ecco.read_llc_to_faces(fdir=mydir,
-                                            fname=fname,
-                                            llc=90, nk=nk, nl=nl,
-                                            skip=skip,
-                                            filetype='>f4',
-                                            less_output=False)
+    data_faces = ecco.read_llc_to_faces(fdir=mydir,
+                                        fname=fname,
+                                        llc=90, nk=nk, nl=nl,
+                                        skip=skip,
+                                        filetype='>f4',
+                                        less_output=False)
 
-        data_converted = ecco.llc_tiles_to_faces(data_tiles)
-        for f in range(1,len(data_faces)+1):
-            assert np.all(np.equal( data_converted[f], data_faces[f] ))
+    data_converted = ecco.llc_tiles_to_faces(data_tiles)
+    for f in range(1,len(data_faces)+1):
+        assert np.all(np.equal( data_converted[f], data_faces[f] ))
 
 @pytest.mark.parametrize("mydir, fname, nk, nl, skip",
                          [_basin,_hfac,_state2d,_state3d,_skip2d,_skip3d])
@@ -73,29 +64,20 @@ def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl,skip,
     if mydir == 'xmitgcm':
         mydir,_ = llc_mds_datadirs
 
-    if skip>0 and nk>1 and use_xmitgcm:
-        with pytest.raises(NotImplementedError):
-            data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
                                         fname=fname,
                                         llc=90, nk=nk, nl=nl, filetype='>f4',
                                         skip=skip,
                                         less_output=False,
-                                        use_xmitgcm=use_xmitgcm)
-    else:
-        data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                        use_xmitgcm=False)
+    data_compact = ecco.read_llc_to_compact(fdir=mydir,
                                             fname=fname,
                                             llc=90, nk=nk, nl=nl, filetype='>f4',
                                             skip=skip,
-                                            less_output=False,
-                                            use_xmitgcm=False)
-        data_compact = ecco.read_llc_to_compact(fdir=mydir,
-                                                fname=fname,
-                                                llc=90, nk=nk, nl=nl, filetype='>f4',
-                                                skip=skip,
-                                                less_output=False)
+                                            less_output=False)
 
-        data_converted = ecco.llc_tiles_to_compact(data_tiles)
-        assert np.all(np.equal( data_converted, data_compact ))
+    data_converted = ecco.llc_tiles_to_compact(data_tiles)
+    assert np.all(np.equal( data_converted, data_compact ))
 
 @pytest.mark.parametrize("mydir, fname, nk, nl, skip",
                          [_basin,_hfac,_state2d,_state3d,_skip2d,_skip3d])
@@ -110,49 +92,39 @@ def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl, sk
 
     ds = get_test_ds
 
-    if skip>0 and nk>1 and use_xmitgcm:
-        with pytest.raises(NotImplementedError):
-            data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
-                                        fname=fname,
-                                        llc=90, nk=nk, nl=nl, filetype='>f4',
-                                        skip=skip,
-                                        less_output=False,
-                                        use_xmitgcm=use_xmitgcm)
-
+    data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
+                                fname=fname,
+                                llc=90, nk=nk, nl=nl, filetype='>f4',
+                                skip=skip,
+                                less_output=False,
+                                use_xmitgcm=use_xmitgcm)
+    if grid_da:
+        grid_da = ds[f'hFac{var_type.upper()}'].isel(k=0) if var_type != 'z' else ds['XG']
+        if nk>1:
+            recdim = xr.DataArray(np.arange(nk),{'k':np.arange(nk)},('k',))
+            grid_da = grid_da.broadcast_like(recdim)
+        if nl>1:
+            recdim = xr.DataArray(np.arange(nl),
+                                  {'time':np.arange(nl)},('time',))
+            grid_da = grid_da.broadcast_like(recdim)
+    if nk>1 and nl>1:
+        d4='k'
+        d5='time'
+    elif nk>1 and nl==1:
+        d4='k'
+        d5=None
+    elif nl>1:
+        d4='time'
+        d5=None
     else:
-        data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
-                                    fname=fname,
-                                    llc=90, nk=nk, nl=nl, filetype='>f4',
-                                    skip=skip,
-                                    less_output=False,
-                                    use_xmitgcm=use_xmitgcm)
-        if grid_da:
-            grid_da = ds[f'hFac{var_type.upper()}'].isel(k=0) if var_type != 'z' else ds['XG']
-            if nk>1:
-                recdim = xr.DataArray(np.arange(nk),{'k':np.arange(nk)},('k',))
-                grid_da = grid_da.broadcast_like(recdim)
-            if nl>1:
-                recdim = xr.DataArray(np.arange(nl),
-                                      {'time':np.arange(nl)},('time',))
-                grid_da = grid_da.broadcast_like(recdim)
-        if nk>1 and nl>1:
-            d4='k'
-            d5='time'
-        elif nk>1 and nl==1:
-            d4='k'
-            d5=None
-        elif nl>1:
-            d4='time'
-            d5=None
-        else:
-            d4=None
-            d5=None
+        d4=None
+        d5=None
 
-        xda = ecco.llc_tiles_to_xda(np.squeeze(data_tiles),
-                                    var_type='c',grid_da=grid_da,
-                                    less_output=False,dim4=d4,dim5=d5)
+    xda = ecco.llc_tiles_to_xda(np.squeeze(data_tiles),
+                                var_type='c',grid_da=grid_da,
+                                less_output=False,dim4=d4,dim5=d5)
 
-        assert np.all(xda.values == np.squeeze(data_tiles))
+    assert np.all(xda.values == np.squeeze(data_tiles))
 
 # Test convert from compact #
 #############################
