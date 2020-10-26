@@ -85,8 +85,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         f.seek(ni*nj*skip*dt.itemsize)
 
     if (ni <= 0) or (nj <= 0):
-        print('load_binary_array: ni and nj must be > 1')
-        return []
+        raise TypeError('ni and nj must be > 1')
 
     # load all 2D records
     if nk == -1:
@@ -113,8 +112,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     # read a specific number of records (nk*nl)
     else:
         if (nk <= 0) or (nl <= 0):
-            print('load_binary_array: nk and nl must be > 0.  If they are singleton dimensions, use 1')
-            return []
+            raise TypeError('nk and nl must be > 0.  If they are singleton dimensions, use 1')
 
         # read in nk*nl 2D records
         arr_k = np.fromfile(f, dtype=filetype, count=ni*nj*nk*nl)

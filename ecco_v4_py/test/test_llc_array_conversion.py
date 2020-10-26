@@ -17,10 +17,15 @@ _basin =    (_PKG_DIR.joinpath('binary_data'),'basins.data',1,1,0)
 _hfac  =    ('xmitgcm','hFacC.data',50,1,0)
 _state2d  = ('xmitgcm','state_2d_set1.0000000008.data',1,25,0)
 _state3d  = ('xmitgcm','state_2d_set1.0000000008.data',5,5,0)
+_state2dsingle  = ('xmitgcm','state_2d_set1.0000000008.data',1,1,24)
 _skip2d  = ('xmitgcm','state_2d_set1.0000000008.data',1,20,5)
 _skip3d  = ('xmitgcm','state_2d_set1.0000000008.data',5,4,2)
 _m1noskip  = ('xmitgcm','state_2d_set1.0000000008.data',-1,1,0)
 _m1skip  = ('xmitgcm','state_2d_set1.0000000008.data',-1,1,5)
+_m1single = ('xmitgcm','state_2d_set1.0000000008.data',-1,1,24)
+_m1_kerr = ('xmitgcm','state_2d_set1.0000000008.data',-10,1,0)
+_m1_lerr = ('xmitgcm','state_2d_set1.0000000008.data',1,-10,0)
+_nofile = (_PKG_DIR.joinpath('binary_data'),'myfile',1,1,0)
 
 # Test convert from tiles #
 ###########################
@@ -231,32 +236,50 @@ def test_convert_faces_to_compact(llc_mds_datadirs,mydir,fname,nk,nl,skip):
 ### test read -1 nl
 @pytest.mark.parametrize("test, expected",
                         [(_m1noskip,_state2d),
-                         (_m1skip,_skip2d)])
+                         (_m1skip,_skip2d),
+                         (_m1single,_state2dsingle),
+                         (_m1_kerr,TypeError),
+                         (_m1_lerr,TypeError),
+                         (_nofile,IOError)])
 @pytest.mark.parametrize("myfunc",
         [   ecco.read_llc_to_compact,
             ecco.read_llc_to_faces,
             ecco.read_llc_to_tiles])
-def test_read_m1_recs(llc_mds_datadirs,test,expected,myfunc):
+@pytest.mark.parametrize("nx",[90,-1])
+def test_read_m1_recs(llc_mds_datadirs,test,expected,myfunc,nx):
     mydir,_ = llc_mds_datadirs
-    data_expected = myfunc(fdir=mydir,
-                           fname=expected[1],
-                           llc=90,
-                           nk=expected[2],
-                           nl=expected[3],
-                           filetype='>f4',
-                           skip=expected[4])
-    data_test = myfunc(fdir=mydir,
-                           fname=test[1],
-                           llc=90,
-                           nk=test[2],
-                           nl=test[3],
-                           filetype='>f4',
-                           skip=test[4])
-    if len(data_expected)==5:
-        for i in range(len(data_expected)):
-            assert np.all(np.equal(data_test[i+1],np.squeeze(data_expected[i+1])))
+    if isinstance(expected,tuple) and nx==90:
+        data_expected = myfunc(fdir=mydir,
+                               fname=expected[1],
+                               llc=nx,
+                               nk=expected[2],
+                               nl=expected[3],
+                               filetype='>f4',
+                               skip=expected[4])
+
+        data_test = myfunc(fdir=mydir,
+                               fname=test[1],
+                               llc=nx,
+                               nk=test[2],
+                               nl=test[3],
+                               filetype='>f4',
+                               skip=test[4])
+
+        if len(data_expected)==5:
+            for i in range(len(data_expected)):
+                assert np.all(np.equal(data_test[i+1],np.squeeze(data_expected[i+1])))
+        else:
+            assert np.all(np.equal(data_test,np.squeeze(data_expected)))
     else:
-        assert np.all(np.equal(data_test,np.squeeze(data_expected)))
+        expected = expected if isinstance(expected,type) else TypeError
+        with pytest.raises(expected):
+            data_test = myfunc(fdir=mydir,
+                               fname=test[1],
+                               llc=nx,
+                               nk=test[2],
+                               nl=test[3],
+                               filetype='>f4',
+                               skip=test[4])
 
 # Tests handling recognized unacceptable array sizes
 @pytest.mark.parametrize("myfunc",
