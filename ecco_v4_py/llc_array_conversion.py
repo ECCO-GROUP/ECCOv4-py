@@ -713,7 +713,7 @@ def llc_faces_to_compact(F, less_output=True):
     return data_compact
 
 #%%
-def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=False,
+def llc_tiles_to_xda(data_tiles, var_type=None, grid_da=None, less_output=True,
                      dim4=None,dim5=None):
     """
     Convert numpy or dask array in tiled format to xarray DataArray
