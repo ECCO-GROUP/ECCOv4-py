@@ -19,6 +19,8 @@ _state2d  = ('xmitgcm','state_2d_set1.0000000008.data',1,25,0)
 _state3d  = ('xmitgcm','state_2d_set1.0000000008.data',5,5,0)
 _skip2d  = ('xmitgcm','state_2d_set1.0000000008.data',1,20,5)
 _skip3d  = ('xmitgcm','state_2d_set1.0000000008.data',5,4,2)
+_m1noskip  = ('xmitgcm','state_2d_set1.0000000008.data',-1,1,0)
+_m1skip  = ('xmitgcm','state_2d_set1.0000000008.data',-1,1,5)
 
 # Test convert from tiles #
 ###########################
@@ -226,6 +228,35 @@ def test_convert_faces_to_compact(llc_mds_datadirs,mydir,fname,nk,nl,skip):
     data_converted = ecco.llc_faces_to_compact(data_faces)
     assert np.all(np.equal( data_converted, data_compact ))
 
+### test read -1 nl
+@pytest.mark.parametrize("test, expected",
+                        [(_m1noskip,_state2d),
+                         (_m1skip,_skip2d)])
+@pytest.mark.parametrize("myfunc",
+        [   ecco.read_llc_to_compact,
+            ecco.read_llc_to_faces,
+            ecco.read_llc_to_tiles])
+def test_read_m1_recs(llc_mds_datadirs,test,expected,myfunc):
+    mydir,_ = llc_mds_datadirs
+    data_expected = myfunc(fdir=mydir,
+                           fname=expected[1],
+                           llc=90,
+                           nk=expected[2],
+                           nl=expected[3],
+                           filetype='>f4',
+                           skip=expected[4])
+    data_test = myfunc(fdir=mydir,
+                           fname=test[1],
+                           llc=90,
+                           nk=test[2],
+                           nl=test[3],
+                           filetype='>f4',
+                           skip=test[4])
+    if len(data_expected)==5:
+        for i in range(len(data_expected)):
+            assert np.all(np.equal(data_test[i+1],np.squeeze(data_expected[i+1])))
+    else:
+        assert np.all(np.equal(data_test,np.squeeze(data_expected)))
 
 # Tests handling recognized unacceptable array sizes
 @pytest.mark.parametrize("myfunc",
@@ -245,15 +276,21 @@ def test_5d(myfunc):
 # These all raise errors, for different reasons
 @pytest.mark.parametrize("test, var_type",[
         (np.zeros(2), 'c'),
-        (np.zeros((1,1,1,1,1)),'c'),
+        (np.zeros((1,1,1,1,1,1)),'c'),
         (np.zeros((1,1,1)),None),
         (np.zeros((1,1,1)),'f'),
         (np.zeros((1,1,1,1)),'c'),
         (np.zeros((1,1,1,1)),'w'),
         (np.zeros((1,1,1,1)),'s'),
         (np.zeros((1,1,1,1)),'z'),
+        (np.zeros((1,1,1,1,1)),'cc'),
         ])
 def test_xda5d(test,var_type):
     myerr = NotImplementedError if var_type=='f' and test.shape==(1,1,1) else TypeError
+    if var_type=='cc':
+        var_type='c'
+        dim4='depth'
+    else:
+        dim4=None
     with pytest.raises(myerr):
-        ecco.llc_tiles_to_xda(test,var_type=var_type)
+        ecco.llc_tiles_to_xda(test,var_type=var_type,dim4=dim4)
