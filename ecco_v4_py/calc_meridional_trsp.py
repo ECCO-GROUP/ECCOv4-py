@@ -57,7 +57,7 @@ def calc_meridional_vol_trsp(ds,lat_vals,
     """
 
     coordlist = ['drF','dyG','dxG','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 
@@ -113,7 +113,7 @@ def calc_meridional_heat_trsp(ds,lat_vals,
     """
 
     coordlist = ['YC']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 
@@ -167,7 +167,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
     """
 
     coordlist = ['YC']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 

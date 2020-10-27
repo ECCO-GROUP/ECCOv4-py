@@ -12,7 +12,7 @@ from .calc_section_trsp import _parse_section_trsp_inputs, section_trsp_at_depth
 # Define constants
 METERS_CUBED_TO_SVERDRUPS = 10**-6
 
-def calc_meridional_stf(ds,lat_vals,doFlip=True
+def calc_meridional_stf(ds,lat_vals,doFlip=True,
                         basin_name=None,coords=None,grid=None):
     """Compute the meridional overturning streamfunction in Sverdrups
     at specified latitude(s)
@@ -55,7 +55,7 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True
 
     # get coords
     coordlist = ['drF','dyG','dxG','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 
@@ -138,7 +138,7 @@ def calc_section_stf(ds,
     """
 
     coordlist = ['drF','dyG','dxG','XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 

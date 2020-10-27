@@ -91,7 +91,7 @@ def calc_section_vol_trsp(ds,
     """
 
     coordlist = ['drF','dyG','dxG','XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
 
@@ -157,7 +157,7 @@ def calc_section_heat_trsp(ds,
     """
 
     coordlist = ['XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
@@ -222,7 +222,7 @@ def calc_section_salt_trsp(ds,
     """
 
     coordlist = ['XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys):
+    for f in set(['maskW','maskS']).intersection(ds.keys()):
         coordlist.append(f)
     coords = coords if coords is not None else ds[coordlist]
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
