@@ -152,8 +152,7 @@ def calc_section_stf(ds,
     # Creates an empty streamfunction
     ds_out = section_trsp_at_depth(trsp_x, trsp_y,
                                    maskW, maskS,
-                                   coords=coords,
-                                   grid=grid)
+                                   coords=coords)
 
     psi_moc = ds_out['trsp_z'].copy(deep=True)
 
