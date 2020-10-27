@@ -17,19 +17,24 @@ from .test_common import llc_mds_datadirs,get_test_array_2d
             {'projection_type':'AlbersEqualArea'},
             {'projection_type':'PlateCarree'},
             {'projection_type':'cyl'},
+            {'projection_type':'ortho'},
+            {'projection_type':'ortho','lat_lim':-50},
             {'projection_type':'ortho','user_lat_0':60},
             {'projection_type':'ortho','user_lat_0':-60},
             {'projection_type':'InterruptedGoodeHomolosine'},
             {'projection_type':'blah'},
             {'plot_type':'contourf'},
-            {'user_lon_0':-60},
-            {'user_lon_0':90},
+            {'user_lon_0':-180},
+            {'user_lon_0':180},
             {'show_colorbar':True},
             {'subplot_grid':[1,2,1]},
+            {'subplot_grid':{'nrows':1,'ncols':2,'index':1}},
             {'cmap':'hot'},
             {'cmin':-1,'cmax':1},
             {'cmin':1,'cmax':10},
-            {'cmin':-10,'cmax':-1}])
+            {'cmin':-10,'cmax':-1},
+            {'show_land':False,'show_coastline':False},
+            {'show_grid_lines':False}])
 @pytest.mark.parametrize("dx, dy",[(1,1)])
 def test_plot_proj(get_test_array_2d,kwargs,dx,dy):
     """Run through various options and make sure nothing is broken"""
