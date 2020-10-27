@@ -6,7 +6,7 @@ TBD: add barotropic streamfunction
 import numpy as np
 
 from .ecco_utils import get_llc_grid
-from .calc_meridional_trsp import meridional_trsp_at_depth
+from .calc_meridional_trsp import _parse_coords, meridional_trsp_at_depth
 from .calc_section_trsp import _parse_section_trsp_inputs, section_trsp_at_depth
 
 # Define constants
@@ -54,10 +54,7 @@ def calc_meridional_stf(ds,lat_vals,doFlip=True,
     """
 
     # get coords
-    coordlist = ['drF','dyG','dxG','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','drF','dyG','dxG'])
 
     # Compute volume transport
     trsp_x = ds['UVELMASS'] * coords['drF'] * coords['dyG']
@@ -137,10 +134,7 @@ def calc_section_stf(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coordlist = ['drF','dyG','dxG','XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','XC','drF','dyG','dxG'])
 
     # Compute volume transport
     trsp_x = ds['UVELMASS'] * coords['drF'] * coords['dyG']

@@ -37,7 +37,7 @@ def calc_meridional_vol_trsp(ds,lat_vals,
         see get_basin.get_available_basin_names for options
     coords : xarray Dataset
         separate dataset containing the coordinate information
-        YC, drF, dyG, dxG, optionally maskW, maskS
+        YC, Z, drF, dyG, dxG, optionally maskW, maskS
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
         see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
@@ -56,10 +56,7 @@ def calc_meridional_vol_trsp(ds,lat_vals,
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
-    coordlist = ['drF','dyG','dxG','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','drF','dyG','dxG'])
 
     x_vol = ds['UVELMASS'] * coords['drF'] * coords['dyG']
     y_vol = ds['VVELMASS'] * coords['drF'] * coords['dxG']
@@ -112,10 +109,7 @@ def calc_meridional_heat_trsp(ds,lat_vals,
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
-    coordlist = ['YC']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC'])
 
     x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
     y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
@@ -140,7 +134,8 @@ def calc_meridional_heat_trsp(ds,lat_vals,
 
     return ds_out
 
-def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
+def calc_meridional_salt_trsp(ds,lat_vals,
+                              basin_name=None,coords=None,grid=None):
     """Compute salt transport across latitude band in psu * Sv
     see calc_meridional_vol_trsp for argument documentation.
     The only differences are:
@@ -166,10 +161,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
-    coordlist = ['YC']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC'])
 
     x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
     y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
@@ -297,3 +289,11 @@ def _initialize_trsp_data_array(coords, lat_vals):
     xds = xds.set_coords('Z')
 
     return xds
+
+def _parse_coords(ds,coords,coordlist):
+    if coords is not None:
+        return coords
+    else:
+        for f in set(['maskW','maskS']).intersection(ds.reset_coords().keys()):
+            coordlist.append(f)
+        return ds[coordlist]

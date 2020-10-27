@@ -11,6 +11,7 @@ except ImportError:
     from collections import OrderedDict
 
 from .ecco_utils import get_llc_grid
+from .calc_meridional_trsp import _parse_coords
 from .get_section_masks import get_available_sections, \
         get_section_endpoints, get_section_line_masks
 
@@ -90,10 +91,7 @@ def calc_section_vol_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coordlist = ['drF','dyG','dxG','XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','XC','drF','dyG','dxG'])
 
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
@@ -156,10 +154,8 @@ def calc_section_heat_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coordlist = ['XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','XC'])
+
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
@@ -221,10 +217,8 @@ def calc_section_salt_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coordlist = ['XC','YC','Z']
-    for f in set(['maskW','maskS']).intersection(ds.keys()):
-        coordlist.append(f)
-    coords = coords if coords is not None else ds[coordlist]
+    coords = _parse_coords(ds,coords,['Z','YC','XC'])
+
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 

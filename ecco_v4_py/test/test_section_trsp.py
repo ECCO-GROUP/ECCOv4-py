@@ -202,3 +202,28 @@ def test_separate_coords(get_test_vectors,myfunc,fld,section_name):
 
     test = myfunc(ds,section_name,coords=coords,grid=grid)
     xr.test.assert_allclose(test[fld],expected[fld])
+
+@pytest.mark.parametrize("myfunc, fld, xflds, yflds",
+        [   (ecco_v4_py.calc_section_vol_trsp,"vol_trsp",
+                ['UVELMASS'],['VVELMASS']),
+            (ecco_v4_py.calc_section_heat_trsp,"heat_trsp",
+                ['ADVx_TH','DFxE_TH'],['ADVy_TH','DFyE_TH']),
+            (ecco_v4_py.calc_section_salt_trsp,"salt_trsp",
+                ['ADVx_SLT','DFxE_SLT'],['ADVy_SLT','DFyE_SLT'])])
+@pytest.mark.parametrize("section_name",["drakepassage"]) # more is unnecessary
+def test_separate_coords(get_test_vectors,myfunc,fld,xflds,yflds,section_name):
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    for fx,fy in zip(xflds,yflds):
+        ds[fx] = ds['U']
+        ds[fy] = ds['V']
+
+    expected = myfunc(ds,section_name=section_name,grid=grid)
+    coords = ds.coords.to_dataset().reset_coords()
+    ds = ds.reset_coords(drop=True)
+
+    test = myfunc(ds,section_name=section_name,coords=coords,grid=grid)
+    xr.testing.assert_allclose(test[fld].reset_coords(drop=True),
+                               expected[fld].reset_coords(drop=True))

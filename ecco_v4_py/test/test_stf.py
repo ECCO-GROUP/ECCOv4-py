@@ -106,10 +106,10 @@ def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr,doFlip):
                             pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
                             section_name=name)
 
-@pytest.mark.parametrize("myfunc, fld, myarg",
-        [   (ecco_v4_py.calc_meridional_stf,"vol_trsp", {'lat_vals':10}),
-            (ecco_v4_py.calc_section_stf,"vol_trsp",{'section_name':'drakepassage'})])
-def test_separate_coords(get_test_vectors,myfunc,fld,myarg):
+@pytest.mark.parametrize("myfunc, myarg",
+        [   (ecco_v4_py.calc_meridional_stf, {'lat_vals':10}),
+            (ecco_v4_py.calc_section_stf,{'section_name':'drakepassage'})])
+def test_separate_coords(get_test_vectors,myfunc,myarg):
     ds = get_test_vectors
     grid = ecco_v4_py.get_llc_grid(ds)
 
@@ -122,4 +122,5 @@ def test_separate_coords(get_test_vectors,myfunc,fld,myarg):
     ds = ds.reset_coords(drop=True)
 
     test = myfunc(ds,coords=coords,**myarg)
-    xr.test.assert_allclose(test[fld],expected[fld])
+    xr.testing.assert_allclose(test['psi_moc'].reset_coords(drop=True),
+                               expected['psi_moc'].reset_coords(drop=True))
