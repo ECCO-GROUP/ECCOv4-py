@@ -24,7 +24,7 @@ def test_latitude_mask(get_test_ds):
     dLat = 0.5 # is this robust?
     nx = 90
 
-    for lat in np.arange(-89,89):
+    for lat in np.arange(-89,89,5):
         print('lat: ',lat)
         maskC = scalar_calc.get_latitude_mask(lat,ds['YC'],grid)
 
