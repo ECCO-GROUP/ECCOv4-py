@@ -70,7 +70,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     datafile = data_folder / fname
 
     #datafile = os.path.join(fdir, fname)
-    if less_output == False:
+    if not less_output:
         print('load_binary_array: loading file', datafile)
 
     # check to see if file exists.

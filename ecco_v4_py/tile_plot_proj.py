@@ -514,9 +514,9 @@ def _create_projection_axis(projection_type,
 
     # Build dictionary for projection arguments
     proj_args={}
-    if user_lon_0 is not None and projection_type is not 'stereo':
+    if user_lon_0 is not None and projection_type != 'stereo':
         proj_args['central_longitude']=user_lon_0
-    if user_lat_0 is not None and projection_type is not 'stereo':
+    if user_lat_0 is not None and projection_type != 'stereo':
         proj_args['central_latitude']=user_lat_0
     if (projection_type == 'LambertConformal') & (lat_lim is not None) :
         proj_args['cutoff']=lat_lim
