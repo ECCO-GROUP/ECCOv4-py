@@ -179,3 +179,26 @@ def test_salt_trsp(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr):
             maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
                             pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
                             section_name=name)
+
+@pytest.mark.parametrize("myfunc, fld",
+        [   (ecco_v4_py.calc_section_vol_trsp,"vol_trsp"),
+            (ecco_v4_py.calc_section_heat_trsp,"heat_trsp"),
+            (ecco_v4_py.calc_section_salt_trsp,"salt_trsp")])
+@pytest.mark.parametrize("section_name","drakepassage") # unnecessary to do more...
+def test_separate_coords(get_test_vectors,myfunc,fld,section_name):
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    ds = ds.rename({'U':'UVELMASS','V':'VVELMASS'})
+    for f in ['ADVx_TH','DFxE_TH','ADVx_SLT','DFxE_SLT']:
+        ds[f] = ds['UVELMASS'].copy()
+    for f in ['ADVy_TH','DFyE_TH','ADVy_SLT','DFyE_SLT']:
+        ds[f] = ds['VVELMASS'].copy()
+
+    expected = myfunc(ds,section_name=section_name,grid=grid)
+    coords = ds.coords.to_dataset().reset_coords()
+    ds = ds.reset_coords(drop=True)
+
+    test = myfunc(ds,section_name,coords=coords,grid=grid)
+    xr.test.assert_allclose(test[fld],expected[fld])

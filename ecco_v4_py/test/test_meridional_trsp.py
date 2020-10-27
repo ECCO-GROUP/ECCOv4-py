@@ -112,3 +112,26 @@ def test_salt_trsp(get_test_vectors,lats,basin):
         test = trsp.sel(lat=lat).salt_trsp_z.reset_coords(drop=True)
         expected = (1e-6*(trspx+trspy)).reset_coords(drop=True)
         xr.testing.assert_allclose(test,expected)
+
+@pytest.mark.parametrize("myfunc, fld",
+        [   (ecco_v4_py.calc_meridional_vol_trsp,"vol_trsp"),
+            (ecco_v4_py.calc_meridional_heat_trsp,"heat_trsp"),
+            (ecco_v4_py.calc_meridional_salt_trsp,"salt_trsp")])
+@pytest.mark.parametrize("lat",10) # unnecessary to do more...
+def test_separate_coords(get_test_vectors,myfunc,fld,lat):
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    ds = ds.rename({'U':'UVELMASS','V':'VVELMASS'})
+    for f in ['ADVx_TH','DFxE_TH','ADVx_SLT','DFxE_SLT']:
+        ds[f] = ds['UVELMASS'].copy()
+    for f in ['ADVy_TH','DFyE_TH','ADVy_SLT','DFyE_SLT']:
+        ds[f] = ds['VVELMASS'].copy()
+
+    expected = myfunc(ds,lat,grid=grid)
+    coords = ds.coords.to_dataset().reset_coords()
+    ds = ds.reset_coords(drop=True)
+
+    test = myfunc(ds,lat,coords=coords,grid=grid)
+    xr.test.assert_allclose(test[fld],expected[fld])

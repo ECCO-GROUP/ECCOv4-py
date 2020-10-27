@@ -21,7 +21,8 @@ WATTS_TO_PETAWATTS = 10**-15
 RHO_CONST = 1029
 HEAT_CAPACITY = 4000
 
-def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
+def calc_meridional_vol_trsp(ds,lat_vals,
+                             basin_name=None,coords=None,grid=None):
     """Compute volumetric transport across latitude band in Sverdrups
 
     Parameters
@@ -34,6 +35,9 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
         denote ocean basin over which to compute streamfunction
         If not specified, compute global quantity
         see get_basin.get_available_basin_names for options
+    coords : xarray Dataset
+        separate dataset containing the coordinate information
+        YC, drF, dyG, dxG, optionally maskW, maskS
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
         see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
@@ -52,12 +56,17 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
-    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
-    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
+    coordlist = ['drF','dyG','dxG','YC','Z']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+
+    x_vol = ds['UVELMASS'] * coords['drF'] * coords['dyG']
+    y_vol = ds['VVELMASS'] * coords['drF'] * coords['dxG']
 
     # Computes salt transport in m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_vol,y_vol,
-                                      cds=ds,
+                                      coords=coords,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -76,7 +85,8 @@ def calc_meridional_vol_trsp(ds,lat_vals,basin_name=None,grid=None):
     return ds_out
 
 
-def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
+def calc_meridional_heat_trsp(ds,lat_vals,
+                              basin_name=None,coords=None,grid=None):
     """Compute heat transport across latitude band in Petwatts
     see calc_meridional_vol_trsp for argument documentation.
     The only differences are:
@@ -85,6 +95,9 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
     ----------
     ds : xarray Dataset
         must contain fields 'ADVx_TH','ADVy_TH','DFxE_TH','DFyE_TH'
+    coords : xarray Dataset, optional
+        in case coordinates are in a separate dataset
+        only needs field 'YC' and optionally maskW, maskS
 
     Returns
     -------
@@ -99,12 +112,17 @@ def calc_meridional_heat_trsp(ds,lat_vals,basin_name=None,grid=None):
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
+    coordlist = ['YC']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+
     x_heat = ds['ADVx_TH'] + ds['DFxE_TH']
     y_heat = ds['ADVy_TH'] + ds['DFyE_TH']
 
     # Computes heat transport in degC * m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_heat,y_heat,
-                                      cds=ds,
+                                      coords=coords,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -131,6 +149,9 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
     ----------
     ds : xarray Dataset
         must contain fields 'ADVx_SLT','ADVy_SLT','DFxE_SLT','DFyE_SLT'
+    coords : xarray Dataset, optional
+        in case coordinates are in a separate dataset
+        only needs field 'YC' and optionally maskW, maskS
 
     Returns
     -------
@@ -145,12 +166,17 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
                 dimensions: 'time' (if provided), 'lat', and 'k'
     """
 
+    coordlist = ['YC']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+
     x_salt = ds['ADVx_SLT'] + ds['DFxE_SLT']
     y_salt = ds['ADVy_SLT'] + ds['DFyE_SLT']
 
     # Computes salt transport in psu * m^3/s at each depth level
     ds_out = meridional_trsp_at_depth(x_salt,y_salt,
-                                      cds=ds,
+                                      coords=coords,
                                       lat_vals=lat_vals,
                                       basin_name=basin_name,
                                       grid=grid)
@@ -170,7 +196,7 @@ def calc_meridional_salt_trsp(ds,lat_vals,basin_name=None,grid=None):
 
 # ---------------------------------------------------------------------
 
-def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
+def meridional_trsp_at_depth(xfld, yfld, lat_vals, coords,
                              basin_name=None, grid=None, less_output=True):
     """
     Compute transport of vector quantity at each depth level
@@ -182,8 +208,8 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
         3D spatial (+ time, optional) field at west and south grid cell edges
     lat_vals : float or list
         latitude value(s) specifying where to compute transport
-    cds : xarray Dataset
-        with all LLC90 coordinates, including: maskW, maskS, YC
+    coords : xarray Dataset
+        only needs YC, and optionally maskW, maskS (defining wet points)
     basin_name : string, optional
         denote ocean basin over which to compute streamfunction
         If not specified, compute global quantity
@@ -203,14 +229,14 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     """
 
     if grid is None:
-        grid = get_llc_grid(cds)
+        grid = get_llc_grid(coords)
 
     # Initialize empty DataArray with coordinates and dims
-    ds_out = _initialize_trsp_data_array(cds, lat_vals)
+    ds_out = _initialize_trsp_data_array(coords, lat_vals)
 
     # Get basin mask
-    maskW = cds['maskW'] if 'maskW' in cds else xr.ones_like(xfld)
-    maskS = cds['maskS'] if 'maskS' in cds else xr.ones_like(yfld)
+    maskW = coords['maskW'] if 'maskW' in coords else xr.ones_like(xfld)
+    maskS = coords['maskS'] if 'maskS' in coords else xr.ones_like(yfld)
     if basin_name is not None:
         maskW = get_basin_mask(basin_name,maskW)
         maskS = get_basin_mask(basin_name,maskS)
@@ -225,7 +251,7 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
             print ('calculating transport for latitutde ', lat)
 
         # Compute mask for particular latitude band
-        lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, cds['YC'], grid)
+        lat_maskW, lat_maskS = vector_calc.get_latitude_masks(lat, coords['YC'], grid)
 
         # Sum horizontally
         lat_trsp_x = (tmp_x * lat_maskW).sum(dim=['i_g','j','tile'])
@@ -236,12 +262,12 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, cds,
     return ds_out
 
 
-def _initialize_trsp_data_array(cds, lat_vals):
+def _initialize_trsp_data_array(coords, lat_vals):
     """Create an xarray DataArray with time, depth, and latitude dims
 
     Parameters
     ----------
-    cds : xarray Dataset
+    coords : xarray Dataset
         contains LLC coordinates 'k' and (optionally) 'time'
     lat_vals : int or array of ints
         latitude value(s) rounded to the nearest degree
@@ -258,19 +284,16 @@ def _initialize_trsp_data_array(cds, lat_vals):
                 the original depth coordinate
     """
 
-    coords = OrderedDict()
-    dims = ()
     lat_vals = np.array(lat_vals) if isinstance(lat_vals,list) else lat_vals
     lat_vals = np.array([lat_vals]) if np.isscalar(lat_vals) else lat_vals
     lat_vals = xr.DataArray(lat_vals,coords={'lat':lat_vals},dims=('lat',))
 
-    xda = xr.zeros_like(lat_vals*cds['k'])
-    xda = xda if 'time' not in cds.dims else xda.broadcast_like(cds['time'])
+    xda = xr.zeros_like(lat_vals*coords['k'])
+    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time'])
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')
-    xds['Z'] = cds['Z']
+    xds['Z'] = coords['Z']
     xds = xds.set_coords('Z')
 
     return xds
-

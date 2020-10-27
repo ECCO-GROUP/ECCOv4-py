@@ -59,7 +59,7 @@ def calc_section_vol_trsp(ds,
     Parameters
     ----------
     ds : xarray Dataset
-        must contain UVELMASS,VVELMASS, drF, dyG, dxG
+        must contain UVELMASS,VVELMASS and fields listed under coords below
     pt1, pt2 : list or tuple with two floats, optional
         end points for section line as [lon lat] or (lon, lat)
     maskW, maskS : xarray DataArray, optional
@@ -70,7 +70,7 @@ def calc_section_vol_trsp(ds,
         otherwise, adds name to returned DataArray
     coords : xarray Dataset
         separate dataset containing the coordinate information
-        XC, YC, drF, dyG, dxG
+        XC, YC, drF, Z, dyG, dxG, optionally maskW, maskS
     grid : xgcm Grid object, optional
         denotes LLC90 operations for xgcm, see ecco_utils.get_llc_grid
         see also the [xgcm documentation](https://xgcm.readthedocs.io/en/latest/grid_topology.html)
@@ -90,7 +90,11 @@ def calc_section_vol_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coords = coords if coords is not None else ds[['drF','dyG','dxG','XC','YC','Z']]
+    coordlist = ['drF','dyG','dxG','XC','YC','Z']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+
     maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
@@ -134,6 +138,8 @@ def calc_section_heat_trsp(ds,
     ----------
     ds : xarray Dataset
         must contain ADVx_TH, ADVy_TH, DFxe_TH, DFyE_TH
+    coords : xarray Dataset, optional
+        must contain XC, YC, Z, optionally maskW, maskS
 
     Returns
     -------
@@ -150,8 +156,11 @@ def calc_section_heat_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coords = coords if coords is not None else ds[['XC','YC','Z']]
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+    coordlist = ['XC','YC','Z']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+    maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
     # Define heat transport
@@ -194,6 +203,8 @@ def calc_section_salt_trsp(ds,
     ----------
     ds : xarray Dataset
         must contain ADVx_SLT, ADVy_SLT, DFxe_SLT, DFyE_SLT
+    coords : xarray Dataset, optional
+        must contain XC, YC, Z, optionally maskW, maskS
 
     Returns
     -------
@@ -210,8 +221,11 @@ def calc_section_salt_trsp(ds,
         and the section_name as an attribute if it is provided
     """
 
-    coords = coords if coords is not None else ds[['XC','YC','Z']]
-    maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,
+    coordlist = ['XC','YC','Z']
+    for f in set(['maskW','maskS']).intersection(ds.keys):
+        coordlist.append(f)
+    coords = coords if coords is not None else ds[coordlist]
+    maskW, maskS = _parse_section_trsp_inputs(coords,pt1,pt2,maskW,maskS,section_name,
                                               grid=grid)
 
     # Define salt transport
@@ -245,7 +259,8 @@ def calc_section_salt_trsp(ds,
 # Main function for computing standard transport quantities
 # -------------------------------------------------------------------------------
 
-def section_trsp_at_depth(xfld, yfld, maskW, maskS, coords):
+def section_trsp_at_depth(xfld, yfld, maskW, maskS,
+                          coords=None):
     """
     Compute transport of vector quantity at each depth level
     across latitude(s) defined in lat_vals
@@ -256,10 +271,8 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, coords):
         3D spatial (+ time, optional) field at west and south grid cell edge
     maskW, maskS : xarray DataArray
         defines the section to define transport across
-    coords : xarray Dataset
-        with all LLC90 coordinates, including: maskW/S, YC
-    grid : xgcm Grid object, optional
-        denotes LLC90 operations for xgcm, see utils.get_llc_grid
+    coords : xarray Dataset, optional
+        include if providing maskW/S (i.e. wet point masks in addition to line masks)
 
     Returns
     -------
@@ -275,8 +288,8 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, coords):
     ds_out = _initialize_section_trsp_data_array(coords)
 
     # Apply section mask and sum horizontally
-    maskW = maskW.where(cds['maskW']) if 'maskW' in cds else maskW
-    maskS = maskS.where(cds['maskS']) if 'maskS' in cds else maskS
+    maskW = maskW.where(coords['maskW']) if 'maskW' in coords else maskW
+    maskS = maskS.where(coords['maskS']) if 'maskS' in coords else maskS
     sec_trsp_x = (xfld * maskW).sum(dim=['i_g','j','tile'])
     sec_trsp_y = (yfld * maskS).sum(dim=['i','j_g','tile'])
 
@@ -360,11 +373,8 @@ def _initialize_section_trsp_data_array(coords):
                 the original depth coordinate
     """
 
-    ddict = OrderedDict()
-    dims = ()
-
-    xda = xr.zeros_like(cds['k'])
-    xda = xda if 'time' not in cds.dims else xda.broadcast_like(cds['time'])
+    xda = xr.zeros_like(coords['k'])
+    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time'])
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')

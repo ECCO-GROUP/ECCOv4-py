@@ -105,3 +105,21 @@ def test_section_stf(get_test_vectors,name,pt1,pt2,maskW,maskS,expArr,doFlip):
             maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,
                             pt1=pt1,pt2=pt2,maskW=maskW,maskS=maskS,
                             section_name=name)
+
+@pytest.mark.parametrize("myfunc, fld, myarg",
+        [   (ecco_v4_py.calc_meridional_stf,"vol_trsp", {'lat_vals':10}),
+            (ecco_v4_py.calc_section_stf,"vol_trsp",{'section_name':'drakepassage'})])
+def test_separate_coords(get_test_vectors,myfunc,fld,myarg):
+    ds = get_test_vectors
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    ds = ds.rename({'U':'UVELMASS','V':'VVELMASS'})
+
+    myarg['grid']=grid
+    expected = myfunc(ds,**myarg)
+    coords = ds.coords.to_dataset().reset_coords()
+    ds = ds.reset_coords(drop=True)
+
+    test = myfunc(ds,coords=coords,**myarg)
+    xr.test.assert_allclose(test[fld],expected[fld])
