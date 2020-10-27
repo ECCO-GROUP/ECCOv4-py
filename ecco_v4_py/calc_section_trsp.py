@@ -27,7 +27,7 @@ HEAT_CAPACITY = 4000
 def calc_section_vol_trsp(ds,
                           pt1=None, pt2=None,
                           section_name=None,
-                          maskW=None, maskS=None, 
+                          maskW=None, maskS=None,
                           grid=None):
     """Compute volumetric transport across section in Sverdrups
     There are 3 ways to call this function:
@@ -39,8 +39,8 @@ def calc_section_vol_trsp(ds,
             * Computes volumetric trsp across predefined Drake Passage line
             * See get_available_sections for available definitions
 
-    2. Provide lat/lon pairs to compute transport across, e.g. 
-        
+    2. Provide lat/lon pairs to compute transport across, e.g.
+
         >> pt1 = [lon1, lat1]
         >> pt2 = [lon2, lat2]
         >> trsp = calc_section_vol_trsp(ds,pt1,pt2)
@@ -53,7 +53,7 @@ def calc_section_vol_trsp(ds,
         >> _, maskW, maskS = get_section_line_masks(pt1, pt2, ds)
         >> trsp = calc_section_vol_trsp(ds,maskW,maskS)
 
-            * Compute trsp across band defined by masks    
+            * Compute trsp across band defined by masks
             * If section name is provided, it gets added to returned DataArray
 
     Parameters
@@ -65,7 +65,7 @@ def calc_section_vol_trsp(ds,
     maskW, maskS : xarray DataArray, optional
         masks denoting the section, created by get_section_line_masks
     section_name: string, optional
-        name for the section. If predefined value, section mask is defined 
+        name for the section. If predefined value, section mask is defined
         via get_section_endpoints
         otherwise, adds name to returned DataArray
     grid : xgcm Grid object, optional
@@ -78,7 +78,7 @@ def calc_section_vol_trsp(ds,
         includes variables as xarray DataArrays
             vol_trsp
                 volumetric transport across section in Sv
-                with dimensions 'time' (if in given dataset) and 'lat' 
+                with dimensions 'time' (if in given dataset) and 'lat'
             vol_trsp_z
                 volumetric transport across section at each depth level in Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
@@ -90,8 +90,8 @@ def calc_section_vol_trsp(ds,
     maskW, maskS = _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name)
 
     # Define volumetric transport
-    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG'] 
-    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG'] 
+    x_vol = ds['UVELMASS'] * ds['drF'] * ds['dyG']
+    y_vol = ds['VVELMASS'] * ds['drF'] * ds['dxG']
 
     # Computes salt transport in m^3/s at each depth level
     ds_out = section_trsp_at_depth(x_vol,y_vol,maskW,maskS,
@@ -120,10 +120,10 @@ def calc_section_vol_trsp(ds,
 def calc_section_heat_trsp(ds,
                            pt1=None, pt2=None,
                            section_name=None,
-                           maskW=None, maskS=None, 
+                           maskW=None, maskS=None,
                            grid=None):
     """Compute heat transport across section in PW
-    Inputs and usage are same as calc_section_vol_trsp. 
+    Inputs and usage are same as calc_section_vol_trsp.
     The only differences are:
 
     Parameters
@@ -137,7 +137,7 @@ def calc_section_heat_trsp(ds,
         includes variables as xarray DataArrays
             heat_trsp
                 heat transport across section in PW
-                with dimensions 'time' (if in given dataset) and 'lat' 
+                with dimensions 'time' (if in given dataset) and 'lat'
             heat_trsp_z
                 heat transport across section at each depth level in PW
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
@@ -179,10 +179,10 @@ def calc_section_heat_trsp(ds,
 def calc_section_salt_trsp(ds,
                            pt1=None, pt2=None,
                            section_name=None,
-                           maskW=None, maskS=None, 
+                           maskW=None, maskS=None,
                            grid=None):
     """Compute salt transport across section in psu*Sv
-    Inputs and usage are same as calc_section_vol_trsp. 
+    Inputs and usage are same as calc_section_vol_trsp.
     The only differences are:
 
     Parameters
@@ -196,7 +196,7 @@ def calc_section_salt_trsp(ds,
         includes variables as xarray DataArrays
             salt_trsp
                 salt transport across section in psu*Sv
-                with dimensions 'time' (if in given dataset) and 'lat' 
+                with dimensions 'time' (if in given dataset) and 'lat'
             salt_trsp_z
                 salt transport across section at each depth level in psu*Sv
                 with dimensions 'time' (if in given dataset), 'lat', and 'k'
@@ -239,10 +239,10 @@ def calc_section_salt_trsp(ds,
 # Main function for computing standard transport quantities
 # -------------------------------------------------------------------------------
 
-def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds, 
+def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
                           grid=None):
     """
-    Compute transport of vector quantity at each depth level 
+    Compute transport of vector quantity at each depth level
     across latitude(s) defined in lat_vals
 
     Parameters
@@ -263,7 +263,7 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
             'trsp_z'
                 transport of vector quantity across denoted section at
                 each depth level with dimensions 'time' (if in given dataset),
-                and 'k' (depth) 
+                and 'k' (depth)
     """
 
     if grid is None:
@@ -273,6 +273,8 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
     ds_out = _initialize_section_trsp_data_array(cds)
 
     # Apply section mask and sum horizontally
+    maskW = maskW.where(cds['maskW']) if 'maskW' in cds else maskW
+    maskS = maskS.where(cds['maskS']) if 'maskS' in cds else maskS
     sec_trsp_x = (xfld * maskW).sum(dim=['i_g','j','tile'])
     sec_trsp_y = (yfld * maskS).sum(dim=['i','j_g','tile'])
 
@@ -286,7 +288,7 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS, cds,
 # All functions below are non-user facing
 #
 # -------------------------------------------------------------------------------
-# Helper functions for the computing volume, heat, and salt transport 
+# Helper functions for the computing volume, heat, and salt transport
 # -------------------------------------------------------------------------------
 
 def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name):
@@ -352,7 +354,7 @@ def _initialize_section_trsp_data_array(cds):
     ds_out : xarray Dataset
         Dataset with the variables
             'trsp_z'
-                zero-valued DataArray with time (optional) and 
+                zero-valued DataArray with time (optional) and
                 depth dimensions
             'Z'
                 the original depth coordinate
@@ -361,19 +363,8 @@ def _initialize_section_trsp_data_array(cds):
     coords = OrderedDict()
     dims = ()
 
-    if 'time' in cds:
-        coords.update( {'time': cds['time'].values} )
-        dims += ('time',)
-        zeros = np.zeros((len(cds['time'].values),
-                          len(cds['k'].values)))
-    else:
-        zeros = np.zeros((len(cds['k'].values)))
-
-    coords.update( {'k': cds['k'].values} )
-
-    dims += ('k',)
-
-    xda = xr.DataArray(data=zeros, coords=coords, dims=dims)
+    xda = xr.zeros_like(cds['k'])
+    xda = xda if 'time' not in cds.dims else xda.broadcast_like(cds['time'])
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')
