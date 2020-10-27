@@ -283,7 +283,7 @@ def months2days(nmon=288, baseyear=1992, basemon=1):
 
 #%%
 
-def get_llc_grid(ds,domain='ecco'):
+def get_llc_grid(ds,domain='global'):
     """
     Define xgcm Grid object for the LLC grid
     See example usage in the xgcm documentation:
@@ -305,7 +305,7 @@ def get_llc_grid(ds,domain='ecco'):
     if 'domain' in ds.attrs:
         domain = ds.attrs['domain']
 
-    if domain == 'ecco':
+    if domain == 'global':
         # Establish grid topology
         tile_connections = {'tile':  {
                 0: {'X': ((12, 'Y', False), (3, 'X', False)),
