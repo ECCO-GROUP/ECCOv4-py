@@ -227,8 +227,8 @@ def meridional_trsp_at_depth(xfld, yfld, lat_vals, coords,
     ds_out = _initialize_trsp_data_array(coords, lat_vals)
 
     # Get basin mask
-    maskW = coords['maskW'] if 'maskW' in coords else xr.ones_like(xfld)
-    maskS = coords['maskS'] if 'maskS' in coords else xr.ones_like(yfld)
+    maskW = coords['maskW'].isel(k=0) if 'maskW' in coords else xr.ones_like(xfld)
+    maskS = coords['maskS'].isel(k=0) if 'maskS' in coords else xr.ones_like(yfld)
     if basin_name is not None:
         maskW = get_basin_mask(basin_name,maskW)
         maskS = get_basin_mask(basin_name,maskS)
