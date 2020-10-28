@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pytest
 from ecco_v4_py import plot_proj_to_latlon_grid
 
-from .test_common import llc_mds_datadirs,get_test_array_2d
+from .test_common import all_mds_datadirs, get_test_ds
 
 @pytest.mark.parametrize("kwargs",
         [   {'projection_type':'Mercator'},
@@ -36,17 +36,18 @@ from .test_common import llc_mds_datadirs,get_test_array_2d
             {'show_land':False,'show_coastline':False},
             {'show_grid_lines':False}])
 @pytest.mark.parametrize("dx, dy",[(1,1)])
-def test_plot_proj(get_test_array_2d,kwargs,dx,dy):
+def test_plot_proj(get_test_ds,kwargs,dx,dy):
     """Run through various options and make sure nothing is broken"""
 
-    test_arr = get_test_array_2d
+    ds = get_test_ds
     kwargs['dx']=dx
     kwargs['dy']=dy
+    print(ds)
     if 'blah' in kwargs.values():
 
         with pytest.raises(NotImplementedError):
-            plot_proj_to_latlon_grid(test_arr.XC,test_arr.YC,test_arr,**kwargs)
+            plot_proj_to_latlon_grid(ds.XC,ds.YC,ds.ETAN,**kwargs)
 
     else:
-        plot_proj_to_latlon_grid(test_arr.XC,test_arr.YC,test_arr,**kwargs)
+        plot_proj_to_latlon_grid(ds.XC,ds.YC,ds.ETAN,**kwargs)
         plt.close()

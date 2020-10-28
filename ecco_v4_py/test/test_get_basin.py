@@ -4,26 +4,26 @@ import numpy as np
 import ecco_v4_py
 import pytest
 
-from .test_common import llc_mds_datadirs, get_test_ds, get_test_vectors
+from .test_common import llc_mds_datadirs, get_global_ds
 
 _test_dir = os.path.dirname(os.path.abspath(__file__))
 
-def test_each_basin_masks(get_test_ds):
+def test_each_basin_masks(get_global_ds):
     """make sure we can make the basin masks
     """
 
-    ds = get_test_ds
+    ds = get_global_ds
     all_basins = ecco_v4_py.read_llc_to_tiles(os.path.join(_test_dir,'..','..','binary_data'),'basins.data',less_output=True)
     ext_names = ['atlExt','pacExt','indExt']
     for i,basin in enumerate(ecco_v4_py.get_available_basin_names(),start=1):
         mask = ecco_v4_py.get_basin_mask(basin,ds.maskC.isel(k=0))
         assert np.all(mask.values == (all_basins==i))
 
-def test_ext_basin_masks(get_test_ds):
+def test_ext_basin_masks(get_global_ds):
     """make sure we can make the extended masks
     """
 
-    ds = get_test_ds
+    ds = get_global_ds
 
     ext_names = ['atlExt','pacExt','indExt']
     individual_names = [['atl','mexico','hudson','med','north','baffin','gin'],
@@ -34,10 +34,10 @@ def test_ext_basin_masks(get_test_ds):
         maskI = ecco_v4_py.get_basin_mask(ind,ds.maskC.isel(k=0))
         assert np.all(maskE==maskI)
 
-def test_3d(get_test_vectors):
+def test_3d(get_global_ds):
     """check that vertical coordinate"""
 
-    ds = get_test_vectors
+    ds = get_global_ds
     grid = ecco_v4_py.get_llc_grid(ds)
     maskK = ds['maskC']
     maskL = grid.interp(maskK,'Z',to='left',boundary='fill')
@@ -46,10 +46,10 @@ def test_3d(get_test_vectors):
     for mask in [maskK,maskL,maskU,maskKp1]:
         ecco_v4_py.get_basin_mask('atl',mask)
 
-def test_bin_dir_is_here(get_test_ds,hide_bin_dir):
+def test_bin_dir_is_here(get_global_ds,hide_bin_dir):
 
     hide_bin_dir
-    ds = get_test_ds
+    ds = get_global_ds
     with pytest.raises(OSError):
         ecco_v4_py.get_basin_mask('atl',ds.maskC.isel(k=0))
 
