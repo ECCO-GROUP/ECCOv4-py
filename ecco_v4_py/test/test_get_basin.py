@@ -4,9 +4,22 @@ import numpy as np
 import ecco_v4_py
 import pytest
 
-from .test_common import llc_mds_datadirs, get_global_ds
+from .test_common import (
+        llc_mds_datadirs, get_global_ds,
+        all_mds_datadirs, get_test_ds)
 
 _test_dir = os.path.dirname(os.path.abspath(__file__))
+
+# test error out for different domains
+def test_notimplemented(get_test_ds):
+    ds = get_test_ds
+    with pytest.raises(NotImplementedError):
+        if len(ds.tile)<13:
+            ecco_v4_py.get_basin_mask('atl',ds.maskC)
+        else:
+            ecco_v4_py.get_basin_mask('atl',ds.sel(tile=0).maskC)
+            ecco_v4_py.get_basin_mask('atl',(1.*ds.maskC).diff(dim='i'))
+            ecco_v4_py.get_basin_mask('atl',(1.*ds.maskC).diff(dim='j'))
 
 def test_each_basin_masks(get_global_ds):
     """make sure we can make the basin masks

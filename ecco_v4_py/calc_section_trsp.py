@@ -344,7 +344,8 @@ def _parse_section_trsp_inputs(ds,pt1,pt2,maskW,maskS,section_name,grid=None):
         # Secondly, try to use endpoints or mask
         if use_endpoints and use_masks:
             raise TypeError('Cannot provide more than one method for defining section')
-    _, maskW, maskS = get_section_line_masks(pt1, pt2, ds, grid=grid)
+    if not use_masks:
+        _, maskW, maskS = get_section_line_masks(pt1, pt2, ds, grid=grid)
 
     return maskW, maskS
 
@@ -368,7 +369,7 @@ def _initialize_section_trsp_data_array(coords):
     """
 
     xda = xr.zeros_like(coords['k'])
-    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time'])
+    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time']).copy()
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')

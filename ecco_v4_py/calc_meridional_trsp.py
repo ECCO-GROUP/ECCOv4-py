@@ -280,8 +280,8 @@ def _initialize_trsp_data_array(coords, lat_vals):
     lat_vals = np.array([lat_vals]) if np.isscalar(lat_vals) else lat_vals
     lat_vals = xr.DataArray(lat_vals,coords={'lat':lat_vals},dims=('lat',))
 
-    xda = xr.zeros_like(lat_vals*coords['k'])
-    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time'])
+    xda = xr.zeros_like(coords['k']*lat_vals)
+    xda = xda if 'time' not in coords.dims else xda.broadcast_like(coords['time']).copy()
 
     # Convert to dataset to add Z coordinate
     xds = xda.to_dataset(name='trsp_z')
@@ -296,4 +296,11 @@ def _parse_coords(ds,coords,coordlist):
     else:
         for f in set(['maskW','maskS']).intersection(ds.reset_coords().keys()):
             coordlist.append(f)
-        return ds[coordlist]
+
+        if 'time' in ds.dims:
+            coordlist.append('time')
+
+        dsout = ds[coordlist]
+        if 'domain' in ds.attrs:
+            dsout.attrs['domain'] = ds.attrs['domain']
+        return dsout

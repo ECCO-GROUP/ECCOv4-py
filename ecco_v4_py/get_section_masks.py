@@ -22,7 +22,7 @@ def get_section_endpoints(section_name):
         pt1 = [-68, -54]
         pt2 = [-63, -66]
 
-    These sections mirror the gcmfaces definitions, see 
+    These sections mirror the gcmfaces definitions, see
     gcmfaces/gcmfaces_calc/gcmfaces_lines_pairs.m
 
     Parameters
@@ -35,9 +35,9 @@ def get_section_endpoints(section_name):
     pt1, pt2 : array_like
         array with two values, [lon, lat] of each endpoint
 
-    or 
+    or
 
-    None  
+    None
         if section_name is not in the pre-defined list of sections
     """
 
@@ -182,11 +182,11 @@ def get_available_sections():
     return section_list
 
 # -------------------------------------------------------------------------------
-# Main function to compute section masks 
+# Main function to compute section masks
 # -------------------------------------------------------------------------------
 
 def get_section_line_masks(pt1, pt2, cds, grid=None):
-    """Compute 2D mask with 1's along great circle line 
+    """Compute 2D mask with 1's along great circle line
     from lat/lon1 -> lat/lon2
 
     Parameters
@@ -204,7 +204,7 @@ def get_section_line_masks(pt1, pt2, cds, grid=None):
         2D mask along section
     """
 
-    # Get cartesian coordinates of end points 
+    # Get cartesian coordinates of end points
     x1, y1, z1 = _convert_latlon_to_cartesian(pt1[0],pt1[1])
     x2, y2, z2 = _convert_latlon_to_cartesian(pt2[0],pt2[1])
 
@@ -236,8 +236,8 @@ def get_section_line_masks(pt1, pt2, cds, grid=None):
     x1, y1, z1 = _apply_rotation_matrix(rot_3, (x1,y1,z1))
     x2, y2, z2 = _apply_rotation_matrix(rot_3, (x2,y2,z2))
 
-    # Now apply rotations to the grid 
-    # and get cartesian coordinates at cell centers 
+    # Now apply rotations to the grid
+    # and get cartesian coordinates at cell centers
     xc, yc, zc = _rotate_the_grid(cds.XC, cds.YC, rot_1, rot_2, rot_3)
 
     # Interpolate for x,y to west and south edges
@@ -248,7 +248,7 @@ def get_section_line_masks(pt1, pt2, cds, grid=None):
     ys = grid.interp(yc, 'Y', boundary='fill')
 
     # Compute the great circle mask, covering the entire globe
-    maskC = scalar_calc.get_edge_mask(zc>0,grid) 
+    maskC = scalar_calc.get_edge_mask(zc>0,grid)
     maskW = grid.diff( 1*(zc>0), 'X', boundary='fill')
     maskS = grid.diff( 1*(zc>0), 'Y', boundary='fill')
 
@@ -265,11 +265,11 @@ def get_section_line_masks(pt1, pt2, cds, grid=None):
 # All functions below are non-user facing
 #
 # -------------------------------------------------------------------------------
-# Helper functions for computing section masks 
+# Helper functions for computing section masks
 # -------------------------------------------------------------------------------
 
 def _calc_section_along_full_arc_mask( mask, x1, y1, x2, y2, xg, yg ):
-    """Given a mask which has a great circle passing through 
+    """Given a mask which has a great circle passing through
     pt1 = (x1, y1) and pt2 = (x2,y2), grab the section just connecting pt1 and pt2
 
     Parameters
@@ -379,7 +379,7 @@ def _apply_rotation_matrix(rot_mat,xyz):
 
 def _convert_latlon_to_cartesian(lon, lat):
     """Convert latitude, longitude (degrees) to cartesian coordinates
-    Note: conversion to cartesian differs from what is found at e.g. Wolfram 
+    Note: conversion to cartesian differs from what is found at e.g. Wolfram
     because here lat \in [-pi/2, pi/2] with 0 at equator, not [0, pi], pi/2 at equator
 
     Parameters
