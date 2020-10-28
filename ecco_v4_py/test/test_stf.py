@@ -42,7 +42,7 @@ def test_meridional_stf(get_test_ds,lats,basin,doFlip):
 
             trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(basinW).sum(dim=['i_g','j','tile'])
             trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(basinS).sum(dim=['i','j_g','tile'])
-            test = trsp.sel(lat=lat).psi_moc.reset_coords(drop=True)
+            test = trsp.sel(lat=lat).psi_moc.squeeze().reset_coords(drop=True)
             expected = (1e-6*(trspx+trspy)).reset_coords(drop=True)
             if doFlip:
                 expected = expected.isel(k=slice(None,None,-1))
@@ -89,7 +89,7 @@ def test_section_stf(get_test_ds,args,mask,error,doFlip):
         trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(ds['maskW']).sum(dim=['i_g','j','tile'])
         trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(ds['maskS']).sum(dim=['i','j_g','tile'])
 
-        test = trsp.psi_moc.reset_coords(drop=True)
+        test = trsp.psi_moc.squeeze().reset_coords(drop=True)
         expected = (1e-6*(trspx+trspy)).reset_coords(drop=True)
         if doFlip:
             expected = expected.isel(k=slice(None,None,-1))
