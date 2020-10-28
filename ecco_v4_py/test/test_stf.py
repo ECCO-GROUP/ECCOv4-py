@@ -14,7 +14,7 @@ _section='floridastrait'
 _pt1=[-81,28]
 _pt2=[-79,22]
 
-@pytest.mark.parametrize("lats",[-20,0,10,np.array([-30,-15,20,45])])
+@pytest.mark.parametrize("lats",[0,np.array([-20,30,45])])
 @pytest.mark.parametrize("basin",[None,'atlExt','pacExt','indExt'])
 @pytest.mark.parametrize("doFlip",[True,False])
 def test_meridional_stf(get_test_ds,lats,basin,doFlip):
