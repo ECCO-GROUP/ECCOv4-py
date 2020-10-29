@@ -279,11 +279,13 @@ def section_trsp_at_depth(xfld, yfld, maskW, maskS,
     """
 
     # Initialize empty DataArray with coordinates and dims
+    coords = coords if coords is not None else xfld.to_dataset(name='xfld')
     ds_out = _initialize_section_trsp_data_array(coords)
 
     # Apply section mask and sum horizontally
-    maskW = maskW.where(coords['maskW'].isel(k=0)) if 'maskW' in coords else maskW
-    maskS = maskS.where(coords['maskS'].isel(k=0)) if 'maskS' in coords else maskS
+    # if wet point mask in coords, use it
+    maskW = maskW.where(coords['maskW']) if 'maskW' in coords else maskW
+    maskS = maskS.where(coords['maskS']) if 'maskS' in coords else maskS
     sec_trsp_x = (xfld * maskW).sum(dim=['i_g','j','tile'])
     sec_trsp_y = (yfld * maskS).sum(dim=['i','j_g','tile'])
 

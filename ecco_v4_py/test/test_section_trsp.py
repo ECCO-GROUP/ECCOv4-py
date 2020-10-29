@@ -100,3 +100,25 @@ def test_separate_coords(get_test_ds,myfunc,tfld,xflds,yflds,section_name):
     test = myfunc(ds,section_name=section_name,coords=coords,grid=grid)
     xr.testing.assert_equal(test[tfld].reset_coords(drop=True),
                             expected[tfld].reset_coords(drop=True))
+
+@pytest.mark.parametrize("section_name",["beringstrait"])
+def test_trsp_masking(get_test_ds,section_name):
+    """make sure internal masking is legit"""
+
+    ds = get_test_ds
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    ds['U'] = ds['U'].where(ds['maskW'],0.)
+    ds['V'] = ds['V'].where(ds['maskS'],0.)
+
+    pt1,pt2 = ecco_v4_py.get_section_endpoints(section_name)
+    _, maskW,maskS = ecco_v4_py.get_section_line_masks(pt1,pt2,ds)
+
+    expected = ecco_v4_py.section_trsp_at_depth(ds['U'],ds['V'],maskW,maskS,ds)
+
+    ds = ds.drop_vars(['maskW','maskS'])
+    test = ecco_v4_py.section_trsp_at_depth(ds['U'],ds['V'],maskW,maskS)
+
+    xr.testing.assert_equal(test['trsp_z'].reset_coords(drop=True),
+                            expected['trsp_z'].reset_coords(drop=True))

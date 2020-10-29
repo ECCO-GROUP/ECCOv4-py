@@ -88,3 +88,23 @@ def test_separate_coords(get_test_ds,myfunc,fld,xflds,yflds,lat):
     test = myfunc(ds,lat,coords=coords,grid=grid)
     xr.testing.assert_equal(test[fld].reset_coords(drop=True),
                             expected[fld].reset_coords(drop=True))
+
+@pytest.mark.parametrize("lat",[10])
+def test_trsp_masking(get_test_ds,lat):
+    """make sure internal masking is legit"""
+
+    ds = get_test_ds
+    grid = ecco_v4_py.get_llc_grid(ds)
+
+    ds['U'],ds['V'] = get_fake_vectors(ds['U'],ds['V'])
+    ds['U'] = ds['U'].where(ds['maskW'],0.)
+    ds['V'] = ds['V'].where(ds['maskS'],0.)
+
+    expected = ecco_v4_py.meridional_trsp_at_depth(ds['U'],ds['V'],lat,ds)
+    coords = ds[['Z','YC','XC','dyG','dxG','time']].copy()
+    coords.attrs=ds.attrs.copy()
+    ds = ds.reset_coords(drop=True)
+    test = ecco_v4_py.meridional_trsp_at_depth(ds['U'],ds['V'],lat,coords)
+
+    xr.testing.assert_equal(test['trsp_z'].reset_coords(drop=True),
+                            expected['trsp_z'].reset_coords(drop=True))
