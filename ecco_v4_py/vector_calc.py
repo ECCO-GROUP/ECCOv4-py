@@ -16,17 +16,17 @@ def UEVNfromUXVY(xfld,yfld,coords,grid=None):
     Parameters
     ----------
     xfld, yfld : xarray DataArray
-        fields living on west and south grid cell edges, e.g. UVELMASS and VVELMASS 
+        fields living on west and south grid cell edges, e.g. UVELMASS and VVELMASS
     coords : xarray Dataset
-        must contain CS (cosine of grid orientation) and 
-        SN (sine of grid orientation) 
+        must contain CS (cosine of grid orientation) and
+        SN (sine of grid orientation)
     grid : xgcm Grid object, optional
         see ecco_utils.get_llc_grid and xgcm.Grid
 
     Returns
     -------
     u_east, v_north : xarray DataArray
-        eastward and northward components of input vector field at 
+        eastward and northward components of input vector field at
         grid cell center/tracer points
     """
 
@@ -35,7 +35,7 @@ def UEVNfromUXVY(xfld,yfld,coords,grid=None):
     required_fields = ['CS','SN']
     for var in required_fields:
         if var not in coords.variables:
-            raise KeyError('Could not find %s in coords DataSet' % var)
+            raise KeyError('Could not find %s in coords Dataset' % var)
 
     # If no grid, establish it
     if grid is None:
@@ -61,7 +61,7 @@ def get_latitude_masks(lat_val,yc,grid):
     ----------
 
     lat_val : int
-        latitude at which to compute mask 
+        latitude at which to compute mask
     yc : xarray DataArray
         Contains latitude values at cell centers
     grid : xgcm Grid object
@@ -74,8 +74,8 @@ def get_latitude_masks(lat_val,yc,grid):
         contains masks of latitude band at grid cell west and south grid edges
     """
 
-    # Compute difference in X, Y direction. 
-    # multiply by 1 so that "True" -> 1, 2nd arg to "where" puts False -> 0 
+    # Compute difference in X, Y direction.
+    # multiply by 1 so that "True" -> 1, 2nd arg to "where" puts False -> 0
     ones = xr.ones_like(yc)
     maskC = ones.where(yc>=lat_val,0)
 

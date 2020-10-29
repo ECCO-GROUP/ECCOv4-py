@@ -1,7 +1,7 @@
 """ECCO v4 Python: read_bin_gen
 
-This module includes utility routines for loading general binary files, 
-not necessarily in the lat-lon-cap layout. For LLC type data, see read_bin_llc. 
+This module includes utility routines for loading general binary files,
+not necessarily in the lat-lon-cap layout. For LLC type data, see read_bin_llc.
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
@@ -14,11 +14,11 @@ import os
 from pathlib import Path
 
 #%%
-def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0, 
+def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
                       filetype = '>f', less_output = False ):
     """
     Note: This function is for reading a general binary file. To read data in
-    the llc structure, see read_bin_llc. 
+    the llc structure, see read_bin_llc.
 
     Loads a binary array from a file into memory, which is not necessarily in
     llc format.  The first two dimensions
@@ -40,11 +40,11 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         the number of 2D (nj x ni) slices to skip.
         Default: 0
     nk : int
-        number of 2D slices (or records) to load in the third dimension.  
+        number of 2D slices (or records) to load in the third dimension.
         if nk = -1, load all 2D slices
         Default: 1 [singleton]
     nl : int
-        number of 2D slices (or records) to load in the fourth dimension.  
+        number of 2D slices (or records) to load in the fourth dimension.
         Default: 1 [singleton]
     filetype: string
         the file type, default is big endian (>) 32 bit float (f)
@@ -53,12 +53,12 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     less_output : boolean
         A debugging flag.  False = less debugging output
         Default: False
-        
+
     Returns
     -------
     data
         a numpy array with dimensions nl x nk x nj x ni
-        
+
     Raises
     ------
     IOError
@@ -68,12 +68,12 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
     #datafile = fdir + '/' + fname
     data_folder = Path(fdir)
     datafile = data_folder / fname
-    
+
     #datafile = os.path.join(fdir, fname)
-    if less_output == False:
+    if not less_output:
         print('load_binary_array: loading file', datafile)
-    
-    # check to see if file exists.    
+
+    # check to see if file exists.
     if datafile.exists() == False:
         raise IOError(fname + ' not found ')
 
@@ -85,8 +85,7 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         f.seek(ni*nj*skip*dt.itemsize)
 
     if (ni <= 0) or (nj <= 0):
-        print('load_binary_array: ni and nj must be > 1')
-        return []
+        raise TypeError('ni and nj must be > 1')
 
     # load all 2D records
     if nk == -1:
@@ -100,21 +99,20 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         # length of each 2D slice is ni * nj
         nk = int(length_arr_k / (ni*nj))
 
-        if less_output == False:
+        if not less_output:
             print('load_binary_array: loading all 2D records.  nk =',nk)
-        
+
         # reshape the array to 2D records
         if nk > 1: # we have more than one 2D record, make 3D field
             data = np.reshape(arr_k,(nk, nj, ni))
-        
+
         else: # nk = 1, just make 2D field
             data = np.reshape(arr_k,(nj, ni))
 
     # read a specific number of records (nk*nl)
     else:
         if (nk <= 0) or (nl <= 0):
-            print('load_binary_array: nk and nl must be > 0.  If they are singleton dimensions, use 1')
-            return []
+            raise TypeError('nk and nl must be > 0.  If they are singleton dimensions, use 1')
 
         # read in nk*nl 2D records
         arr_k = np.fromfile(f, dtype=filetype, count=ni*nj*nk*nl)
@@ -123,18 +121,18 @@ def load_binary_array(fdir, fname, ni, nj, nk=1, nl=1, skip=0,
         #  - if we have a fourth dimension
         if nl > 1:
             data = np.reshape(arr_k,(nl, nk, nj, ni))
-        
+
         #  - if we have a third dimension
         elif nk > 1:
             data = np.reshape(arr_k,(nk, nj, ni))
-        
+
         #  - if we only have two dimensions
         else:
             data = np.reshape(arr_k,(nj, ni))
-    
+
     f.close()
 
-    if less_output == False:
+    if not less_output:
         print('load_binary_array: data array shape ', data.shape)
         print('load_binary_array: data array type ', data.dtype)
 
