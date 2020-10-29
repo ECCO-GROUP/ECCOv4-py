@@ -41,12 +41,11 @@ def test_meridional_trsp(get_test_ds,myfunc,tfld,xflds,yflds,factor,lats,basin):
 
     if basin is None or len(ds.tile)==13:
         trsp = myfunc(ds,lats,basin_name=basin,grid=grid)
+        basinW = ds['maskW']
+        basinS = ds['maskS']
         if basin is not None:
-            basinW = ecco_v4_py.get_basin_mask(basin,ds['maskW'].isel(k=0))
-            basinS = ecco_v4_py.get_basin_mask(basin,ds['maskS'].isel(k=0))
-        else:
-            basinW = ds['maskW'].isel(k=0)
-            basinS = ds['maskS'].isel(k=0)
+            basinW = ecco_v4_py.get_basin_mask(basin,basinW)
+            basinS = ecco_v4_py.get_basin_mask(basin,basinS)
 
         lats = [lats] if np.isscalar(lats) else lats
         expx = (ds['drF']*ds['dyG']).copy() if tfld == 'vol_trsp_z' else 2.*xr.ones_like(ds['hFacW'])

@@ -65,8 +65,8 @@ def test_section_trsp(get_test_ds,myfunc,tfld,xflds,yflds,factor,args,mask,error
 
         expx = (ds['drF']*ds['dyG']).copy() if tfld == 'vol_trsp_z' else 2.*xr.ones_like(ds['hFacW'])
         expy = (ds['drF']*ds['dxG']).copy() if tfld == 'vol_trsp_z' else 2.*xr.ones_like(ds['hFacS'])
-        trspx = (expx*np.abs(maskW)).where(ds['maskW'].isel(k=0)).sum(dim=['i_g','j','tile'])
-        trspy = (expy*np.abs(maskS)).where(ds['maskS'].isel(k=0)).sum(dim=['i','j_g','tile'])
+        trspx = (expx*np.abs(maskW)).where(ds['maskW']).sum(dim=['i_g','j','tile'])
+        trspy = (expy*np.abs(maskS)).where(ds['maskS']).sum(dim=['i','j_g','tile'])
 
         test = trsp[tfld].squeeze().reset_coords(drop=True)
         expected = (factor*(trspx+trspy)).reset_coords(drop=True)
