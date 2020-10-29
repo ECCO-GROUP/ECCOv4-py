@@ -42,15 +42,15 @@ def test_meridional_trsp(get_test_ds,myfunc,tfld,xflds,yflds,factor,lats,basin):
     if basin is None or len(ds.tile)==13:
         trsp = myfunc(ds,lats,basin_name=basin,grid=grid)
         if basin is not None:
-            basinW = ecco_v4_py.get_basin_mask(basin,ds['maskW'])
-            basinS = ecco_v4_py.get_basin_mask(basin,ds['maskS'])
+            basinW = ecco_v4_py.get_basin_mask(basin,ds['maskW'].isel(k=0))
+            basinS = ecco_v4_py.get_basin_mask(basin,ds['maskS'].isel(k=0))
         else:
-            basinW = ds['maskW']
-            basinS = ds['maskS']
+            basinW = ds['maskW'].isel(k=0)
+            basinS = ds['maskS'].isel(k=0)
 
         lats = [lats] if np.isscalar(lats) else lats
-        expx = (ds['drF']*ds['dyG']).copy() if tfld == 'vol_trsp_z' else 2.
-        expy = (ds['drF']*ds['dxG']).copy() if tfld == 'vol_trsp_z' else 2.
+        expx = (ds['drF']*ds['dyG']).copy() if tfld == 'vol_trsp_z' else 2.*xr.ones_like(ds['hFacW'])
+        expy = (ds['drF']*ds['dxG']).copy() if tfld == 'vol_trsp_z' else 2.*xr.ones_like(ds['hFacS'])
         for lat in lats:
             maskW,maskS = ecco_v4_py.vector_calc.get_latitude_masks(lat,ds['YC'],grid)
 
