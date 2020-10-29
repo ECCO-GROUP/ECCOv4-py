@@ -29,11 +29,11 @@ def test_meridional_stf(get_test_ds,lats,basin,doFlip):
     if basin is None or len(ds.tile)==13:
         trsp = ecco_v4_py.calc_meridional_stf(ds,lats,doFlip=doFlip,basin_name=basin,grid=grid)
         if basin is not None:
-            basinW = ecco_v4_py.get_basin_mask(basin,ds['maskW'])
-            basinS = ecco_v4_py.get_basin_mask(basin,ds['maskS'])
+            basinW = ecco_v4_py.get_basin_mask(basin,ds['maskW'].isel(k=0))
+            basinS = ecco_v4_py.get_basin_mask(basin,ds['maskS'].isel(k=0))
         else:
-            basinW = ds['maskW']
-            basinS = ds['maskS']
+            basinW = ds['maskW'].isel(k=0)
+            basinS = ds['maskS'].isel(k=0)
 
 
         lats = [lats] if np.isscalar(lats) else lats
@@ -86,8 +86,8 @@ def test_section_stf(get_test_ds,args,mask,error,doFlip):
 
         maskW,maskS = ecco_v4_py.calc_section_trsp._parse_section_trsp_inputs(ds,**myargs)
 
-        trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(ds['maskW']).sum(dim=['i_g','j','tile'])
-        trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(ds['maskS']).sum(dim=['i','j_g','tile'])
+        trspx = (ds['drF']*ds['dyG']*np.abs(maskW)).where(ds['maskW'].isel(k=0)).sum(dim=['i_g','j','tile'])
+        trspy = (ds['drF']*ds['dxG']*np.abs(maskS)).where(ds['maskS'].isel(k=0)).sum(dim=['i','j_g','tile'])
 
         test = trsp.psi_moc.squeeze().reset_coords(drop=True)
         expected = (1e-6*(trspx+trspy)).reset_coords(drop=True)
