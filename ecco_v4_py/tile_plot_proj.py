@@ -35,7 +35,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar = False,
                              show_grid_lines = True,
                              show_grid_labels = True,
-                             show_coastline =True,
+                             show_coastline = True,
                              show_land = True,
                              grid_linewidth = 1,
                              grid_linestyle = '--',
@@ -270,13 +270,9 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)
 
-
-
     #%%
     return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
 
 def plot_pstereo(xx,yy, data,
@@ -285,11 +281,13 @@ def plot_pstereo(xx,yy, data,
                  cmin, cmax, ax,
                  plot_type = 'pcolormesh',
                  show_colorbar=False,
-                 circle_boundary = False,
+                 circle_boundary = False, 
                  grid_linewidth = 1,
                  grid_linestyle = '--',
                  cmap=None,
-                 show_grid_lines=False,
+                 show_grid_lines = False,
+                 show_coastline = True,
+                 show_land = True,
                  custom_background = False,
                  background_name = [],
                  background_resolution = [],
