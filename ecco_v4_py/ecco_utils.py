@@ -356,8 +356,6 @@ def get_llc_grid(ds,domain='global'):
                        'Y':(None,(0,'X',False))}
                    }}
         grid = xgcm.Grid(ds,periodic=False,face_connections=tile_connections)
-    elif domain == 'sose':
-        grid = xgcm.Grid(ds,periodic='X')
     else:
         raise TypeError(f'Domain {domain} not recognized')
 
