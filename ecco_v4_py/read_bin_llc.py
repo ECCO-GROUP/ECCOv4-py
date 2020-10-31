@@ -40,7 +40,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                             model_time_steps_to_load = 'all',
                             output_freq_code = '',
-                            drop_unused_coords=True,
+                            drop_unused_coords = False,
+                            grid_vars_to_coords = True,
                             coordinate_metadata = [],
                             variable_metadata = [],
                             global_metadata = [],
@@ -110,9 +111,13 @@ def load_ecco_vars_from_mds(mds_var_dir,
         - AVG_DAY, AVG_WEEK, AVG_MON, AVG_YEAR
         - SNAPSHOT_DAY, SNAPSHOT_WEEK, SNAPSHOT_MON, SNAPSHOT_YEAR
 
-    drop_unused_coords : boolean, optional, default True
+    drop_unused_coords : boolean, optional, default False
         drop coordinates that have dimensions that do not appear in any
         data variables
+
+    grid_vars_to_coords : boolean, optional, default True
+        promote grid variables to coordinates. grid variables are coordinates
+        according to xarray's definition but not CF conventions
 
     coordinate_metadata : list, option, default empty list
         tuples with information that is specific to coordinate fields
@@ -182,7 +187,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        ref_date = ref_date,
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
-                                       grid_vars_to_coords=False,
+                                       grid_vars_to_coords=grid_vars_to_coords,
                                        llc_method = llc_method,
                                        ignore_unknown_vars=False,
                                        **kwargs)
@@ -204,7 +209,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            ref_date = ref_date,
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
-                                           grid_vars_to_coords=False,
+                                           grid_vars_to_coords = grid_vars_to_coords,
                                            llc_method=llc_method,
                                            ignore_unknown_vars=False,
                                            **kwargs)
@@ -221,16 +226,17 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
 
 
-    # A bunch of grid geometry fields that aren't actually coordinates in
-    # any sense are loaded by default as coordinates. We'll kick them all
-    # down to data variables and then promote a few that are actually
-    # coordinates.
+    if grid_vars_to_coords == False:
+        # A bunch of grid geometry fields that aren't actually coordinates in
+        # any sense are loaded by default as coordinates. We'll kick them all
+        # down to data variables and then promote a few that are actually
+        # coordinates.
 
-    # Promote some variables as CF convention compliant coordinates.
-    CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
-    for legal_coord in CF_legal_coords:
-        if legal_coord in list(ecco_dataset.data_vars):
-            ecco_dataset = ecco_dataset.set_coords(legal_coord)
+        # Promote some variables as CF convention compliant coordinates.
+        CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
+        for legal_coord in CF_legal_coords:
+            if legal_coord in list(ecco_dataset.data_vars):
+                ecco_dataset = ecco_dataset.set_coords(legal_coord)
 
 
     # if vars_to_load is an empty list, keep all variables.  otherwise,
@@ -328,14 +334,13 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ecco_dataset=ecco_dataset.drop_vars('maskCtrlW')
     if 'maskCtrlC' in list(ecco_dataset.data_vars):
         ecco_dataset=ecco_dataset.drop_vars('maskCtrlC')
-        
+
     # determine all of the dimensions used by data variables
     all_var_dims = set([])
     for ecco_var in ecco_dataset.data_vars:
         all_var_dims = set.union(all_var_dims, set(ecco_dataset[ecco_var].dims))
 
     # drop coordinates that do not appear in any data variable
-    drop_unused_coords=False
     if drop_unused_coords:
         for coord in list(ecco_dataset.coords):
             coord_dims =  set(ecco_dataset[coord].dims)
