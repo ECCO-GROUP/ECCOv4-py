@@ -1,10 +1,10 @@
 """
 ECCO v4 Python: read_bin_llc
 
-This module includes utility routines for loading binary files in the 
-llc 13-tile native flat binary layout.  This layout is the default for 
-MITgcm input and output for global setups using lat-lon-cap (llc) layout. 
-The llc layout is used for ECCO v4. 
+This module includes utility routines for loading binary files in the
+llc 13-tile native flat binary layout.  This layout is the default for
+MITgcm input and output for global setups using lat-lon-cap (llc) layout.
+The llc layout is used for ECCO v4.
 
 .. _ecco_v4_py Documentation :
    https://github.com/ECCO-GROUP/ECCOv4-py
@@ -18,6 +18,7 @@ import numpy as np
 import xarray as xr
 import time
 import sys
+import datetime
 
 from .llc_array_conversion  import llc_compact_to_tiles, \
     llc_compact_to_faces, llc_faces_to_tiles, llc_faces_to_compact, \
@@ -26,29 +27,34 @@ from .llc_array_conversion  import llc_compact_to_tiles, \
 from .read_bin_gen import load_binary_array
 
 from .ecco_utils import make_time_bounds_and_center_times_from_ecco_dataset
+from .ecco_utils import add_global_metadata
+from .ecco_utils import add_variable_metadata
+from .ecco_utils import add_coordinate_metadata
+from .ecco_utils import sort_all_attrs, sort_attrs
 
 
-def load_ecco_vars_from_mds(mds_var_dir, 
+def load_ecco_vars_from_mds(mds_var_dir,
                             mds_grid_dir,
                             mds_files=None,
-                            vars_to_load = 'all', 
+                            vars_to_load = 'all',
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                             model_time_steps_to_load = 'all',
-                            output_freq_code = '', 
-                            meta_variable_specific=dict(),
-                            meta_common=dict(),
+                            output_freq_code = '',
+                            coordinate_metadata = [],
+                            variable_metadata = [],
+                            global_metadata = [],
                             mds_datatype = '>f4',
                             llc_method = 'bigchunks',
-                            less_output=True):
-                                 
+                            less_output = True):
+
     """
 
-    Uses xmitgcm's *open_mdsdataset* routine to load ecco variable(s) from 
-    MITgcm's MDS binary output into xarray Dataset/DataArray objects.  
+    Uses xmitgcm's *open_mdsdataset* routine to load ecco variable(s) from
+    MITgcm's MDS binary output into xarray Dataset/DataArray objects.
 
     The main benefit of using this routine over open_mdsdataset is that this
-    routine allows for 
-        
+    routine allows for
+
         - proper centering of the *time* variable for time-averaged fields
 
         - creation of the *time-bnds* fields in time-averaged fields
@@ -56,25 +62,25 @@ def load_ecco_vars_from_mds(mds_var_dir,
         - specification of extra variable-specific and globl metadata
 
 
-    xmitgcm.open_mdsdataset uses the model step number from the file name 
-    (e.g., 732 from the file VAR.000000000732.data) to construct the 
-    'time' field.  For time-averaged fields, this model step 
-    corresponds to END of the averaging period, not the time averaging mid 
+    xmitgcm.open_mdsdataset uses the model step number from the file name
+    (e.g., 732 from the file VAR.000000000732.data) to construct the
+    'time' field.  For time-averaged fields, this model step
+    corresponds to END of the averaging period, not the time averaging mid
     point. This routine fixes the 'time' field of time-averaged fields
     to be the mid point of the time averaging period when the appropriate
     *output_freq_code* is passed.
 
-    
+
     Parameters
     ----------
     mds_var_dir : str
         directory where the .data/.meta files are stored
-    
+
 
     mds_grid_dir : str
         the directory where the model binary (.data) grid fields
         are stored
-    
+
     mds_files   : str or list or None, optional
         either: a string or list of file names to load,
         or None to load all files
@@ -98,28 +104,29 @@ def load_ecco_vars_from_mds(mds_var_dir,
     output_freq_code : str, optional, default empty string
         a code used to create the proper time indices on the fields after loading
         ('AVG' or 'SNAPSHOT') + '_' + ('DAY','WEEK','MON', or 'YEAR')
-        
+
         valid options :
 
         - AVG_DAY, AVG_WEEK, AVG_MON, AVG_YEAR
         - SNAPSHOT_DAY, SNAPSHOT_WEEK, SNAPSHOT_MON, SNAPSHOT_YEAR
-        
-    meta_variable_specific : dict, optional, default empty dictionary
-        a dictionary with variable-specific metadata.  used when creating
-        the offical ECCO products
 
-    meta_common : dict, optional, default empty dictionary
-        a dictionary with globally-valid metadata for the ECCO fields.
-        useful when creating the offical ECCO netcdf fields
+    coordinate_metadata : list, option, default empty list
+        tuples with information that is specific to coordinate fields
+
+    variable_metadata : list, option, default empty list
+        tuples with information specific to variable fields
+
+    global_metadata : list, option, default empty list
+        tuples with global metadata information
 
     mds_datatype : string, optional, default '>f4'
-        code indicating what type of field to load if the xmitgcm cannot 
+        code indicating what type of field to load if the xmitgcm cannot
         determine the format from the .meta file.  '>f4' means big endian
         32 bit float.
 
     llc_method : string, optional, default 'big_chunks'
         refer to the xmitgcm documentation.
-    
+
     less_output : logical, optional
         if True (default), omit additional print statements
 
@@ -142,10 +149,10 @@ def load_ecco_vars_from_mds(mds_var_dir,
     ecco_v4_start_hour = 12
     ecco_v4_start_min  = 0
     ecco_v4_start_sec  = 0
-    
-    # ECCO v4 r3 has 1 hour (3600 s) time steps    
+
+    # ECCO v4 r3 has 1 hour (3600 s) time steps
     delta_t = 3600
-    
+
     # define reference date for xmitgcm
     ref_date = str(ecco_v4_start_year) + '-' + str(ecco_v4_start_mon)  + '-' + \
         str(ecco_v4_start_day)  + ' ' +  str(ecco_v4_start_hour) + ':' +  \
@@ -162,85 +169,106 @@ def load_ecco_vars_from_mds(mds_var_dir,
         print('read bin_llc:')
         print(mds_var_dir)
         print(mds_grid_dir)
-        ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
+        ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                        grid_dir = mds_grid_dir,
                                        read_grid = True,
                                        prefix = mds_files,
-                                       geometry = 'llc', 
+                                       geometry = 'llc',
                                        iters = 'all',
-                                       ref_date = ref_date, 
+                                       ref_date = ref_date,
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=True,
                                        llc_method = llc_method,
-                                       ignore_unknown_vars=True)
-    
+                                       ignore_unknown_vars=False)
     else:
         if not less_output:
             print ('loading subset of  model time steps')
 
         if isinstance(model_time_steps_to_load, int):
             model_time_steps_to_load = [model_time_steps_to_load]
-        
+
         if isinstance(model_time_steps_to_load, list):
-            ecco_dataset = open_mdsdataset(data_dir = mds_var_dir, 
+            ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                            grid_dir = mds_grid_dir,
                                            read_grid = True,
-                                           prefix = mds_files, 
-                                           geometry = 'llc', 
+                                           prefix = mds_files,
+                                           geometry = 'llc',
                                            iters = model_time_steps_to_load,
-                                           ref_date = ref_date, 
+                                           ref_date = ref_date,
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=True,
                                            llc_method=llc_method,
-                                           ignore_unknown_vars=True)
+                                           ignore_unknown_vars=False)
         else:
+            print('model time steps to load ', model_time_steps_to_load)
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'face': 'tile'})
         ecco_dataset.tile.attrs['long_name'] = 'index of llc grid tile'
-       
+
     if 'iter' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
         #xmitgcm aleardy has set the long_name for timestep.
         #ecco_dataset.timestep.attrs['long_name'] = 'model time step'
     # if vars_to_load is an empty list, keep all variables.  otherwise,
     # only keep those variables in the vars_to_load list.
-    
+
+    # A bunch of grid geometry fields that aren't actually coordinates in
+    # any sense are loaded by default as coordinates. We'll kick them all
+    # down to data variables and then promote a few that are actually
+    # coordinates.
+    ecco_dataset = ecco_dataset.reset_coords()
+    if not less_output:
+        print('after coordinate reset')
+        print(ecco_dataset)
+
+    all_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
+    dataset_coords = []
+    for legal_coord in all_legal_coords:
+        if legal_coord in list(ecco_dataset.data_vars):
+            dataset_coords.append(legal_coord)
+
+    ecco_dataset = ecco_dataset.set_coords(dataset_coords)
+    if not less_output:
+        print(dataset_coords)
+        print('after coordinate promotion')
+        print(ecco_dataset)
+
     vars_ignored = []
     vars_loaded = []
-    
+
     if not isinstance(vars_to_load, list):
         vars_to_load = [vars_to_load]
 
     if not less_output:
         print ('vars to load ', vars_to_load)
-    
+
     if 'all' not in vars_to_load:
         if not less_output:
             print ('loading subset of variables: ', vars_to_load)
-    
+
         # remove variables that are not on the vars_to_load_list
         for ecco_var in ecco_dataset.keys():
-            
+
             if ecco_var not in vars_to_load:
                 vars_ignored.append(ecco_var)
                 ecco_dataset = ecco_dataset.drop(ecco_var)
-            
+
             else:
                 vars_loaded.append(ecco_var)
 
         if not less_output:
             print ('loaded  : ', vars_loaded)
             print ('ignored : ', vars_ignored)
-    
+
     else:
         if not less_output:
             print ('loaded all variables  : ', ecco_dataset.keys())
-        
+
     # keep tiles in the 'tiles_to_load' list.
     if not isinstance(tiles_to_load, list) and not isinstance(tiles_to_load,range):
         tiles_to_load = [tiles_to_load]
@@ -249,24 +277,22 @@ def load_ecco_vars_from_mds(mds_var_dir,
         print ('subsetting tiles to ', tiles_to_load)
 
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
-    
+
     #ecco_dataset = ecco_dataset.isel(time=0)
     if not less_output:
         print ('creating time bounds .... ')
 
     if 'AVG' in output_freq_code and \
         'time_bnds' not in ecco_dataset.keys():
-    
+
         if not less_output:
             print ('avg in output freq code and time bounds not in ecco keys')
 
         time_bnds_ds, center_times = \
             make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset,\
                                                                 output_freq_code)
-        
+
         ecco_dataset = xr.merge((ecco_dataset, time_bnds_ds))
-        if 'time_bnds-no-units' in meta_common:
-            ecco_dataset.time_bnds.attrs=meta_common['time_bnds-no-units']
 
         ecco_dataset = ecco_dataset.set_coords('time_bnds')
 
@@ -283,7 +309,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
             if not less_output:
                 print ('replacing time.values....')
             ecco_dataset.time.values = center_times
-        
+
         elif isinstance(center_times, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
@@ -291,71 +317,72 @@ def load_ecco_vars_from_mds(mds_var_dir,
             ecco_dataset.time.values[:] = center_times
 
         elif isinstance(ecco_dataset.time.values, np.ndarray) and \
-             isinstance(center_times, np.ndarray):
+              isinstance(center_times, np.ndarray):
             if not less_output:
                 print ('replacing time.values....')
-            ecco_dataset.time.values = center_times
- 
-        if 'ecco-v4-time-average-center-no-units' in meta_common:
-            ecco_dataset.time.attrs = \
-                meta_common['ecco-v4-time-average-center-no-units']
+                ecco_dataset = ecco_dataset.assign_coords({'time': center_times})
 
-        if not less_output:
-            print ('dataset times : ', ecco_dataset.time.values)
-        
-    elif  'SNAPSHOT' in output_freq_code:
-         if 'ecco-v4-time-snapshot-no-units' in meta_common:
-            ecco_dataset.time.attrs = \
-                meta_common['ecco-v4-time-snapshot-no-units']
-       
-
-    #%% DROP SOME EXTRA FIELDS THAT DO NOT NEED TO BE IN THE DATASET
-    if 'maskCtrlS' in ecco_dataset.coords.keys():
+    # Drop mask Ctrl fields
+    if 'maskCtrlS' in list(ecco_dataset.data_vars):
         ecco_dataset=ecco_dataset.drop('maskCtrlS')
-    if 'maskCtrlW' in ecco_dataset.coords.keys():
+    if 'maskCtrlW' in list(ecco_dataset.data_vars):
         ecco_dataset=ecco_dataset.drop('maskCtrlW')
-    if 'maskCtrlC' in ecco_dataset.coords.keys():
+    if 'maskCtrlC' in list(ecco_dataset.data_vars):
         ecco_dataset=ecco_dataset.drop('maskCtrlC')
-        
-    # UPDATE THE VARIABLE SPECIFIC METADATA USING THE 'META_VARSPECIFIC' DICT.
-    # if it exists...
-    for ecco_var in ecco_dataset.variables.keys():
 
-        # always drop whatever is in the standard name field
+
+    ## update global, coordinate, and variable metadata
+
+    print(ecco_dataset)
+    # first, drop whatever is in 'standard_name' because those fields
+    # are generally not CF compliant.
+    for ecco_var in ecco_dataset.data_vars.keys():
         if 'standard_name' in ecco_dataset[ecco_var].attrs.keys():
             ecco_dataset[ecco_var].attrs.pop('standard_name')
-    
-        ecco_dataset[ecco_var].encoding['_FillValue'] = False
+    for ecco_var in ecco_dataset.coords.keys():
+        if 'standard_name' in ecco_dataset[ecco_var].attrs.keys():
+            ecco_dataset[ecco_var].attrs.pop('standard_name')
+
+    # update coordinate metadata
+    if len(coordinate_metadata) > 0:
+        ecco_dataset = add_coordinate_metadata(coordinate_metadata, ecco_dataset)
+
+    # update variable metadata
+    if len(variable_metadata) > 0:
+        ecco_dataset, gcmd_keywords = \
+            add_variable_metadata(variable_metadata, ecco_dataset)
+
+    # update global metadata
+    if len(global_metadata) > 0:
+        # possible keys
+        keys_3D = ['k','k_l','k_u','k_p1']
 
 
-        # use the variable specific keys from the meta_variable_specific
-        # dictionary
-        if not less_output:
-            print('added metadata to %s ' % ecco_var)
-            
-        if ecco_var in meta_variable_specific.keys():
-            ecco_dataset[ecco_var].attrs = meta_variable_specific[ecco_var]
+        # if any of these keys are present in the dimension field, then the
+        # dataset is 3D
+        if sum([(lambda x: x in list(ecco_dataset.dims))(x) for x in keys_3D]) > 0:
+            dataset_dim = '3D'
+        else:
+            dataset_dim = '2D'
 
+        # some metadata is 3D dataset specific.
+        ecco_dataset = \
+            add_global_metadata(global_metadata, ecco_dataset, dataset_dim,\
+                                less_output=less_output)
 
-    #%% UPDATE THE GLOBAL METADATA USING THE 'META_COMMON' DICT, if it exists
-    ecco_dataset.attrs = dict()
+    # current time and date
+    current_time = datetime.datetime.now().isoformat()[0:19]
+    ecco_dataset.attrs['date_created'] = current_time
+    ecco_dataset.attrs['date_modified'] = current_time
+    ecco_dataset.attrs['date_metadata_modified'] = current_time
+    ecco_dataset.attrs['date_issued'] = current_time
 
-    if 'ecco-v4-global' in meta_common:
-        ecco_dataset.attrs.update(meta_common['ecco-v4-global'])
-
-    if 'k' in ecco_dataset.dims.keys() and \
-        'ecco-v4-global-3D' in meta_common:
-        ecco_dataset.attrs.update(meta_common['ecco-v4-global-3D'])
-   
-    ecco_dataset.attrs['date_created'] = time.ctime()
-    
-    # give it a hug?
-    # ecco_dataset = ecco_dataset.squeeze()
+    ecco_dataset.attrs = sort_attrs(ecco_dataset.attrs)
 
     return ecco_dataset
 
 #%%
-def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
+def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
             filetype = '>f4', less_output = False ):
     """
 
@@ -366,50 +393,50 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
         [nl, nk, N_tiles*llc, llc]
 
-    where if either N_z or N_recs =1, then that dimension is collapsed 
+    where if either N_z or N_recs =1, then that dimension is collapsed
     and not present in the returned array.
 
     Parameters
     ----------
     fdir : string
         A string with the directory of the binary file to open
-    
+
     fname : string
         A string with the name of the binary file to open
-    
+
     llc : int, optional, default 90
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
-        so `llc` would be `90`.  
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain
+        so `llc` would be `90`.
         Default: 90
-    
+
     skip : int, optional, default 0
         the number of 2D slices (or records) to skip.  Records could be vertical levels of a 3D field, or different 2D fields, or both.
-    
+
     nk : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the depth dimension.  
+        number of 2D slices (or records) to load in the depth dimension.
         Default: 1 [singleton]
-    
+
     nl : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the "record" dimension.  
-        Default: 1 [singleton] 
-    
+        number of 2D slices (or records) to load in the "record" dimension.
+        Default: 1 [singleton]
+
     filetype: string, default '>f4'
         the file type, default is big endian (>) 32 bit float (f4)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
-        
+
     less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        
-        
+
+
     Returns
     -------
     data_compact : ndarray
-        a numpy array of dimension nl x nk x 13*llc x llc 
+        a numpy array of dimension nl x nk x 13*llc x llc
 
     """
-    data_compact = load_binary_array(fdir, fname, llc, 13*llc, nk=nk, nl=nl, 
-                                     skip=skip, filetype = filetype, 
-                                     less_output = less_output) 
+    data_compact = load_binary_array(fdir, fname, llc, 13*llc, nk=nk, nl=nl,
+                                     skip=skip, filetype = filetype,
+                                     less_output = less_output)
     #data_tiles = read_bin_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
     #                skip=skip, filetype = filetype, less_output = less_output)
 
@@ -417,19 +444,19 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     #                               filetype=filetype)
 
     #data_compact = llc_tiles_to_compact(data_tiles,less_output=less_output)
-    
+
     # return the array
     return data_compact
 
 
 #%%
-def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1, 
-              	      filetype = '>f', less_output = False, 
+def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
+                       filetype = '>f', less_output = False,
                       use_xmitgcm=False):
     """
 
 
-    Loads an MITgcm binary file in the 'tiled' format of the 
+    Loads an MITgcm binary file in the 'tiled' format of the
     lat-lon-cap (LLC) grids with dimension order:
 
         [N_recs, N_z, N_tiles, llc, llc]
@@ -439,16 +466,16 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
     if use_xmitgcm == True
 
-        data are read in via the low level routine 
+        data are read in via the low level routine
         xmitgcm.utils.read_3d_llc_data and returned as dask array.
 
         Hint: use data_tiles.compute() to load into memory.
 
     if use_xmitgcm == False
 
-        Loads an MITgcm binary file in the 'compact' format of the 
+        Loads an MITgcm binary file in the 'compact' format of the
         lat-lon-cap (LLC) grids and converts it to the '13 tiles' format
-        of the LLC grids.  
+        of the LLC grids.
 
     Parameters
     ----------
@@ -457,19 +484,19 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     fname : string
         A string with the name of the binary file to open
     llc : int
-        the size of the llc grid.  For ECCO v4, we use the llc90 domain 
-        so `llc` would be `90`.  
+        the size of the llc grid.  For ECCO v4, we use the llc90 domain
+        so `llc` would be `90`.
         Default: 90
     skip : int
-        the number of 2D slices (or records) to skip.  
+        the number of 2D slices (or records) to skip.
         Records could be vertical levels of a 3D field, or different 2D fields, or both.
     nk : int
-        number of 2D slices (or records) to load in the third dimension.  
+        number of 2D slices (or records) to load in the third dimension.
         if nk = -1, load all 2D slices
         Default: 1 [singleton]
     nl : int
-        number of 2D slices (or records) to load in the fourth dimension.  
-        Default: 1 [singleton] 
+        number of 2D slices (or records) to load in the fourth dimension.
+        Default: 1 [singleton]
     filetype: string
         the file type, default is big endian (>) 32 bit float (f)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
@@ -478,15 +505,15 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         Default: False
     use_xmitgcm : boolean
         option to use the routine xmitgcm.utils.read_3d_llc_data into a dask
-        array, i.e. not into memory. 
+        array, i.e. not into memory.
         Otherwise read in as a compact array, convert to faces, then to tiled format
         Default: False
-        
+
     Returns
     -------
     data_tiles
-        a numpy array of dimension 13 x nl x nk x llc x llc, one llc x llc array 
-        for each of the 13 tiles and nl and nk levels.  
+        a numpy array of dimension 13 x nl x nk x llc x llc, one llc x llc array
+        for each of the 13 tiles and nl and nk levels.
     """
 
     if use_xmitgcm:
@@ -495,7 +522,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
         if not less_output:
             print('read_llc_to_tiles: full_filename: ',full_filename)
-        
+
         # Handle "skipped" records by reading up until that record, and
         # dropping preceding records afterward
         #
@@ -505,7 +532,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         skip_3d = int(np.ceil(skip/nk))
         nrecs += skip_3d
 
-        # Reads data into dask array as numpy memmap 
+        # Reads data into dask array as numpy memmap
         # [Nrecs x Nz x Ntiles x llc x llc]
         data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
                                                     nrecs=nrecs, dtype=filetype)
@@ -528,7 +555,7 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
                 else:
                     data_tiles = data_tiles[skip:skip+nl,...]
 
-                    # to make consistent with default, add singleton vertical dimension... 
+                    # to make consistent with default, add singleton vertical dimension...
                     data_tiles = np.expand_dims(data_tiles,axis=1)
         else:
             data_tiles=np.squeeze(data_tiles)
@@ -536,8 +563,8 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
     else:
 
-        data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
-           				    filetype = filetype, less_output=less_output)
+        data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl,
+                           filetype = filetype, less_output=less_output)
 
         data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
 
@@ -549,9 +576,9 @@ def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         filetype = '>f4', less_output = False):
     """
 
-    Loads an MITgcm binary file in the 'compact' format of the 
+    Loads an MITgcm binary file in the 'compact' format of the
     lat-lon-cap (LLC) grids and converts it to the '5 faces' format
-    of the LLC grids.  
+    of the LLC grids.
 
     Can load 2D and 3D arrays.
 
@@ -565,30 +592,30 @@ def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
     ----------
     fdir : string
         A string with the directory of the binary file to open
-    
+
     fname : string
         A string with the name of the binary file to open
-    
+
     llc : int, optional, default 90
         the size of the llc grid.  For ECCO v4, we use the llc90 domain (llc=90)
-    
+
     skip : int, optional, default 0
-        the number of 2D slices (or records) to skip.  
+        the number of 2D slices (or records) to skip.
         Records could be vertical levels of a 3D field, or different 2D fields, or both.
-    
+
     nk : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the depth dimension.  
-    
+        number of 2D slices (or records) to load in the depth dimension.
+
     nl : int, optional, default 1 [singleton]
-        number of 2D slices (or records) to load in the "record" dimension.  
-    
+        number of 2D slices (or records) to load in the "record" dimension.
+
     filetype : string, default '>f4'
         the file type, default is big endian (>) 32 bit float (f4)
         alternatively, ('<d') would be little endian (<) 64 bit float (d)
-        
+
     less_output : boolean, optional, default False
         A debugging flag.  False = less debugging output
-        
+
 
     Returns
     -------
@@ -597,21 +624,18 @@ def read_llc_to_faces(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         dimensions of each 2D slice of data_faces
         f1,f2: 3*llc x llc
         f3: llc x llc
-        4,f5: llc x 3*llc  
+        4,f5: llc x 3*llc
 
     """
-   
-    data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl, 
+
+    data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl,
                                     filetype = filetype, less_output=less_output)
 
     data_faces = llc_compact_to_faces(data_compact, less_output = less_output)
- 
+
     #data_tiles = read_llc_to_tiles(fdir,fname,llc=llc,nk=nk,nl=nl,skip=skip,
     #                               filetype=filetype)
 
     #data_faces = llc_tiles_to_faces(data_tiles, less_output = less_output)
 
     return data_faces
-
-
-
