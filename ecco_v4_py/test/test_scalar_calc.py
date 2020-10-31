@@ -9,7 +9,7 @@ import xarray as xr
 import pytest
 from ecco_v4_py import scalar_calc, get_llc_grid
 
-from .test_common import llc_mds_datadirs, get_test_ds
+from .test_common import all_mds_datadirs, get_test_ds
 
 def test_latitude_mask(get_test_ds):
     """run through lats, and ensure we're grabbing the closest
@@ -24,7 +24,7 @@ def test_latitude_mask(get_test_ds):
     dLat = 0.5 # is this robust?
     nx = 90
 
-    for lat in np.arange(-89,89,5):
+    for lat in np.arange(-89,89,10):
         print('lat: ',lat)
         maskC = scalar_calc.get_latitude_mask(lat,ds['YC'],grid)
 

@@ -39,7 +39,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             meta_common=dict(),
                             mds_datatype = '>f4',
                             llc_method = 'bigchunks',
-                            less_output=True):
+                            less_output=True,
+                            **kwargs):
 
     """
 
@@ -123,6 +124,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
     less_output : logical, optional
         if True (default), omit additional print statements
 
+    **kwargs: optional
+        extra inputs passed to xmitgcm.open_mdsdataset
+
     Returns
     =======
 
@@ -170,7 +174,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=True,
                                        llc_method = llc_method,
-                                       ignore_unknown_vars=True)
+                                       ignore_unknown_vars=True,
+                                       **kwargs)
 
     else:
         if not less_output:
@@ -191,7 +196,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=True,
                                            llc_method=llc_method,
-                                           ignore_unknown_vars=True)
+                                           ignore_unknown_vars=True,
+                                           **kwargs)
         else:
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 

@@ -21,6 +21,7 @@ def get_basin_mask(basin_name, mask,
                    basin_path=os.path.join('..','binary_data')):
     """Return mask for ocean basin.
     Note: This mirrors gcmfaces/ecco_v4/v4_basin.m
+    And this only works for the global LLC90 domain
 
     Parameters
     ----------
@@ -51,6 +52,8 @@ def get_basin_mask(basin_name, mask,
         mask with values at cell centers, 1's for denoted ocean basin
         dimensions are the same as input field
     """
+    if 'tile' not in mask.dims or len(mask.tile)!=13 or mask.shape[-1]!=90 or mask.shape[-2]!=90:
+        raise NotImplementedError("Basin masks only available for global LLC90 domain")
 
     if type(basin_name) is not list:
         basin_name = [basin_name]

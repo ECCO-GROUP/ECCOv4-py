@@ -283,7 +283,7 @@ def months2days(nmon=288, baseyear=1992, basemon=1):
 
 #%%
 
-def get_llc_grid(ds):
+def get_llc_grid(ds,domain='global'):
     """
     Define xgcm Grid object for the LLC grid
     See example usage in the xgcm documentation:
@@ -302,40 +302,62 @@ def get_llc_grid(ds):
 
     """
 
+    if 'domain' in ds.attrs:
+        domain = ds.attrs['domain']
 
-    # Establish grid topology
-    tile_connections = {'tile':  {
-            0: {'X': ((12, 'Y', False), (3, 'X', False)),
-                'Y': (None, (1, 'Y', False))},
-            1: {'X': ((11, 'Y', False), (4, 'X', False)),
-                'Y': ((0, 'Y', False), (2, 'Y', False))},
-            2: {'X': ((10, 'Y', False), (5, 'X', False)),
-                'Y': ((1, 'Y', False), (6, 'X', False))},
-            3: {'X': ((0, 'X', False), (9, 'Y', False)),
-                'Y': (None, (4, 'Y', False))},
-            4: {'X': ((1, 'X', False), (8, 'Y', False)),
-                'Y': ((3, 'Y', False), (5, 'Y', False))},
-            5: {'X': ((2, 'X', False), (7, 'Y', False)),
-                'Y': ((4, 'Y', False), (6, 'Y', False))},
-            6: {'X': ((2, 'Y', False), (7, 'X', False)),
-                'Y': ((5, 'Y', False), (10, 'X', False))},
-            7: {'X': ((6, 'X', False), (8, 'X', False)),
-                'Y': ((5, 'X', False), (10, 'Y', False))},
-            8: {'X': ((7, 'X', False), (9, 'X', False)),
-                'Y': ((4, 'X', False), (11, 'Y', False))},
-            9: {'X': ((8, 'X', False), None),
-                'Y': ((3, 'X', False), (12, 'Y', False))},
-            10: {'X': ((6, 'Y', False), (11, 'X', False)),
-                 'Y': ((7, 'Y', False), (2, 'X', False))},
-            11: {'X': ((10, 'X', False), (12, 'X', False)),
-                 'Y': ((8, 'Y', False), (1, 'X', False))},
-            12: {'X': ((11, 'X', False), None),
-                 'Y': ((9, 'Y', False), (0, 'X', False))}
-    }}
+    if domain == 'global':
+        # Establish grid topology
+        tile_connections = {'tile':  {
+                0: {'X': ((12, 'Y', False), (3, 'X', False)),
+                    'Y': (None, (1, 'Y', False))},
+                1: {'X': ((11, 'Y', False), (4, 'X', False)),
+                    'Y': ((0, 'Y', False), (2, 'Y', False))},
+                2: {'X': ((10, 'Y', False), (5, 'X', False)),
+                    'Y': ((1, 'Y', False), (6, 'X', False))},
+                3: {'X': ((0, 'X', False), (9, 'Y', False)),
+                    'Y': (None, (4, 'Y', False))},
+                4: {'X': ((1, 'X', False), (8, 'Y', False)),
+                    'Y': ((3, 'Y', False), (5, 'Y', False))},
+                5: {'X': ((2, 'X', False), (7, 'Y', False)),
+                    'Y': ((4, 'Y', False), (6, 'Y', False))},
+                6: {'X': ((2, 'Y', False), (7, 'X', False)),
+                    'Y': ((5, 'Y', False), (10, 'X', False))},
+                7: {'X': ((6, 'X', False), (8, 'X', False)),
+                    'Y': ((5, 'X', False), (10, 'Y', False))},
+                8: {'X': ((7, 'X', False), (9, 'X', False)),
+                    'Y': ((4, 'X', False), (11, 'Y', False))},
+                9: {'X': ((8, 'X', False), None),
+                    'Y': ((3, 'X', False), (12, 'Y', False))},
+                10: {'X': ((6, 'Y', False), (11, 'X', False)),
+                     'Y': ((7, 'Y', False), (2, 'X', False))},
+                11: {'X': ((10, 'X', False), (12, 'X', False)),
+                     'Y': ((8, 'Y', False), (1, 'X', False))},
+                12: {'X': ((11, 'X', False), None),
+                     'Y': ((9, 'Y', False), (0, 'X', False))}
+        }}
 
-    grid = xgcm.Grid(ds,
-            periodic=False,
-            face_connections=tile_connections
-    )
+        grid = xgcm.Grid(ds,
+                periodic=False,
+                face_connections=tile_connections
+        )
+    elif domain == 'aste':
+        tile_connections = {'tile':{
+                    0:{'X':((5,'Y',False),None),
+                       'Y':(None,(1,'Y',False))},
+                    1:{'X':((4,'Y',False),None),
+                       'Y':((0,'Y',False),(2,'X',False))},
+                    2:{'X':((1,'Y',False),(3,'X',False)),
+                       'Y':(None,(4,'X',False))},
+                    3:{'X':((2,'X',False),None),
+                       'Y':(None,None)},
+                    4:{'X':((2,'Y',False),(5,'X',False)),
+                       'Y':(None,(1,'X',False))},
+                    5:{'X':((4,'X',False),None),
+                       'Y':(None,(0,'X',False))}
+                   }}
+        grid = xgcm.Grid(ds,periodic=False,face_connections=tile_connections)
+    else:
+        raise TypeError(f'Domain {domain} not recognized')
+
 
     return grid

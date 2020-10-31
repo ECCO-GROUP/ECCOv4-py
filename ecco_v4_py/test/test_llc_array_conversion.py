@@ -7,7 +7,7 @@ import xarray as xr
 import pytest
 import ecco_v4_py as ecco
 
-from .test_common import llc_mds_datadirs,get_test_ds
+from .test_common import llc_mds_datadirs,get_global_ds
 
 # Define bin directory for test reading
 _PKG_DIR = Path(__file__).resolve().parent.parent.parent
@@ -91,13 +91,13 @@ def test_convert_tiles_to_compact(llc_mds_datadirs,mydir,fname,nk,nl,skip,
 @pytest.mark.parametrize("grid_da",[None,True])
 @pytest.mark.parametrize("var_type",['c','w','s','z'])
 @pytest.mark.parametrize("use_xmitgcm",[True,False])
-def test_convert_tiles_to_xda(llc_mds_datadirs,get_test_ds,mydir,fname,nk,nl, skip,
+def test_convert_tiles_to_xda(llc_mds_datadirs,get_global_ds,mydir,fname,nk,nl, skip,
                               grid_da, var_type, use_xmitgcm):
 
     if mydir == 'xmitgcm':
         mydir,_ = llc_mds_datadirs
 
-    ds = get_test_ds
+    ds = get_global_ds
 
     data_tiles = ecco.read_llc_to_tiles(fdir=mydir,
                                 fname=fname,

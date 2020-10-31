@@ -269,6 +269,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)
+        label=''
+        if 'long_name' in data.attrs:
+            label = data.long_name
+        elif data.name is not None:
+            label = data.name
+        if 'units' in data.attrs:
+            label+= ' ['+data.units+']'
+        cbar.set_label(label)
 
     #%%
     return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection
@@ -281,7 +289,7 @@ def plot_pstereo(xx,yy, data,
                  cmin, cmax, ax,
                  plot_type = 'pcolormesh',
                  show_colorbar=False,
-                 circle_boundary = False, 
+                 circle_boundary = False,
                  grid_linewidth = 1,
                  grid_linestyle = '--',
                  cmap=None,
@@ -303,11 +311,11 @@ def plot_pstereo(xx,yy, data,
 
 
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
-        ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
+        ax.set_extent([-179.5, 180, lat_lim, 90], ccrs.PlateCarree())
         if not less_output:
             print('North Polar Projection')
     elif isinstance(ax.projection, ccrs.SouthPolarStereo):
-        ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
+        ax.set_extent([-179.5, 180, -90, lat_lim], ccrs.PlateCarree())
         if not less_output:
             print('South Polar Projection')
     else:
@@ -512,7 +520,7 @@ def _create_projection_axis(projection_type,
 
     # Build dictionary for projection arguments
     proj_args={}
-    if user_lon_0 is not None and projection_type != 'stereo':
+    if user_lon_0 is not None:
         proj_args['central_longitude']=user_lon_0
     if user_lat_0 is not None and projection_type != 'stereo':
         proj_args['central_latitude']=user_lat_0
