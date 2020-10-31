@@ -4,9 +4,8 @@ Some helper functions for plotting
 
 import numpy as np
 import xarray as xr
-import dask
 
-def assign_colormap(fld,user_cmap):
+def assign_colormap(fld,user_cmap=None):
     """assign a default colormap based on input field
     following xarray defaults
 
@@ -19,9 +18,9 @@ def assign_colormap(fld,user_cmap):
     fld : xarray.DataArray or numpy.ndarray
         must be in tiled format
 
-    user_cmap : str or None
+    user_cmap : str or None, optional
         if user_cmap is specified, use this
-        will be None if not specified, and default used
+        None if not specified, and default cmaps selected
 
     Returns
     -------

@@ -34,7 +34,7 @@ from .ecco_utils import sort_all_attrs, sort_attrs
 
 
 def load_ecco_vars_from_mds(mds_var_dir,
-                            mds_grid_dir,
+                            mds_grid_dir=None,
                             mds_files=None,
                             vars_to_load = 'all',
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
@@ -46,7 +46,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             global_metadata = [],
                             mds_datatype = '>f4',
                             llc_method = 'bigchunks',
-                            less_output = True):
+                            less_output=True,
+                            **kwargs):
 
     """
 
@@ -77,10 +78,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
     mds_var_dir : str
         directory where the .data/.meta files are stored
 
-
-    mds_grid_dir : str
+    mds_grid_dir : str, optional, default 'None'
         the directory where the model binary (.data) grid fields
-        are stored
+        are stored, default is same directory as mds_var_dir
 
     mds_files   : str or list or None, optional
         either: a string or list of file names to load,
@@ -134,6 +134,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
     less_output : logical, optional
         if True (default), omit additional print statements
 
+    **kwargs: optional
+        extra inputs passed to xmitgcm.open_mdsdataset
+
     Returns
     =======
 
@@ -170,9 +173,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
             print(mds_var_dir)
             print(mds_grid_dir)
 
-        print('read bin_llc:')
-        print(mds_var_dir)
-        print(mds_grid_dir)
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                        grid_dir = mds_grid_dir,
                                        read_grid = True,
@@ -184,7 +184,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        default_dtype = np.dtype(mds_datatype),
                                        grid_vars_to_coords=False,
                                        llc_method = llc_method,
-                                       ignore_unknown_vars=False)
+                                       ignore_unknown_vars=False,
+                                       **kwargs)
+
     else:
         if not less_output:
             print ('loading subset of  model time steps')
@@ -204,7 +206,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            default_dtype = np.dtype(mds_datatype),
                                            grid_vars_to_coords=False,
                                            llc_method=llc_method,
-                                           ignore_unknown_vars=False)
+                                           ignore_unknown_vars=False,
+                                           **kwargs)
         else:
             print('model time steps to load ', model_time_steps_to_load)
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
@@ -250,7 +253,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
             if ecco_var not in vars_to_load:
                 vars_ignored.append(ecco_var)
-                ecco_dataset = ecco_dataset.drop(ecco_var)
+                ecco_dataset = ecco_dataset.drop_vars(ecco_var)
 
             else:
                 vars_loaded.append(ecco_var)
@@ -302,29 +305,30 @@ def load_ecco_vars_from_mds(mds_var_dir,
         if isinstance(ecco_dataset.time.values, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
-            ecco_dataset.time.values = center_times
+            ecco_dataset['time'].values = center_times
 
         elif isinstance(center_times, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
             center_times = np.array(center_times)
-            ecco_dataset.time.values[:] = center_times
+            ecco_dataset['time'].values[:] = center_times
 
         elif isinstance(ecco_dataset.time.values, np.ndarray) and \
               isinstance(center_times, np.ndarray):
             if not less_output:
                 print ('replacing time.values....')
             ecco_dataset = ecco_dataset.assign_coords({'time': center_times})
+            #ecco_dataset['time'] = center_times
 
 
     # Drop mask Ctrl fields
     if 'maskCtrlS' in list(ecco_dataset.data_vars):
-        ecco_dataset=ecco_dataset.drop('maskCtrlS')
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlS')
     if 'maskCtrlW' in list(ecco_dataset.data_vars):
-        ecco_dataset=ecco_dataset.drop('maskCtrlW')
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlW')
     if 'maskCtrlC' in list(ecco_dataset.data_vars):
-        ecco_dataset=ecco_dataset.drop('maskCtrlC')
-
+        ecco_dataset=ecco_dataset.drop_vars('maskCtrlC')
+        
     # determine all of the dimensions used by data variables
     all_var_dims = set([])
     for ecco_var in ecco_dataset.data_vars:
@@ -459,7 +463,7 @@ def read_llc_to_compact(fdir, fname, llc=90, skip=0, nk=1, nl=1,
 
 #%%
 def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
-                       filetype = '>f', less_output = False,
+              	      filetype = '>f', less_output = False,
                       use_xmitgcm=False):
     """
 
@@ -543,36 +547,22 @@ def read_llc_to_tiles(fdir, fname, llc=90, skip=0, nk=1, nl=1,
         # Reads data into dask array as numpy memmap
         # [Nrecs x Nz x Ntiles x llc x llc]
         data_tiles = xmitgcm.utils.read_3d_llc_data(full_filename, nx=llc, nz=nk,
-                                                    nrecs=nrecs, dtype=filetype)
+                                                    nrecs=nrecs, dtype=filetype,
+                                                    memmap=False)
 
         # Handle cases of single or multiple records, and skip>0
         if skip>0:
-            if nl==1:
-                # Only want 1 record
-                # extra logic because xmitgcm grabs 3D data as a single chunk
-                if nk > 1:
-                    data_tiles = np.squeeze(data_tiles[:,skip,...])
-                else:
-                    data_tiles = data_tiles[skip,...]
-
+            if nk>1 and nl>1:
+                data_tiles = np.reshape(data_tiles,(nk*nrecs,)+data_tiles.shape[-3:])
+                data_tiles = data_tiles[skip:skip+nl*nk]
+                data_tiles = np.reshape(data_tiles,(nl,nk)+data_tiles.shape[-3:])
             else:
-                # Want more than one record
-                # extra logic because xmitgcm grabs 3D data as a single chunk
-                if nk > 1:
-                    data_tiles = np.squeeze(data_tiles[:,skip:skip+nl,...])
-                else:
-                    data_tiles = data_tiles[skip:skip+nl,...]
-
-                    # to make consistent with default, add singleton vertical dimension...
-                    data_tiles = np.expand_dims(data_tiles,axis=1)
-        else:
-            data_tiles=np.squeeze(data_tiles)
-
+                data_tiles = data_tiles[skip:skip+nl,...]
 
     else:
 
         data_compact = read_llc_to_compact(fdir, fname, llc=llc, skip=skip, nk=nk, nl=nl,
-                           filetype = filetype, less_output=less_output)
+           				    filetype = filetype, less_output=less_output)
 
         data_tiles   = llc_compact_to_tiles(data_compact, less_output=less_output)
 

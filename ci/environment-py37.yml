@@ -10,7 +10,6 @@ dependencies:
   - scipy
   - pytest
   - future
-  - xmitgcm
   - xgcm>=0.5.0
   - pytest 
   - codecov
@@ -20,3 +19,6 @@ dependencies:
   - docrep
   - fsspec
   - aiohttp
+  - pip
+  - pip:
+      - git+https://github.com/MITgcm/xmitgcm.git
