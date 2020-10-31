@@ -7,7 +7,7 @@ def README():
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
-  version = '1.2.2',
+  version = '1.4.0',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty',
   author_email = 'ian.fenty@jpl.nasa.gov',

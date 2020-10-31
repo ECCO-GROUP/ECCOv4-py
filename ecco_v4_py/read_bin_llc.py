@@ -40,6 +40,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                             model_time_steps_to_load = 'all',
                             output_freq_code = '',
+                            drop_unused_coords=True,
                             coordinate_metadata = [],
                             variable_metadata = [],
                             global_metadata = [],
@@ -106,9 +107,12 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ('AVG' or 'SNAPSHOT') + '_' + ('DAY','WEEK','MON', or 'YEAR')
 
         valid options :
-
         - AVG_DAY, AVG_WEEK, AVG_MON, AVG_YEAR
         - SNAPSHOT_DAY, SNAPSHOT_WEEK, SNAPSHOT_MON, SNAPSHOT_YEAR
+
+    drop_unused_coords : boolean, optional, default True
+        drop coordinates that have dimensions that do not appear in any
+        data variables
 
     coordinate_metadata : list, option, default empty list
         tuples with information that is specific to coordinate fields
@@ -178,7 +182,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                        ref_date = ref_date,
                                        delta_t  = delta_t,
                                        default_dtype = np.dtype(mds_datatype),
-                                       grid_vars_to_coords=True,
+                                       grid_vars_to_coords=False,
                                        llc_method = llc_method,
                                        ignore_unknown_vars=False)
     else:
@@ -198,7 +202,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                                            ref_date = ref_date,
                                            delta_t = delta_t,
                                            default_dtype = np.dtype(mds_datatype),
-                                           grid_vars_to_coords=True,
+                                           grid_vars_to_coords=False,
                                            llc_method=llc_method,
                                            ignore_unknown_vars=False)
         else:
@@ -212,32 +216,22 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     if 'iter' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
-        #xmitgcm aleardy has set the long_name for timestep.
-        #ecco_dataset.timestep.attrs['long_name'] = 'model time step'
-    # if vars_to_load is an empty list, keep all variables.  otherwise,
-    # only keep those variables in the vars_to_load list.
+
 
     # A bunch of grid geometry fields that aren't actually coordinates in
     # any sense are loaded by default as coordinates. We'll kick them all
     # down to data variables and then promote a few that are actually
     # coordinates.
-    ecco_dataset = ecco_dataset.reset_coords()
-    if not less_output:
-        print('after coordinate reset')
-        print(ecco_dataset)
 
-    all_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
-    dataset_coords = []
-    for legal_coord in all_legal_coords:
+    # Promote some variables as CF convention compliant coordinates.
+    CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
+    for legal_coord in CF_legal_coords:
         if legal_coord in list(ecco_dataset.data_vars):
-            dataset_coords.append(legal_coord)
+            ecco_dataset = ecco_dataset.set_coords(legal_coord)
 
-    ecco_dataset = ecco_dataset.set_coords(dataset_coords)
-    if not less_output:
-        print(dataset_coords)
-        print('after coordinate promotion')
-        print(ecco_dataset)
 
+    # if vars_to_load is an empty list, keep all variables.  otherwise,
+    # only keep those variables in the vars_to_load list.
     vars_ignored = []
     vars_loaded = []
 
@@ -278,7 +272,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     ecco_dataset = ecco_dataset.sel(tile = tiles_to_load)
 
-    #ecco_dataset = ecco_dataset.isel(time=0)
+    # add time bounds for datasets with time-averaged quantities
     if not less_output:
         print ('creating time bounds .... ')
 
@@ -320,7 +314,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
               isinstance(center_times, np.ndarray):
             if not less_output:
                 print ('replacing time.values....')
-                ecco_dataset = ecco_dataset.assign_coords({'time': center_times})
+            ecco_dataset = ecco_dataset.assign_coords({'time': center_times})
+
 
     # Drop mask Ctrl fields
     if 'maskCtrlS' in list(ecco_dataset.data_vars):
@@ -330,12 +325,22 @@ def load_ecco_vars_from_mds(mds_var_dir,
     if 'maskCtrlC' in list(ecco_dataset.data_vars):
         ecco_dataset=ecco_dataset.drop('maskCtrlC')
 
+    # determine all of the dimensions used by data variables
+    all_var_dims = set([])
+    for ecco_var in ecco_dataset.data_vars:
+        all_var_dims = set.union(all_var_dims, set(ecco_dataset[ecco_var].dims))
 
-    ## update global, coordinate, and variable metadata
+    # drop coordinates that do not appear in any data variable
+    drop_unused_coords=False
+    if drop_unused_coords:
+        for coord in list(ecco_dataset.coords):
+            coord_dims =  set(ecco_dataset[coord].dims)
+            if len(all_var_dims.intersection(coord_dims)) == 0:
+                ecco_dataset = ecco_dataset.drop(coord)
 
-    print(ecco_dataset)
-    # first, drop whatever is in 'standard_name' because those fields
-    # are generally not CF compliant.
+    # update global, coordinate, and variable metadata
+    # ... first, drop whatever is in 'standard_name' because those fields
+    #     are generally not CF compliant.
     for ecco_var in ecco_dataset.data_vars.keys():
         if 'standard_name' in ecco_dataset[ecco_var].attrs.keys():
             ecco_dataset[ecco_var].attrs.pop('standard_name')
@@ -355,28 +360,31 @@ def load_ecco_vars_from_mds(mds_var_dir,
     # update global metadata
     if len(global_metadata) > 0:
         # possible keys
-        keys_3D = ['k','k_l','k_u','k_p1']
+        keys_2D = set(['i','j','i_g','j_g'])
+        keys_3D = set(['k','k_l','k_u','k_p1'])
 
-
-        # if any of these keys are present in the dimension field, then the
-        # dataset is 3D
-        if sum([(lambda x: x in list(ecco_dataset.dims))(x) for x in keys_3D]) > 0:
+        if len(all_var_dims.intersection(keys_3D)) > 0:
             dataset_dim = '3D'
-        else:
+        elif len(all_var_dims.intersection(keys_2D)) > 0:
             dataset_dim = '2D'
+        else:
+            #print('no 2D or 3D dimensions')
+            dataset_dim = '1D'
 
+        #print('dataset dim: ', dataset_dim)
         # some metadata is 3D dataset specific.
         ecco_dataset = \
             add_global_metadata(global_metadata, ecco_dataset, dataset_dim,\
                                 less_output=less_output)
 
-    # current time and date
+    # add current time and date
     current_time = datetime.datetime.now().isoformat()[0:19]
     ecco_dataset.attrs['date_created'] = current_time
     ecco_dataset.attrs['date_modified'] = current_time
     ecco_dataset.attrs['date_metadata_modified'] = current_time
     ecco_dataset.attrs['date_issued'] = current_time
 
+    # alaphbetically sort global attributes
     ecco_dataset.attrs = sort_attrs(ecco_dataset.attrs)
 
     return ecco_dataset
