@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ECCO v4 Python: Utililites
@@ -15,6 +15,193 @@ import xarray as xr
 import datetime
 import dateutil
 import xgcm
+from pprint import pprint
+from collections import OrderedDict
+
+def find_metadata_in_json_dictionary(var, key, metadata, print_output=False):
+    for m in metadata:
+        if m[key] == var:
+            if print_output:
+                print(m)
+            return m
+    return []
+
+
+def add_global_metadata(metadata, G, dataset_dim, less_output=True):
+
+    if not less_output:
+        print('adding global metadata')
+        pprint(metadata)
+
+    # loop through pairs
+    for mc in metadata:
+        # get name and type
+        mname = mc['name']
+        mtype = mc['type']
+
+        # by default add the key/pair
+        add_field = True
+
+        # unless it has as specific 'grid_dimension' associated
+        # with it. If so, then only add it if this dataset indicates
+        # it is necessary.  for example, don't provide geospatial
+        # depth information for 2D datasets
+        if 'grid_dimension' in mc.keys():
+            gd = mc['grid_dimension']
+
+            if dataset_dim not in gd:
+                add_field = False
+
+        # if we do add the field, we have to convert to the
+        # appropriate data type
+        if add_field == True:
+            if mtype == 's':
+                G.attrs[mname] = mc['value']
+            elif mtype == 'f':
+                G.attrs[mname] = float(mc['value'])
+            elif mtype == 'i':
+                G.attrs[mname] = np.int32(mc['value'])
+            else:
+                print('INVALID MTYPE ! ', mtype)
+        else:
+            print('\t> not adding ', mc)
+
+    return G
+
+
+def add_coordinate_metadata(metadata_dict, G):
+    # G : dataset
+    # metadata_dict: dictionary of metadata records with name as a key
+    keys_to_exclude = ['grid_dimension','name']
+
+    for coord in G.coords:
+
+        print('\n### ', coord)
+        # look for coordinate in metadat dictionary
+        mv = find_metadata_in_json_dictionary(coord, 'name', metadata_dict)
+
+        if len(mv) > 0:
+            # if metadata for this coordinate is present
+            # loop through all of the keys and if it is not
+            # on the excluded list, add it
+            for m_key in sorted(mv.keys()):
+                if m_key not in keys_to_exclude:
+                    G[coord].attrs[m_key] = mv[m_key]
+                    print('\t',m_key, ':', mv[m_key])
+        else:
+            print('...... no metadata found in dictionary')
+
+    return G
+
+
+def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
+
+    # ADD VARIABLE METADATA  & SAVE GCMD KEYWORDS
+    keys_to_exclude = ['grid_dimension','name', 'GCMD_keywords', "variable_rename",\
+                       'comments_1', 'comments_2', 'internal_note','internal note',\
+                       'grid_location']
+
+    for var in G.data_vars:
+        print('\n### ', var)
+        mv = find_metadata_in_json_dictionary(var, 'name', variable_metadata_dict)
+
+        if len(mv) == 0:
+            print('...... no metadata found in dictionary')
+
+        else:
+            # loop through each key, add if not on exclude list
+            for m_key in sorted(mv.keys()):
+                if m_key not in keys_to_exclude:
+                    G[var].attrs[m_key] = mv[m_key]
+                    print('\t',m_key, ':', mv[m_key])
+
+            # merge the two comment fields (both *MUST* be present)
+            # if they are empty then don't merge
+            if len(mv['comments_1']) > 0 and len(mv['comments_2']) > 0:
+                if mv['comments_1'][-1] == '.':
+                    G[var].attrs['comment'] =  mv['comments_1'] + ' ' + mv['comments_2']
+                else:
+                    G[var].attrs['comment'] =  mv['comments_1'] + '. ' + mv['comments_2']
+
+                print('\t','comment', ':', G[var].attrs['comment'])
+            else:
+                print('comment fields are empty')
+
+            # append GCMD keywords, if present
+            if 'GCMD_keywords' in mv.keys():
+               # Get the GCMD keywords, these will be added into the global
+               # attributes
+               gcmd_keywords = mv['GCMD_keywords'].split(',')
+
+               print('\t','GCMD keywords : ', gcmd_keywords)
+
+               for gcmd_keyword in gcmd_keywords:
+                   grouping_gcmd_keywords.append(gcmd_keyword.strip())
+
+    return G, grouping_gcmd_keywords
+
+def sort_attrs(attrs):
+    """
+
+    Alphabetically sort all keys in a dictionary
+
+    Parameters
+    ----------
+    attrs : dict
+        a dictionary of key/value pairs
+
+    Returns
+    -------
+    attrs : dict
+        a dictionary of key/value pairs sorted alphabetically by key
+
+    """
+
+    od = OrderedDict()
+
+    keys = sorted(list(attrs.keys()),key=str.casefold)
+
+    for k in keys:
+        od[k] = attrs[k]
+
+    return od
+
+
+def sort_all_attrs(ecco_dataset, print_output=False):
+    """
+
+    Alphabetically sort all attributes in a ecco_dataset object (ecco_dataset)
+    including the attributes of coordinates, data variables,
+    and the global attributes.
+
+    Parameters
+    ----------
+    ecco_dataset : xarray Dataset
+        an xarray dataset
+
+    Returns
+    -------
+    ecco_dataset : xarray Dataset
+        an xarray dataset with all attributes sorted alphabetically
+
+    """
+
+    for coord in list(ecco_dataset.coords):
+        if print_output:
+            print(coord)
+        new_attrs = sort_attrs(ecco_dataset[coord].attrs)
+        ecco_dataset[coord].attrs = new_attrs
+
+    for dv in list(ecco_dataset.data_vars):
+        if print_output:
+            print(dv)
+        new_attrs = sort_attrs(ecco_dataset[dv].attrs)
+        ecco_dataset[dv].attrs = new_attrs
+
+    new_attrs = sort_attrs(ecco_dataset.attrs)
+    ecco_dataset.attrs = new_attrs
+
+    return ecco_dataset
 
 
 def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
@@ -174,7 +361,7 @@ def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
     Parameters
     ----------
     dt64 : xarray DataArray, np.ndarray, list of, or single numpy.datetime64
-        a datetime64 object
+        datetime64 object
 
     Returns
     -------

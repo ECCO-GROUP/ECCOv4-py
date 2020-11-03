@@ -15,6 +15,12 @@ from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64
 from .ecco_utils import minimal_metadata
 from .ecco_utils import months2days
 from .ecco_utils import get_llc_grid
+from .ecco_utils import find_metadata_in_json_dictionary
+from .ecco_utils import add_global_metadata
+from .ecco_utils import add_coordinate_metadata
+from .ecco_utils import add_variable_metadata
+from .ecco_utils import sort_attrs
+from .ecco_utils import sort_all_attrs
 
 from .get_basin import get_basin_mask, get_available_basin_names
 
@@ -39,7 +45,7 @@ from .netcdf_product_generation import create_nc_variable_files_on_regular_grid_
 from .netcdf_product_generation import update_ecco_dataset_geospatial_metadata
 from .netcdf_product_generation import update_ecco_dataset_temporal_coverage_metadata
 
-from .read_bin_llc import read_llc_to_tiles 
+from .read_bin_llc import read_llc_to_tiles
 from .read_bin_llc import read_llc_to_compact
 from .read_bin_llc import read_llc_to_faces
 from .read_bin_llc import load_ecco_vars_from_mds
@@ -66,15 +72,15 @@ from ecco_v4_py import vector_calc
 __all__ = ['calc_meridional_trsp',
            'calc_section_trsp',
            'calc_stf',
-           'ecco_utils', 
+           'ecco_utils',
            'get_section_masks',
-           'llc_array_conversion', 
+           'llc_array_conversion',
            'netcdf_product_generation',
            'read_bin_llc',
-           'read_bin_gen', 
-           'resample_to_latlon', 
+           'read_bin_gen',
+           'resample_to_latlon',
            'scalar_calc',
-           'tile_io', 
+           'tile_io',
            'tile_plot',
            'tile_plot_proj',
            'vector_calc']
