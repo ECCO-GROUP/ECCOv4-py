@@ -34,6 +34,7 @@ from .llc_array_conversion  import llc_compact_to_tiles
 from .llc_array_conversion  import llc_tiles_to_compact
 from .llc_array_conversion  import llc_compact_to_faces
 from .llc_array_conversion  import llc_faces_to_tiles
+from .llc_array_conversion  import llc_ig_jg_faces_to_tiles
 from .llc_array_conversion  import llc_tiles_to_faces
 from .llc_array_conversion  import llc_faces_to_compact
 from .llc_array_conversion  import llc_tiles_to_xda

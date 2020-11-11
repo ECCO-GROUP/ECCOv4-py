@@ -69,14 +69,15 @@ def add_global_metadata(metadata, G, dataset_dim, less_output=True):
     return G
 
 
-def add_coordinate_metadata(metadata_dict, G):
+def add_coordinate_metadata(metadata_dict, G, less_output=True):
     # G : dataset
     # metadata_dict: dictionary of metadata records with name as a key
     keys_to_exclude = ['grid_dimension','name']
 
     for coord in G.coords:
 
-        print('\n### ', coord)
+        if not less_output:
+            print('\n### ', coord)
         # look for coordinate in metadat dictionary
         mv = find_metadata_in_json_dictionary(coord, 'name', metadata_dict)
 
@@ -87,14 +88,17 @@ def add_coordinate_metadata(metadata_dict, G):
             for m_key in sorted(mv.keys()):
                 if m_key not in keys_to_exclude:
                     G[coord].attrs[m_key] = mv[m_key]
-                    print('\t',m_key, ':', mv[m_key])
+
+                    if not less_output:
+                        print('\t',m_key, ':', mv[m_key])
         else:
             print('...... no metadata found in dictionary')
 
     return G
 
 
-def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
+def add_variable_metadata(variable_metadata_dict, G, \
+                          grouping_gcmd_keywords=[], less_output=True):
 
     # ADD VARIABLE METADATA  & SAVE GCMD KEYWORDS
     keys_to_exclude = ['grid_dimension','name', 'GCMD_keywords', "variable_rename",\
@@ -102,7 +106,9 @@ def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
                        'grid_location']
 
     for var in G.data_vars:
-        print('\n### ', var)
+        if not less_output:
+            print('\n### ', var)
+
         mv = find_metadata_in_json_dictionary(var, 'name', variable_metadata_dict)
 
         if len(mv) == 0:
@@ -113,7 +119,8 @@ def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
             for m_key in sorted(mv.keys()):
                 if m_key not in keys_to_exclude:
                     G[var].attrs[m_key] = mv[m_key]
-                    print('\t',m_key, ':', mv[m_key])
+                    if not less_output:
+                        print('\t',m_key, ':', mv[m_key])
 
             # merge the two comment fields (both *MUST* be present)
             # if they are empty then don't merge
@@ -123,9 +130,11 @@ def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
                 else:
                     G[var].attrs['comment'] =  mv['comments_1'] + '. ' + mv['comments_2']
 
-                print('\t','comment', ':', G[var].attrs['comment'])
+                if not less_output:
+                    print('\t','comment', ':', G[var].attrs['comment'])
             else:
-                print('comment fields are empty')
+                if not less_output:
+                    print('comment fields are empty')
 
             # append GCMD keywords, if present
             if 'GCMD_keywords' in mv.keys():
@@ -133,12 +142,14 @@ def add_variable_metadata(variable_metadata_dict, G, grouping_gcmd_keywords=[]):
                # attributes
                gcmd_keywords = mv['GCMD_keywords'].split(',')
 
-               print('\t','GCMD keywords : ', gcmd_keywords)
+               if not less_output:
+                   print('\t','GCMD keywords : ', gcmd_keywords)
 
                for gcmd_keyword in gcmd_keywords:
                    grouping_gcmd_keywords.append(gcmd_keyword.strip())
 
     return G, grouping_gcmd_keywords
+
 
 def sort_attrs(attrs):
     """

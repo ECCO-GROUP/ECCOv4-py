@@ -324,7 +324,6 @@ def llc_faces_to_tiles(F, less_output=False):
 
     # final dimension of face 1 is always of length llc
     ni_3 = f3.shape[-1]
-    nj_3 = f3.shape[-2]
 
     llc = ni_3 # default
     #
@@ -410,6 +409,147 @@ def llc_faces_to_tiles(F, less_output=False):
                 data_tiles[l,k,12,:] = f5[l,k,:,llc*2:]
 
     return data_tiles
+
+#%%
+def llc_ig_jg_faces_to_tiles(F, less_output=False):
+    """
+
+    Converts a dictionary, F, containing 5 lat-lon-cap faces into 13 tiles
+    of dimension nl x nk x llc+1 x llc+1 x nk.
+
+    ig_jg_faces arrays include one extra 'row' and 'column'
+    for the 'north' and 'east' points of the array.
+
+    Tiles 1-6 and 8-13 are oriented approximately lat-lon
+    while tile 7 is the Arctic 'cap'
+
+    Parameters
+    ----------
+    F : dict
+        a dictionary containing the five lat-lon-cap face arrays that include
+        one extra 'row' and 'column' for the 'north' and 'east' points
+
+        F[n] is a numpy array of face n, n in [1..5]
+
+    less_output : boolean, optional, default False
+        A debugging flag.  False = less debugging output
+
+    Returns
+    -------
+    data_tiles : ndarray
+        an array of dimension 13 x nl x nk x llc+1 x llc+1,
+
+        Each 2D slice is dimension 13 x llc+1 x llc+1
+
+    Note
+    ----
+    If dimensions nl or nk are singular, they are not included
+    as dimensions of data_tiles
+
+
+    """
+
+    # pull out the five face arrays
+    f1 = F[1]
+    f2 = F[2]
+    f3 = F[3]
+    f4 = F[4]
+    f5 = F[5]
+
+    dims = f3.shape
+    num_dims = len(dims)
+
+    # dtype of compact array
+    arr_dtype = f1.dtype
+
+    # final dimension of face 1 length llc +1
+    ni_3 = f3.shape[-1]
+
+    llc = ni_3 -1 #1 is subtracted because array has extra north and east points
+    #
+
+    if num_dims == 2: # we have a single 2D slices (y, x)
+        data_tiles = np.zeros((13, llc+1, llc+1), dtype=arr_dtype)
+
+
+    elif num_dims == 3: # we have 3D slices (time or depth, y, x)
+        nk = dims[0]
+        data_tiles = np.zeros((nk, 13, llc+1, llc+1), dtype=arr_dtype)
+
+
+    elif num_dims == 4: # we have a 4D slice (time or depth, time or depth, y, x)
+        nl = dims[0]
+        nk = dims[1]
+
+        data_tiles = np.zeros((nl, nk, 13, llc+1, llc+1), dtype=arr_dtype)
+
+    else:
+        print ('llc_faces_to_tiles: can only handle face arrays that have 2, 3, or 4 dimensions!')
+        return []
+
+    # llc is the length of the second dimension
+    if not less_output:
+        print ('llc_faces_to_tiles: data_tiles shape ', data_tiles.shape)
+        print ('llc_faces_to_tiles: data_tiles dtype ', data_tiles.dtype)
+
+
+    # map the data from the faces format to the 13 tile arrays
+
+    # -- 2D case
+    if num_dims == 2:
+        data_tiles[0,:]  = f1[llc*0:llc*1+1,:]
+        data_tiles[1,:]  = f1[llc*1:llc*2+1,:]
+        data_tiles[2,:]  = f1[llc*2:,:]
+        data_tiles[3,:]  = f2[llc*0:llc*1+1,:]
+        data_tiles[4,:]  = f2[llc*1:llc*2+1,:]
+        data_tiles[5,:]  = f2[llc*2:,:]
+        data_tiles[6,:]  = f3
+        data_tiles[7,:]  = f4[:,llc*0:llc*1+1]
+        data_tiles[8,:]  = f4[:,llc*1:llc*2+1]
+        data_tiles[9,:]  = f4[:,llc*2:]
+        data_tiles[10,:] = f5[:,llc*0:llc*1+1]
+        data_tiles[11,:] = f5[:,llc*1:llc*2+1]
+        data_tiles[12,:] = f5[:,llc*2:]
+
+    # -- 3D case
+    if num_dims == 3:
+        # loop over k
+        for k in range(nk):
+            data_tiles[k,0,:]  = f1[k,llc*0:llc*1+1,:]
+            data_tiles[k,1,:]  = f1[k,llc*1:llc*2+1,:]
+            data_tiles[k,2,:]  = f1[k,llc*2:,:]
+            data_tiles[k,3,:]  = f2[k,llc*0:llc*1+1,:]
+            data_tiles[k,4,:]  = f2[k,llc*1:llc*2+1,:]
+            data_tiles[k,5,:]  = f2[k,llc*2:,:]
+            data_tiles[k,6,:]  = f3[k,:]
+            data_tiles[k,7,:]  = f4[k,:,llc*0:llc*1+1]
+            data_tiles[k,8,:]  = f4[k,:,llc*1:llc*2+1]
+            data_tiles[k,9,:]  = f4[k,:,llc*2:]
+            data_tiles[k,10,:] = f5[k,:,llc*0:llc*1+1]
+            data_tiles[k,11,:] = f5[k,:,llc*1:llc*2+1]
+            data_tiles[k,12,:] = f5[k,:,llc*2:]
+
+    # -- 4D case
+    if num_dims == 4:
+        #loop over l and k
+        for l in range(nl):
+            for k in range(nk):
+                data_tiles[l,k,0,:]  = f1[l,k,llc*0:llc*1+1,:]
+                data_tiles[l,k,1,:]  = f1[l,k,llc*1:llc*2+1,:]
+                data_tiles[l,k,2,:]  = f1[l,k,llc*2:,:]
+                data_tiles[l,k,3,:]  = f2[l,k,llc*0:llc*1+1,:]
+                data_tiles[l,k,4,:]  = f2[l,k,llc*1:llc*2+1,:]
+                data_tiles[l,k,5,:]  = f2[l,k,llc*2:,:]
+                data_tiles[l,k,6,:]  = f3[l,k,:]
+                data_tiles[l,k,7,:]  = f4[l,k,:,llc*0:llc*1+1]
+                data_tiles[l,k,8,:]  = f4[l,k,:,llc*1:llc*2+1]
+                data_tiles[l,k,9,:]  = f4[l,k,:,llc*2:]
+                data_tiles[l,k,10,:] = f5[l,k,:,llc*0:llc*1+1]
+                data_tiles[l,k,11,:] = f5[l,k,:,llc*1:llc*2+1]
+                data_tiles[l,k,12,:] = f5[l,k,:,llc*2:]
+
+    return data_tiles
+
 
 
 
