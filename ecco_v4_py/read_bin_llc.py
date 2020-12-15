@@ -45,6 +45,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             coordinate_metadata = [],
                             variable_metadata = [],
                             global_metadata = [],
+                            cell_bounds = None,
                             mds_datatype = '>f4',
                             llc_method = 'bigchunks',
                             less_output=True,
@@ -127,6 +128,11 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     global_metadata : list, option, default empty list
         tuples with global metadata information
+
+    cell_bounds: a DataSet object, optional, default None
+        DataSet object with two DataArrays, XC_bnds, YC_bnds
+        If passed, the auxillary XC_bnds and YC_bnds coordinates are
+        added
 
     mds_datatype : string, optional, default '>f4'
         code indicating what type of field to load if the xmitgcm cannot
@@ -217,6 +223,12 @@ def load_ecco_vars_from_mds(mds_var_dir,
             print('model time steps to load ', model_time_steps_to_load)
             raise TypeError('not a valid model_time_steps_to_load.  must be "all", an "int", or a list of "int"')
 
+    if isinstance(cell_bounds, xr.core.dataset.Dataset):
+        if 'XC_bnds' in cell_bounds.data_vars:
+            ecco_dataset = ecco_dataset.assign_coords({"XC_bnds": (("tile","j","i","nb"), cell_bounds['XC_bnds'])})
+        if 'YC_bnds' in cell_bounds.data_vars:
+            ecco_dataset = ecco_dataset.assign_coords({"YC_bnds": (("tile","j","i","nb"), cell_bounds['YC_bnds'])})
+
     # replace the xmitgcm coordinate name of 'FACE' with 'TILE'
     if 'face' in ecco_dataset.coords.keys():
         ecco_dataset = ecco_dataset.rename({'face': 'tile'})
@@ -233,7 +245,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
         # coordinates.
 
         # Promote some variables as CF convention compliant coordinates.
-        CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl']
+        CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl','time']
         for legal_coord in CF_legal_coords:
             if legal_coord in list(ecco_dataset.data_vars):
                 ecco_dataset = ecco_dataset.set_coords(legal_coord)
@@ -340,12 +352,9 @@ def load_ecco_vars_from_mds(mds_var_dir,
     for ecco_var in ecco_dataset.data_vars:
         all_var_dims = set.union(all_var_dims, set(ecco_dataset[ecco_var].dims))
 
-    # drop coordinates that do not appear in any data variable
-    if drop_unused_coords:
-        for coord in list(ecco_dataset.coords):
-            coord_dims =  set(ecco_dataset[coord].dims)
-            if len(all_var_dims.intersection(coord_dims)) == 0:
-                ecco_dataset = ecco_dataset.drop(coord)
+    if not less_output:
+        print('all_var_dims ', all_var_dims)
+
 
     # update global, coordinate, and variable metadata
     # ... first, drop whatever is in 'standard_name' because those fields
@@ -367,24 +376,54 @@ def load_ecco_vars_from_mds(mds_var_dir,
             add_variable_metadata(variable_metadata, ecco_dataset)
 
     # update global metadata
-    if len(global_metadata) > 0:
-        # possible keys
-        keys_2D = set(['i','j','i_g','j_g'])
-        keys_3D = set(['k','k_l','k_u','k_p1'])
+    # possible keys
+    keys_2D = set(['i','j','i_g','j_g'])
+    keys_3D = set(['k','k_l','k_u','k_p1'])
 
-        if len(all_var_dims.intersection(keys_3D)) > 0:
-            dataset_dim = '3D'
-        elif len(all_var_dims.intersection(keys_2D)) > 0:
-            dataset_dim = '2D'
-        else:
-            #print('no 2D or 3D dimensions')
-            dataset_dim = '1D'
+    if len(all_var_dims.intersection(keys_3D)) > 0:
+        dataset_dim = '3D'
+    elif len(all_var_dims.intersection(keys_2D)) > 0:
+        dataset_dim = '2D'
+    else:
+        #print('no 2D or 3D dimensions')
+        print('cannot find 2D or 3D dims in dataset')
+        sys.exit()
+
+    # drop 3D and dims coordinates that do not appear in any data variable
+    if drop_unused_coords:
+
+        if dataset_dim == '2D':
+            if not less_output:
+                print('\n only 2D variables, dropping 3D dims and coords')
+                print(all_var_dims)
+
+            # drop 3D dimensions
+            dims_to_drop = set(ecco_dataset.dims).intersection(set(['k','k_u','k_l','k_p1']))
+            print(dims_to_drop)
+            for dim in dims_to_drop:
+                if not less_output:
+                    print('--> dropping', dim)
+                ecco_dataset = ecco_dataset.drop(dim)
+
+            # drop 3D coords
+            coords_to_drop = set(ecco_dataset.coords).intersection(set(['Z','Zp1','Zu','Zl']))
+            for coord in coords_to_drop:
+                if not less_output:
+                    print('--> dropping ', coord)
+                ecco_dataset = ecco_dataset.drop(coord)
+
+    # apply global metadata
+    if len(global_metadata) > 0:
 
         #print('dataset dim: ', dataset_dim)
         # some metadata is 3D dataset specific.
         ecco_dataset = \
             add_global_metadata(global_metadata, ecco_dataset, dataset_dim,\
                                 less_output=less_output)
+
+    if not less_output:
+        print('dataset dim: ', dataset_dim)
+        print('dataset_coords : ', ecco_dataset.coords)
 
     # add current time and date
     current_time = datetime.datetime.now().isoformat()[0:19]
@@ -395,6 +434,12 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
     # alaphbetically sort global attributes
     ecco_dataset.attrs = sort_attrs(ecco_dataset.attrs)
+
+    if not less_output:
+        print('---- END!')
+        print(ecco_dataset)
+        for dim in ecco_dataset.dims:
+            print(dim, ecco_dataset[dim].attrs)
 
     return ecco_dataset
 
