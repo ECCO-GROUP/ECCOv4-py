@@ -17,6 +17,7 @@ import cartopy.crs as ccrs
 from cartopy._crs import PROJ4_VERSION
 import cartopy.feature as cfeature
 from .resample_to_latlon import resample_to_latlon
+import xarray as xr
 
 from .plot_utils import assign_colormap
 
@@ -270,12 +271,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         sm._A = []
         cbar = plt.colorbar(sm,ax=ax)
         label=''
-        if 'long_name' in data.attrs:
-            label = data.long_name
-        elif data.name is not None:
-            label = data.name
-        if 'units' in data.attrs:
-            label+= ' ['+data.units+']'
+        if type(data) == xr.DataArray:
+            if 'long_name' in data.attrs:
+                label = data.long_name
+            elif data.name is not None:
+                label = data.name
+            if 'units' in data.attrs:
+                label+= ' ['+data.units+']'
+
         cbar.set_label(label)
 
     #%%
@@ -285,12 +288,12 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
 def plot_pstereo(xx,yy, data,
                  data_projection_code, \
-                 lat_lim, 
-                 cmin, cmax, ax, 
-                 plot_type = 'pcolormesh', 
-                 show_colorbar=False, 
-                 circle_boundary = False, 
-                 grid_linewidth = 1, 
+                 lat_lim,
+                 cmin, cmax, ax,
+                 plot_type = 'pcolormesh',
+                 show_colorbar=False,
+                 circle_boundary = False,
+                 grid_linewidth = 1,
                  grid_linestyle = '--',
                  cmap=None,
                  show_grid_lines = False,
