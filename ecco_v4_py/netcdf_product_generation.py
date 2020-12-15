@@ -106,8 +106,9 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
             print('making single file grid netcdf')
             print(str(new_fname))
 
+        if not less_output:
+            print('\n... creating variable encodings')
 
-        print('\n... creating variable encodings')
         # PROVIDE SPECIFIC ENCODING DIRECTIVES FOR EACH DATA VAR
         dv_encoding = dict()
         for dv in grid.data_vars:
@@ -118,7 +119,8 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
 
 
         # PROVIDE SPECIFIC ENCODING DIRECTIVES FOR EACH COORDINATE
-        print('\n... creating coordinate encodings')
+        if not less_output:
+            print('\n... creating coordinate encodings')
         coord_encoding = dict()
 
         for coord in grid.coords:
@@ -133,6 +135,8 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
         encoding = {**dv_encoding, **coord_encoding}
 
 
+        if not less_output:
+            print('\n... saving single file to netcdf') 
         grid.to_netcdf(str(new_fname), encoding=encoding)
 
         # save as 13 tiles
