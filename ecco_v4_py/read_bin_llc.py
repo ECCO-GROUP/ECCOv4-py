@@ -399,7 +399,10 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
             # drop 3D dimensions
             dims_to_drop = set(ecco_dataset.dims).intersection(set(['k','k_u','k_l','k_p1']))
-            print(dims_to_drop)
+            if not less_output:
+                print('\n dropping 3D dims and coords')
+                print(dims_to_drop)
+
             for dim in dims_to_drop:
                 if not less_output:
                     print('--> dropping', dim)
@@ -436,8 +439,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
     ecco_dataset.attrs = sort_attrs(ecco_dataset.attrs)
 
     if not less_output:
-        print('---- END!')
-        print(ecco_dataset)
         for dim in ecco_dataset.dims:
             print(dim, ecco_dataset[dim].attrs)
 
