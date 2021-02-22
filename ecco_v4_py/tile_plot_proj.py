@@ -35,7 +35,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              dy=.25,
                              show_colorbar = False,
                              show_grid_lines = True,
-                             show_grid_labels = True,
+                             show_grid_labels = False,
                              show_coastline = True,
                              show_land = True,
                              grid_linewidth = 1,
@@ -64,6 +64,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             'LambertConformal'
             'Mercator'
             'EqualEarth'
+            'Mollweide'
             'AlbersEqualArea'
             'cyl' - Lambert Cylindrical
             'ortho' - Orthographic
@@ -98,8 +99,11 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     show_colorbar : logical, optional, default False
         show a colorbar or not,
 
-    show_grid_lines : logical, optional
-        True only possible for Mercator or PlateCarree projections
+    show_grid_lines : logical, optional, default True
+        True only possible for some cartopy projections
+
+    show_grid_labels: logical, optional, default False
+        True only possible for some cartopy projections
 
     grid_linewidth : float, optional, default 1.0
         width of grid lines
@@ -135,13 +139,20 @@ def plot_proj_to_latlon_grid(lons, lats, data,
 
     cmap, (cmin,cmax) = assign_colormap(data,cmap)
 
+    # default 
+    circle_boundary = False
+    
     for key in kwargs:
         if key == "cmin":
-            cmin = kwargs[key]
+          cmin = kwargs[key]
         elif key == "cmax":
-            cmax =  kwargs[key]
+          cmax =  kwargs[key]
+        elif key == "circle_boundary":
+          circle_boundary = kwargs[key]
+          print('circle boundary', circle_boundary)
+          
         else:
-            print("unrecognized argument ", key)
+          print("unrecognized argument ", key)
 
     #%%
     # To avoid plotting problems around the date line, lon=180E, -180W
@@ -192,17 +203,17 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             user_lat_0 = -90
 
     # Make projection axis
-    (ax,show_grid_labels) = _create_projection_axis(
+    ax  = _create_projection_axis(
             projection_type, user_lon_0, user_lat_0, parallels,
             lat_lim, subplot_grid, less_output)
-
-
+    
     #%%
     # loop through different parts of the map to plot (if they exist),
     # do interpolation and plot
     f = plt.gcf()
     if not less_output:
         print('len(lon_tmp_d): ',len(lon_tmp_d))
+
     for key, lon_tmp in lon_tmp_d.items():
 
         new_grid_lon, new_grid_lat, data_latlon_projection = \
@@ -224,9 +235,10 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              show_colorbar=False,
                              show_coastline = show_coastline,
                              show_land = show_land,
-                             circle_boundary=True,
+                             circle_boundary=circle_boundary,
                              cmap=cmap,
-                             show_grid_lines=show_grid_labels,
+                             show_grid_lines=False,
+                             show_grid_labels = False,
                              custom_background = custom_background,
                              background_name = background_name,
                              background_resolution = background_resolution,
@@ -241,30 +253,35 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                             cmin, cmax, ax,
                             plot_type = plot_type,
                             show_colorbar = False,
-                            cmap=cmap,
-                            show_grid_lines = False,
                             show_coastline = show_coastline,
                             show_land = show_land,
+                            cmap=cmap,
+                            show_grid_lines = False,
+                            show_grid_labels = False,
                             custom_background = custom_background,
                             background_name = background_name,
                             background_resolution = background_resolution,
-                            show_grid_labels = show_grid_labels)
+                            less_output=less_output)
 
-        if show_grid_lines :
-            ax.gridlines(crs=ccrs.PlateCarree(),
-                                  linewidth=grid_linewidth,
-                                  color='black',
-                                  alpha=0.5,
-                                  linestyle=grid_linestyle,
-                                  draw_labels = show_grid_labels,zorder=102)
 
-        if show_land:
-            ax.add_feature(cfeature.LAND, zorder=100)
+    if show_land:
+        ax.add_feature(cfeature.LAND, zorder=100)
 
-        if show_coastline:
-            ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
-
-    ax= plt.gca()
+    if show_coastline:
+        ax.add_feature(cfeature.COASTLINE,linewidth=0.5,zorder=101)
+    
+    if show_grid_lines :
+      if not less_output:
+        print('-- pre plot_pstereo or plot_pstereo', show_grid_lines, show_grid_labels)
+      
+      gl2 = ax.gridlines(crs=ccrs.PlateCarree(),
+                         linewidth=grid_linewidth,
+                         color='black',
+                         alpha=0.5,
+                         linestyle=grid_linestyle,
+                         draw_labels = show_grid_labels,
+                         zorder=110)
+      #ax.gridlines(draw_labels=True,zorder=110)
 
     if show_colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(cmin,cmax))
@@ -282,7 +299,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
         cbar.set_label(label)
 
     #%%
-    return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection
+    return f, ax, p, cbar, new_grid_lon, new_grid_lat, data_latlon_projection, gl
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -297,6 +314,7 @@ def plot_pstereo(xx,yy, data,
                  grid_linestyle = '--',
                  cmap=None,
                  show_grid_lines = False,
+                 show_grid_labels = False,
                  show_coastline = True,
                  show_land = True,
                  custom_background = False,
@@ -314,11 +332,12 @@ def plot_pstereo(xx,yy, data,
 
 
     if isinstance(ax.projection, ccrs.NorthPolarStereo):
-        ax.set_extent([-179.5, 180, lat_lim, 90], ccrs.PlateCarree())
+        ax.set_extent([-180, 180, lat_lim, 90], ccrs.PlateCarree())
         if not less_output:
             print('North Polar Projection')
+    
     elif isinstance(ax.projection, ccrs.SouthPolarStereo):
-        ax.set_extent([-179.5, 180, -90, lat_lim], ccrs.PlateCarree())
+        ax.set_extent([-180, 180, -90, lat_lim], ccrs.PlateCarree())
         if not less_output:
             print('South Polar Projection')
     else:
@@ -333,13 +352,6 @@ def plot_pstereo(xx,yy, data,
         verts = np.vstack([np.sin(theta), np.cos(theta)]).T
         circle = mpath.Path(verts * radius + center)
         ax.set_boundary(circle, transform=ax.transAxes)
-
-    if show_grid_lines :
-        gl = ax.gridlines(crs=ccrs.PlateCarree(),
-                          linewidth=grid_linewidth, color='black',
-                          alpha=0.5, linestyle=grid_linestyle, zorder=102)
-    else:
-        gl = []
 
     if data_projection_code == 4326: # lat lon does nneed to be projected
         data_crs =  ccrs.PlateCarree()
@@ -371,6 +383,20 @@ def plot_pstereo(xx,yy, data,
     if show_coastline:
         ax.coastlines('110m', linewidth=0.8, zorder=101)
 
+    if show_grid_lines :
+        if not less_output:
+          print('plot_pstereo: show_grid_lines, show_grid_labels',\
+                 show_grid_lines, show_grid_labels)
+        
+        gl = ax.gridlines(crs=ccrs.PlateCarree(),
+                          linewidth=grid_linewidth, color='black',
+                          draw_labels = show_grid_labels,
+                          alpha=0.5, linestyle=grid_linestyle, zorder=110)
+
+    else:
+        gl = []
+
+    
     cbar = []
     if show_colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap,norm=plt.Normalize(cmin,cmax))
@@ -395,7 +421,8 @@ def plot_global(xx,yy, data,
                 custom_background = False,
                 background_name = [],
                 background_resolution = [],
-                levels=20):
+                levels=20,
+                less_output=True):
 
     # assign cmap default
     if cmap is None:
@@ -403,14 +430,6 @@ def plot_global(xx,yy, data,
             cmap = 'RdBu_r'
         else:
             cmap = 'viridis'
-
-    if show_grid_lines :
-        gl = ax.gridlines(crs=ccrs.PlateCarree(),
-                          linewidth=1, color='black',
-                          draw_labels = show_grid_labels,
-                          alpha=0.5, linestyle='--', zorder=102)
-    else:
-        gl = []
 
     if data_projection_code == 4326: # lat lon does nneed to be projected
         data_crs =  ccrs.PlateCarree()
@@ -435,6 +454,14 @@ def plot_global(xx,yy, data,
 
     if show_coastline:
         ax.coastlines('110m', linewidth=grid_linewidth, zorder=101)
+
+    if show_grid_lines :
+        gl = ax.gridlines(crs=ccrs.PlateCarree(),
+                          linewidth=1, color='black',
+                          draw_labels = show_grid_labels,
+                          alpha=0.5, linestyle='--', zorder=102)
+    else:
+        gl = []
 
     cbar = []
     if show_colorbar:
@@ -462,8 +489,8 @@ def _create_projection_axis(projection_type,
     ax :  matplotlib axis object
         defined with the correct projection
     show_grid_labels : logical
-        True = show the grid labels, only currently
-        supported for PlateCarree and Mercator projections
+        True = show the grid labels, possibly not supported by all projections. 
+               See cartopy documentation for updates.
     """
 
     if not less_output:
@@ -503,6 +530,7 @@ def _create_projection_axis(projection_type,
              'PlateCarree':ccrs.PlateCarree,
              'cyl':ccrs.LambertCylindrical,
              'robin':ccrs.Robinson,
+             'Mollweide':ccrs.Mollweide,
              'ortho': ccrs.Orthographic,
              'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
              }
@@ -535,12 +563,12 @@ def _create_projection_axis(projection_type,
     ax = plt.subplot(row, col, ind,
                     projection=proj_dict[projection_type](**proj_args))
 
-    if (projection_type == 'Mercator') | (projection_type== 'PlateCarree'):
-        show_grid_labels = True
-    else:
-        show_grid_labels = False
+    #if (projection_type == 'Mercator') | (projection_type== 'PlateCarree'):
+    ##    show_grid_labels = True
+    #else:
+    ##    show_grid_labels = False
 
     if not less_output:
         print('Projection type: ', projection_type)
 
-    return (ax,show_grid_labels)
+    return ax
