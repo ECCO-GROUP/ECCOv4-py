@@ -234,8 +234,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ecco_dataset = ecco_dataset.rename({'face': 'tile'})
         ecco_dataset.tile.attrs['long_name'] = 'index of llc grid tile'
 
-    if 'iter' in ecco_dataset.coords.keys():
-        ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
 
 
     if grid_vars_to_coords == False:
@@ -245,10 +243,15 @@ def load_ecco_vars_from_mds(mds_var_dir,
         # coordinates.
 
         # Promote some variables as CF convention compliant coordinates.
-        CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl','time']
+        CF_legal_coords = ['XC','YC','XG','YG','Z','Zp1','Zu','Zl','time', 'iter']
         for legal_coord in CF_legal_coords:
             if legal_coord in list(ecco_dataset.data_vars):
                 ecco_dataset = ecco_dataset.set_coords(legal_coord)
+
+    # rename iter to timestep
+    if 'iter' in ecco_dataset.coords.keys():
+        ecco_dataset = ecco_dataset.rename({'iter': 'timestep'})
+
 
 
     # if vars_to_load is an empty list, keep all variables.  otherwise,
@@ -435,8 +438,36 @@ def load_ecco_vars_from_mds(mds_var_dir,
     ecco_dataset.attrs['date_metadata_modified'] = current_time
     ecco_dataset.attrs['date_issued'] = current_time
 
+    if not less_output:
+        print('output_freq_code: ', output_freq_code)
+    # set the long name of the time attribute
+    if 'AVG' in output_freq_code:
+        ecco_dataset.time.attrs['long_name'] = 'center time of averaging period'
+    elif 'SNAP' in output_freq_code:
+        ecco_dataset.time.attrs['long_name'] = 'snapshot time'
+
+    # set averaging period duration and resolution
+    print('\n... setting time coverage resolution')
+    # --- AVG DAY
+    if output_freq_code == 'AVG_MON':
+        ecco_dataset.attrs['time_coverage_duration'] = 'P1M'
+        ecco_dataset.attrs['time_coverage_resolution'] = 'P1M'
+    # --- AVG DAY
+    elif output_freq_code == 'AVG_DAY':
+        ecco_dataset.attrs['time_coverage_duration'] = 'P1D'
+        ecco_dataset.attrs['time_coverage_resolution'] = 'P1D'
+    # --- SNAPSHOT
+    elif output_freq_code == 'SNAPSHOT':
+        ecco_dataset.attrs['time_coverage_duration'] = 'P0S'
+        ecco_dataset.attrs['time_coverage_resolution'] = 'P0S'
+        ecco_dataset.time.attrs.pop('bounds')
+
+    ecco_dataset.attrs['original_mds_var_dir'] = str(mds_var_dir)
+    ecco_dataset.attrs['original_mds_grid_dir'] = str(mds_grid_dir)
+
     # alaphbetically sort global attributes
     ecco_dataset.attrs = sort_attrs(ecco_dataset.attrs)
+
 
     if not less_output:
         for dim in ecco_dataset.dims:

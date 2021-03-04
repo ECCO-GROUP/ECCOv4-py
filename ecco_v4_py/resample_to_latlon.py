@@ -5,6 +5,8 @@ from __future__ import division,print_function
 import numpy as np
 import matplotlib.pylab as plt
 import xarray as xr
+from dask import delayed
+import dask
 
 # The Proj class can convert from geographic (longitude,latitude) to native
 # map projection (x,y) coordinates and vice versa, or from one map projection
@@ -14,16 +16,17 @@ import xarray as xr
 import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@dask.delayed
 def resample_to_latlon(orig_lons, orig_lats, orig_field,
                        new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
                        new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
-                       radius_of_influence = 120000, 
+                       radius_of_influence = 120000,
                        fill_value = None, mapping_method = 'bin_average') :
     """Take a field from a source grid and interpolate to a target grid.
 
     Parameters
     ----------
-    orig_lons, orig_lats, orig_field : xarray DataArray or numpy array  : 
+    orig_lons, orig_lats, orig_field : xarray DataArray or numpy array  :
         the lons, lats, and field from the source grid
 
 	new_grid_min_lat, new_grid_max_lat : float
@@ -37,15 +40,15 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
 
     new_grid_delta_llon : float
          longitudinal extent of new lat-lon grid cells in degrees
-        
+
     radius_of_influence : float, optional.  Default 120000 m
         the radius of the circle within which the input data is search for
         when mapping to the new grid
 
     fill_value : float, optional. Default None
-		value to use in the new lat-lon grid if there are no valid values 
+		value to use in the new lat-lon grid if there are no valid values
 		from the source grid
-  
+
   	mapping_method : string, optional. Default 'bin_average'
         denote the type of interpolation method to use.
         options include
@@ -53,10 +56,10 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
             					 to the target grid
             'bin_average'      - Use the average value from the source grid
 								 to the target grid
-        
+
     RETURNS:
     new_grid_lon, new_grid_lat : ndarrays
-    	2D arrays with the lon and lat values of the new grid 
+    	2D arrays with the lon and lat values of the new grid
 
     data_latlon_projection:
     	the source field interpolated to the new grid
@@ -66,20 +69,20 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
     if type(orig_lats) == xr.core.dataarray.DataArray:
         orig_lons_1d = orig_lons.values.ravel()
         orig_lats_1d = orig_lats.values.ravel()
-        
+
     elif type(orig_lats) == np.ndarray:
         orig_lats_1d = orig_lats.ravel()
         orig_lons_1d = orig_lons.ravel()
     else:
         raise TypeError('orig_lons and orig_lats variable either a DataArray or numpy.ndarray. \n'
-                'Found type(orig_lons) = %s and type(orig_lats) = %s' % 
+                'Found type(orig_lons) = %s and type(orig_lats) = %s' %
                 (type(orig_lons), type(orig_lats)))
 
     if type(orig_field) == xr.core.dataarray.DataArray:
         orig_field = orig_field.values
     elif type(orig_field) != np.ndarray and \
          type(orig_field) != np.ma.core.MaskedArray :
-        raise TypeError('orig_field must be a type of DataArray, ndarray, or MaskedArray. \n' 
+        raise TypeError('orig_field must be a type of DataArray, ndarray, or MaskedArray. \n'
                 'Found type(orig_field) = %s' % type(orig_field))
 
     # prepare for the nearest neighbor mapping
@@ -111,7 +114,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                                                 fill_value=fill_value)
         elif mapping_method == 'bin_average':
             wf = lambda r: 1
-        
+
             data_latlon_projection = \
                     pr.kd_tree.resample_custom(orig_grid, orig_field, new_grid,
                                                 radius_of_influence=radius_of_influence,
