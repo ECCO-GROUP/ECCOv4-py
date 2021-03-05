@@ -11,14 +11,19 @@ import xarray as xr
 import datetime
 import dateutil
 import xgcm
+import pathlib
+from pathlib import Path
 
 from .read_bin_llc import read_llc_to_tiles
 
 # Store the package directory for loading the basins binary
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
+#def get_basin_mask(basin_name, mask,
+#                   basin_path=os.path.join('..','binary_data')):
 def get_basin_mask(basin_name, mask,
-                   basin_path=os.path.join('..','binary_data')):
+                   basin_path = os.path.join(package_directory, '../binary_data'),
+                   less_output=False):
     """Return mask for ocean basin.
     Note: This mirrors gcmfaces/ecco_v4/v4_basin.m
     And this only works for the global LLC90 domain
@@ -52,6 +57,9 @@ def get_basin_mask(basin_name, mask,
         mask with values at cell centers, 1's for denoted ocean basin
         dimensions are the same as input field
     """
+
+
+
     if 'tile' not in mask.dims or len(mask.tile)!=13 or mask.shape[-1]!=90 or mask.shape[-2]!=90:
         raise NotImplementedError("Basin masks only available for global LLC90 domain")
 
@@ -64,14 +72,18 @@ def get_basin_mask(basin_name, mask,
     # Get available names
     available_names = get_available_basin_names()
 
-
     # Read binary with the masks, from gcmfaces package
-    bin_dir = os.path.join(package_directory, basin_path)
+    #if os.path.exists(os.path.join(bin_dir, 'basins.data')):
+    basin_path = Path(basin_path).resolve()
 
-    if os.path.exists(os.path.join(bin_dir, 'basins.data')):
-        all_basins = read_llc_to_tiles(bin_dir,'basins.data')
+    if not less_output:
+        print('get_basin_name: ', basin_name, basin_path)
+
+    #if os.path.exists(os.path.join(basin_path, 'basins.data')):
+    if (basin_path / 'basins.data').is_file(): 
+        all_basins = read_llc_to_tiles(basin_path,'basins.data')
     else:
-        log = 'Cannot find basins.data in ' + bin_dir + '\n'+\
+        log = 'Cannot find basins.data in ' + str(basin_path) + '\n'+\
         'You can download basins.data and basins.meta here:\n'+\
         '   https://github.com/ECCO-GROUP/ECCOv4-py/tree/master/binary_data\n'+\
         ' or \n'+\

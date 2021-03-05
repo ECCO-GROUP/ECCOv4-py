@@ -122,19 +122,32 @@ def add_variable_metadata(variable_metadata_dict, G, \
                     if not less_output:
                         print('\t',m_key, ':', mv[m_key])
 
-            # merge the two comment fields (both *MUST* be present)
-            # if they are empty then don't merge
-            if len(mv['comments_1']) > 0 and len(mv['comments_2']) > 0:
-                if mv['comments_1'][-1] == '.':
-                    G[var].attrs['comment'] =  mv['comments_1'] + ' ' + mv['comments_2']
-                else:
-                    G[var].attrs['comment'] =  mv['comments_1'] + '. ' + mv['comments_2']
+            # merge the two comment fields (both *MUST* be present in the json file
+            # but they can be empty strings "")
+
+            # if either one is not-empty, add a comment field
+            if len(mv['comments_1']) > 0 or len(mv['comments_2']) > 0:
+
+                # if both are not-empty, merge them, make sure '.' between
+                if len(mv['comments_1']) > 0 and len(mv['comments_2']) > 0:
+                    if mv['comments_1'][-1] == '.':
+                        G[var].attrs['comment'] =  mv['comments_1'] + ' ' + mv['comments_2']
+                    else:
+                        G[var].attrs['comment'] =  mv['comments_1'] + '. ' + mv['comments_2']
+
+                # if only comments_1 is not empty 
+                elif len(mv['comments_1']) > 0:
+                    G[var].attrs['comment'] = mv['comments_1']
+
+                # if only comments_2 is not empty
+                elif len(mv['comments_2']) > 0:
+                   G[var].attrs['comment'] = mv['comments_2']
 
                 if not less_output:
-                    print('\t','comment', ':', G[var].attrs['comment'])
+                    print('\t', 'comment', ':', G[var].attrs['comment'])
             else:
                 if not less_output:
-                    print('comment fields are empty')
+                    print('\t', 'comment fields are empty')
 
             # append GCMD keywords, if present
             if 'GCMD_keywords' in mv.keys():
