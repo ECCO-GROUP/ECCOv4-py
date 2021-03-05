@@ -23,8 +23,15 @@ _experiments['aste270']= {'geometry':'llc',
                             'SIvice  ' 'ETANSQ  ']),
                           'test_iternum':8}
 
+# global variables that will be filled with the directory information
+# about the mds and llc files after downloading (setup_mds_dir 
+# and llc_mds_datadirs). Once we have that directory information,
+# we do not have to redownload the files. This approach significantly
+# reduces the local disk space requirement for performing the tests
+# using the pytest-xdist parallel package
+# -- initially defined as 'None' = not yet filled
 mds_dir_info = None
-llc_dir_info= None
+llc_dir_info = None
 
 # Modify xmitgcm's function for both global ECCO and ASTE
 @pytest.fixture(scope='module', params=['global_oce_llc90','aste270'])
@@ -32,7 +39,8 @@ def all_mds_datadirs(tmpdir_factory, request):
 
     global mds_dir_info
     if mds_dir_info == None:
-       mds_dir_info = setup_mds_dir(tmpdir_factory,request, _experiments)
+    #save the directory information in the global variable
+        mds_dir_info = setup_mds_dir(tmpdir_factory,request, _experiments)
    
     print('-------- made mds_dirr_info ')
     print(mds_dir_info) 
@@ -70,6 +78,7 @@ def get_global_ds(llc_mds_datadirs):
 
     global llc_dir_info
     if llc_dir_info == None:
+        #save the directory information in the global variable
         dirname, expected = llc_mds_datadirs
         llc_dir_info = [dirname, expected]
     else:
@@ -88,6 +97,7 @@ def get_test_array_2d(llc_mds_datadirs):
     """download, unzip and return 2D field"""
     global llc_dir_info
     if llc_dir_info == None:
+        #save the directory information in the global variable
         dirname, expected = llc_mds_datadirs
         llc_dir_info = [dirname, expected]
     else:
