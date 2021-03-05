@@ -19,10 +19,8 @@ from .read_bin_llc import read_llc_to_tiles
 # Store the package directory for loading the basins binary
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
-#def get_basin_mask(basin_name, mask,
-#                   basin_path=os.path.join('..','binary_data')):
 def get_basin_mask(basin_name, mask,
-                   basin_path = os.path.join(package_directory, '../binary_data'),
+                   basin_path = os.path.join(package_directory, '..' ,'binary_data'),
                    less_output=False):
     """Return mask for ocean basin.
     Note: This mirrors gcmfaces/ecco_v4/v4_basin.m
@@ -72,14 +70,13 @@ def get_basin_mask(basin_name, mask,
     # Get available names
     available_names = get_available_basin_names()
 
-    # Read binary with the masks, from gcmfaces package
-    #if os.path.exists(os.path.join(bin_dir, 'basins.data')):
+    # resolve the basin path
     basin_path = Path(basin_path).resolve()
 
     if not less_output:
-        print('get_basin_name: ', basin_name, basin_path)
+        print('get_basin_name: ', basin_name, str(basin_path))
 
-    #if os.path.exists(os.path.join(basin_path, 'basins.data')):
+    # Read binary with the masks, from gcmfaces package
     if (basin_path / 'basins.data').is_file(): 
         all_basins = read_llc_to_tiles(basin_path,'basins.data')
     else:
