@@ -460,7 +460,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
     elif output_freq_code == 'SNAPSHOT':
         ecco_dataset.attrs['time_coverage_duration'] = 'P0S'
         ecco_dataset.attrs['time_coverage_resolution'] = 'P0S'
-        ecco_dataset.time.attrs.pop('bounds')
 
     ecco_dataset.attrs['original_mds_var_dir'] = str(mds_var_dir)
     ecco_dataset.attrs['original_mds_grid_dir'] = str(mds_grid_dir)

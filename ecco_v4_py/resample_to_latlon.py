@@ -16,7 +16,6 @@ import dask
 import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-@dask.delayed
 def resample_to_latlon(orig_lons, orig_lats, orig_field,
                        new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
                        new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
