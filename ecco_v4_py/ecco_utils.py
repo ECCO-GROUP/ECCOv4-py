@@ -144,7 +144,7 @@ def add_variable_metadata(variable_metadata_dict, G, \
                    G[var].attrs['comment'] = mv['comments_2']
 
                 if not less_output:
-                    print('\t','comment', ':', G[var].attrs['comment'])
+                    print('\t', 'comment', ':', G[var].attrs['comment'])
             else:
                 if not less_output:
                     print('\t', 'comment fields are empty')
