@@ -447,7 +447,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
         ecco_dataset.time.attrs['long_name'] = 'snapshot time'
 
     # set averaging period duration and resolution
-    print('\n... setting time coverage resolution')
+    if not less_output:
+        print('\n... setting time coverage resolution')
     # --- AVG DAY
     if output_freq_code == 'AVG_MON':
         ecco_dataset.attrs['time_coverage_duration'] = 'P1M'
