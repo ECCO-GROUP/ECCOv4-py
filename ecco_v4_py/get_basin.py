@@ -79,6 +79,8 @@ def get_basin_mask(basin_name, mask,
     # Read binary with the masks, from gcmfaces package
     if (basin_path / 'basins.data').is_file(): 
         all_basins = read_llc_to_tiles(basin_path,'basins.data')
+        print('shape after reading ')
+        print(all_basins.shape)
     else:
         log = 'Cannot find basins.data in ' + str(basin_path) + '\n'+\
         'You can download basins.data and basins.meta here:\n'+\
@@ -103,6 +105,7 @@ def get_basin_mask(basin_name, mask,
         mask_2d = mask
 
     basin_mask = 0*mask_2d
+    basin_mask.name = 'basin_mask'
 
     for name in basin_name:
         if name in available_names:
@@ -113,9 +116,9 @@ def get_basin_mask(basin_name, mask,
 
     # Now multiply by original mask to get vertical coordinate back
     # (xarray multiplication implies union of dimensions)
-    basin_mask = basin_mask * mask
-
-    return basin_mask
+    # yet mask needs to be first for the resulting 3D mask to have depth as the first array index
+    basin_mask_3D = mask * basin_mask 
+    return basin_mask_3D
 
 def get_available_basin_names():
     """Return available basins to get a mask for

@@ -17,8 +17,12 @@ import pyresample as pr
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def resample_to_latlon(orig_lons, orig_lats, orig_field,
-                       new_grid_min_lat, new_grid_max_lat, new_grid_delta_lat,
-                       new_grid_min_lon, new_grid_max_lon, new_grid_delta_lon,
+                       new_grid_min_lat, 
+                       new_grid_max_lat, 
+                       new_grid_delta_lat,
+                       new_grid_min_lon, 
+                       new_grid_max_lon, 
+                       new_grid_delta_lon,
                        radius_of_influence = 120000,
                        fill_value = None, mapping_method = 'bin_average') :
     """Take a field from a source grid and interpolate to a target grid.
@@ -37,7 +41,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
     new_grid_min_lon, new_grid_max_lon : float
 		longitude limits of new lat-lon grid (-180..180)
 
-    new_grid_delta_llon : float
+    new_grid_delta_lon : float
          longitudinal extent of new lat-lon grid cells in degrees
 
     radius_of_influence : float, optional.  Default 120000 m
@@ -57,14 +61,16 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
 								 to the target grid
 
     RETURNS:
-    new_grid_lon, new_grid_lat : ndarrays
-    	2D arrays with the lon and lat values of the new grid
+    new_grid_lon_centers, new_grid_lat_centers : ndarrays
+    	2D arrays with the lon and lat values of the new grid cell centers
+
+    new_grid_lon_edges, new_grid_lat_edges: ndarrays
+    	2D arrays with the lon and lat values of the new grid cell edges
 
     data_latlon_projection:
     	the source field interpolated to the new grid
 
     """
-    #%%
     if type(orig_lats) == xr.core.dataarray.DataArray:
         orig_lons_1d = orig_lons.values.ravel()
         orig_lats_1d = orig_lats.values.ravel()
@@ -90,6 +96,7 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
     orig_grid = pr.geometry.SwathDefinition(lons=orig_lons_1d,
                                             lats=orig_lats_1d)
 
+
    # the latitudes to which we will we interpolate
     num_lats = int((new_grid_max_lat - new_grid_min_lat) / new_grid_delta_lat + 1)
     num_lons = int((new_grid_max_lon - new_grid_min_lon) / new_grid_delta_lon + 1)
@@ -97,14 +104,30 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
     if (num_lats > 0) and (num_lons > 0):
         # linspace is preferred when using floats!
 
-        lat_tmp = np.linspace(new_grid_min_lat, new_grid_max_lat, num=int(num_lats))
-        lon_tmp = np.linspace(new_grid_min_lon, new_grid_max_lon, num=int(num_lons))
+        new_grid_lat_edges_1D =\
+            np.linspace(new_grid_min_lat, new_grid_max_lat, num=int(num_lats))
+        
+        new_grid_lon_edges_1D =\
+            np.linspace(new_grid_min_lon, new_grid_max_lon, num=int(num_lons))
 
-        new_grid_lon, new_grid_lat = np.meshgrid(lon_tmp, lat_tmp)
+        new_grid_lat_centers_1D = (new_grid_lat_edges_1D[0:-1] + new_grid_lat_edges_1D[1:])/2
+        new_grid_lon_centers_1D = (new_grid_lon_edges_1D[0:-1] + new_grid_lon_edges_1D[1:])/2
 
+        new_grid_lon_edges, new_grid_lat_edges =\
+            np.meshgrid(new_grid_lon_edges_1D, new_grid_lat_edges_1D)
+        
+        new_grid_lon_centers, new_grid_lat_centers =\
+            np.meshgrid(new_grid_lon_centers_1D, new_grid_lat_centers_1D)
+
+        print(np.min(new_grid_lon_centers), np.max(new_grid_lon_centers))
+        print(np.min(new_grid_lon_edges), np.max(new_grid_lon_edges))
+        
+        print(np.min(new_grid_lat_centers), np.max(new_grid_lat_centers))
+        print(np.min(new_grid_lat_edges), np.max(new_grid_lat_edges)) 
+        
         # define the lat lon points of the two parts.
-        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon,
-                                               lats=new_grid_lat)
+        new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon_centers,
+                                               lats=new_grid_lat_centers)
 
         if mapping_method == 'nearest_neighbor':
             data_latlon_projection = \
@@ -127,6 +150,8 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         raise ValueError('Number of lat and lon points to interpolate to must be > 0. \n'
                 'Found num_lats = %d, num lons = %d' % (num_lats,num_lons))
 
-    return new_grid_lon, new_grid_lat, data_latlon_projection
+    return new_grid_lon_centers, new_grid_lat_centers,\
+           new_grid_lon_edges, new_grid_lat_edges,\
+           data_latlon_projection
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
