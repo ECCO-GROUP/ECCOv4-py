@@ -597,8 +597,6 @@ def _create_projection_axis(projection_type,
              'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
              }
 
-    try:
-
     # cartopy crs changed the name of ths proj version attribute
     # so we must check both the new and old names
     if hasattr(cartopy._crs, 'PROJ_VERSION'):
