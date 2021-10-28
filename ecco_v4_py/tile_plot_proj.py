@@ -599,9 +599,9 @@ def _create_projection_axis(projection_type,
 
     # cartopy crs changed the name of ths proj version attribute
     # so we must check both the new and old names
-    if hasattr(cartopy._crs, 'PROJ_VERSION'):
+    if hasattr(cartopy.crs, 'PROJ_VERSION'):
        proj_version = cartopy.crs.PROJ_VERSION
-    elif hasattr(cartopy._crs, 'PROJ4_VERSION'):
+    elif hasattr(cartopy.crs, 'PROJ4_VERSION'):
        proj_version = cartopy.crs.PROJ4_VERSION
     else:
        # I can't tell the proj version, set to zero to be safe 
