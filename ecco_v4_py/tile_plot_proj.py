@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.path as mpath
 import cartopy.crs as ccrs
-from cartopy._crs import PROJ4_VERSION
+import cartopy as cartopy
 import cartopy.feature as cfeature
 from .resample_to_latlon import resample_to_latlon
 
@@ -597,8 +597,20 @@ def _create_projection_axis(projection_type,
              'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
              }
 
+    try:
+
+    # cartopy crs changed the name of ths proj version attribute
+    # so we must check both the new and old names
+    if hasattr(cartopy._crs, 'PROJ_VERSION'):
+       proj_version = cartopy._crs.PROJ_VERSION
+    elif hasattr(cartopy._crs, 'PROJ4_VERSION'):
+       proj_version = cartopy._crs.PROJ4_VERSION
+    else:
+       # I can't tell the proj veresion
+       proj_version = (0,0,0) 
+
     # This projection requires proj4 v.>= 5.2.0
-    if PROJ4_VERSION>=(5,2,0):
+    if proj_version >= (5,2,0):
         proj_dict['EqualEarth']=ccrs.EqualEarth
 
     # stereo special cases
