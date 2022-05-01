@@ -600,7 +600,7 @@ def _create_projection_axis(projection_type,
     if hasattr(ccrs, 'AlbersEqualArea'):
         proj_dict['AlbersEqualArea']=ccrs.AlbersEqualArea
     if hasattr(ccrs, 'PlateCarree'):
-        proj_dict['PlateCarree']=ccrs.PlateCaree
+        proj_dict['PlateCarree']=ccrs.PlateCarree
     if hasattr(ccrs, 'LambertCylindrical'):
         proj_dict['cyl']=ccrs.LambertCylindrical
     if hasattr(ccrs, 'Robinson'):
