@@ -30,7 +30,7 @@ setup(
 	'python-dateutil',
 	'xarray',
 	'xmitgcm',
-	'xgcm=0.6.1'],
+	'xgcm >= 0.5.0'],
   tests_require=['pytest','coverage'],
   license='MIT',
   classifiers=[

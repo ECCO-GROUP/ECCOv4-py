@@ -14,13 +14,18 @@ dependencies:
   - geos
   - matplotlib
   - netcdf4
+  - numba
   - numpy
+  - pip
+  - pre-commit
   - proj
   - pytest
   - python=3.8
   - pytest-cov
+  - pytest-xdist
   - pyresample
   - scipy
+  - typing_extensions
   - xarray
   - xgcm>=0.5.0
   - xmitgcm>=0.5.1
