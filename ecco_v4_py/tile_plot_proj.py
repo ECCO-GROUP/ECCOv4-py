@@ -599,8 +599,8 @@ def _create_projection_axis(projection_type,
         proj_dict['LambertConformal']=ccrs.LambertConformal
     if hasattr(ccrs, 'AlbersEqualArea'):
         proj_dict['AlbersEqualArea']=ccrs.AlbersEqualArea
-    if hasattr(ccrs, 'PlateCaree'):
-        proj_dict['PlateCaree']=ccrs.PlateCaree
+    if hasattr(ccrs, 'PlateCarree'):
+        proj_dict['PlateCarree']=ccrs.PlateCaree
     if hasattr(ccrs, 'LambertCylindrical'):
         proj_dict['cyl']=ccrs.LambertCylindrical
     if hasattr(ccrs, 'Robinson'):
@@ -622,7 +622,7 @@ def _create_projection_axis(projection_type,
                proj_dict['stereo']=ccrs.SouthPolarStereo
 
     if projection_type not in proj_dict:
-        raise NotImplementedError('projection type not found in set of available projections:', proj_dict.keys())
+        raise NotImplementedError('requested projection type ', projection_type, ' is not an available projection:', proj_dict.keys())
 
     # Build dictionary for projection arguments
     proj_args={}
