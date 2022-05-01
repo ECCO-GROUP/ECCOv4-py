@@ -20,7 +20,7 @@ dependencies:
   - pre-commit
   - proj
   - pytest
-  - python=3.8
+  - python=3.9
   - pytest-cov
   - pytest-xdist
   - pyresample

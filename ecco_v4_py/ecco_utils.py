@@ -20,11 +20,14 @@ from collections import OrderedDict
 
 def find_metadata_in_json_dictionary(var, key, metadata, print_output=False):
     for m in metadata:
-        if m[key] == var:
-            if print_output:
-                print(m)
-            return m
+        if key in m.keys():
+            if m[key] == var:
+                if print_output:
+                    print(m)
+                return m
+
     return []
+
 
 
 def add_global_metadata(metadata, G, dataset_dim, less_output=True):
@@ -135,7 +138,7 @@ def add_variable_metadata(variable_metadata_dict, G, \
                     else:
                         G[var].attrs['comment'] =  mv['comments_1'] + '. ' + mv['comments_2']
 
-                # if only comments_1 is not empty 
+                # if only comments_1 is not empty
                 elif len(mv['comments_1']) > 0:
                     G[var].attrs['comment'] = mv['comments_1']
 

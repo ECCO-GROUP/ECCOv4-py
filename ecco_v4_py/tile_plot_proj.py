@@ -47,7 +47,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                              less_output=True,
                              **kwargs):
     
-    """Plot a field of data from an arbitrary grid with lat/lon coordinates
+    """Plot a field of data from an arbitrary projection with lat/lon coordinates
     on a geographic projection after resampling it to a regular lat/lon grid.
     
 
@@ -335,6 +335,7 @@ def plot_pstereo(xx, yy, data,
                  grid_linestyle = '--',
                  levels = 20,
                  data_zorder = 50,
+                 points_color = 'k',
                  colorbar_label = None,
                  less_output = True):
 
@@ -383,7 +384,8 @@ def plot_pstereo(xx, yy, data,
                         vmin=cmin, vmax=cmax, cmap=cmap, zorder=data_zorder)
 
     elif plot_type == 'points':
-        p = ax.plot(xx, yy,  'k.', transform=data_crs,zorder=data_zorder)
+        p = ax.plot(xx, yy,  color=points_color, marker='.', transform=data_crs,
+                    zorder=data_zorder)
 
     else:
         raise ValueError('plot_type  must be either "pcolormesh", "contourf", or "points"')
@@ -426,6 +428,7 @@ def plot_global(xx,yy, data,
                 levels = 20,
                 colorbar_label=None,
                 data_zorder = 50,
+                points_color = 'k',
                 less_output=True):
 
     # assign cmap default
@@ -450,7 +453,7 @@ def plot_global(xx,yy, data,
                         zorder=data_zorder)
 
     elif plot_type == 'points':
-        p = ax.plot(xx, yy,  'k.', transform=data_crs,
+        p = ax.plot(xx, yy,  color=points_color, marker='.', transform=data_crs,
                     zorder=data_zorder)
 
     else:
@@ -585,41 +588,41 @@ def _create_projection_axis(projection_type,
         col = 1
         ind = 1
 
+    proj_dict = dict()
     # Build dictionary of projection_types mapped to Cartopy calls
-    proj_dict = {'Mercator':ccrs.Mercator,
-             'LambertConformal':ccrs.LambertConformal,
-             'AlbersEqualArea':ccrs.AlbersEqualArea,
-             'PlateCarree':ccrs.PlateCarree,
-             'cyl':ccrs.LambertCylindrical,
-             'robin':ccrs.Robinson,
-             'Mollweide':ccrs.Mollweide,
-             'ortho': ccrs.Orthographic,
-             'InterruptedGoodeHomolosine':ccrs.InterruptedGoodeHomolosine
-             }
-
-    # cartopy crs changed the name of ths proj version attribute
-    # so we must check both the new and old names
-    if hasattr(cartopy.crs, 'PROJ_VERSION'):
-       proj_version = cartopy.crs.PROJ_VERSION
-    elif hasattr(cartopy.crs, 'PROJ4_VERSION'):
-       proj_version = cartopy.crs.PROJ4_VERSION
-    else:
-       # I can't tell the proj version, set to zero to be safe 
-       proj_version = (0,0,0) 
-
-    # This projection requires proj4 v.>= 5.2.0
-    if proj_version >= (5,2,0):
+    # verify that each project is available in cartopy before adding it to the dictionary
+    if hasattr(ccrs, 'EqualEarth'):
         proj_dict['EqualEarth']=ccrs.EqualEarth
+    if hasattr(ccrs, 'Mercator'):
+        proj_dict['Mercator']=ccrs.Mercator
+    if hasattr(ccrs, 'LambertConformal'):
+        proj_dict['LambertConformal']=ccrs.LambertConformal
+    if hasattr(ccrs, 'AlbersEqualArea'):
+        proj_dict['AlbersEqualArea']=ccrs.AlbersEqualArea
+    if hasattr(ccrs, 'PlateCarree'):
+        proj_dict['PlateCarree']=ccrs.PlateCarree
+    if hasattr(ccrs, 'LambertCylindrical'):
+        proj_dict['cyl']=ccrs.LambertCylindrical
+    if hasattr(ccrs, 'Robinson'):
+        proj_dict['robin']=ccrs.Robinson
+    if hasattr(ccrs, 'Mollweide'):
+        proj_dict['Mollweide']=ccrs.Mollweide
+    if hasattr(ccrs, 'Orthographic'):
+        proj_dict['ortho']=ccrs.Orthographic
+    if hasattr(ccrs, 'InterruptedGoodeHomolosine'):
+        proj_dict['InterruptedGoodeHomolosine']=ccrs.InterruptedGoodeHomolosine
 
     # stereo special cases
     if projection_type == 'stereo':
         if lat_lim>0:
-            proj_dict['stereo']=ccrs.NorthPolarStereo
+            if hasattr(ccrs, 'NorthPolarStereo'):
+               proj_dict['stereo']=ccrs.NorthPolarStereo
         else :
-            proj_dict['stereo']=ccrs.SouthPolarStereo
+            if hasattr(ccrs, 'SouthPolarStereo'):
+               proj_dict['stereo']=ccrs.SouthPolarStereo
 
     if projection_type not in proj_dict:
-        raise NotImplementedError('projection type must be in ',proj_dict.keys())
+        raise NotImplementedError('requested projection type ', projection_type, ' is not an available projection:', proj_dict.keys())
 
     # Build dictionary for projection arguments
     proj_args={}
@@ -634,11 +637,6 @@ def _create_projection_axis(projection_type,
 
     ax = plt.subplot(row, col, ind,
                     projection=proj_dict[projection_type](**proj_args))
-
-    #if (projection_type == 'Mercator') | (projection_type== 'PlateCarree'):
-    ##    show_grid_labels = True
-    #else:
-    ##    show_grid_labels = False
 
     if not less_output:
         print('Projection type: ', projection_type)
