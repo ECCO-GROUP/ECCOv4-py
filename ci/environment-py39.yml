@@ -16,12 +16,11 @@ dependencies:
   - netcdf4
   - numba
   - numpy
-  - pathlib
   - pip
   - pre-commit
   - proj
   - pytest
-  - python=3.7
+  - python=3.9
   - pytest-cov
   - pytest-xdist
   - pyresample
