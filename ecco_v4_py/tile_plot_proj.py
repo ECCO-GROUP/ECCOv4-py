@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.path as mpath
 import cartopy.crs as ccrs
-#from cartopy._crs import PROJ4_VERSION
+import cartopy as cartopy
 import cartopy.feature as cfeature
 from .resample_to_latlon import resample_to_latlon
 
@@ -588,6 +588,7 @@ def _create_projection_axis(projection_type,
         col = 1
         ind = 1
 
+    proj_dict = dict()
     # Build dictionary of projection_types mapped to Cartopy calls
     # verify that each project is available in cartopy before adding it to the dictionary
     if hasattr(ccrs, 'EqualEarth'):
@@ -621,7 +622,7 @@ def _create_projection_axis(projection_type,
                proj_dict['stereo']=ccrs.SouthPolarStereo
 
     if projection_type not in proj_dict:
-        raise NotImplementedError('projection type must be in ',proj_dict.keys())
+        raise NotImplementedError('projection type not found in set of available projections:', proj_dict.keys())
 
     # Build dictionary for projection arguments
     proj_args={}
