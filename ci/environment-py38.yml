@@ -15,7 +15,6 @@ dependencies:
   - matplotlib
   - netcdf4
   - numpy
-  - pathlib
   - proj
   - pytest
   - python=3.8
