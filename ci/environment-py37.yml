@@ -27,6 +27,6 @@ dependencies:
   - pyresample
   - scipy
   - xarray
-  - xgcm=0.5.0
+  - xgcm>=0.5.0
   - xmitgcm>=0.5.1
   - typing_extensions
