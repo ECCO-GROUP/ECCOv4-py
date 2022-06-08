@@ -24,6 +24,7 @@ from .plot_utils import assign_colormap
 def plot_proj_to_latlon_grid(lons, lats, data,
                              projection_type = 'robin',
                              dx=.25, dy=.25,
+                             mapping_method='nearest_neighbor',
                              radius_of_influence = 112000,
                              plot_type = 'pcolormesh',
                              cmap = None,
@@ -62,6 +63,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
     dx, dy : float, optional, default 0.25 degrees
         latitude, longitude spacing of the new lat/lon grid onto which the 
         field 'data' will be resampled.
+        
+  	mapping_method : string, optional. Default 'nearest_neighbor'
+        denote the type of interpolation method to use.
+        options include
+            'nearest_neighbor' - Take the nearest value from the source grid
+            					 to the target grid
+            'bin_average'      - Use the average value from the source grid
+								 to the target grid        
 
     radius_of_influence : float, optional, default 112000 m
         to map values from 'data' to the new lat/lon grid, we use use a
@@ -205,7 +214,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
             resample_to_latlon(lons, lats, data,
                                -90, 90, dy,
                                -180, 180, dx,
-                               mapping_method='nearest_neighbor',
+                               mapping_method=mapping_method,
                                radius_of_influence = radius_of_influence)
             
         if plot_type == 'pcolormesh':
@@ -276,7 +285,7 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                 resample_to_latlon(lons, lats, data,
                                    -90, 90, dy,
                                    lon_limits[0], lon_limits[1], dx,
-                                   mapping_method='nearest_neighbor',
+                                   mapping_method=mapping_method,
                                    radius_of_influence = radius_of_influence)
             if(ki==0):
                 new_grid_lon_centers_out = new_grid_lon_centers
