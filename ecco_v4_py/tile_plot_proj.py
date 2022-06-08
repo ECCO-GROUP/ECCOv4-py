@@ -278,7 +278,14 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                                    lon_limits[0], lon_limits[1], dx,
                                    mapping_method='nearest_neighbor',
                                    radius_of_influence = radius_of_influence)
-    
+            if(ki==0):
+                new_grid_lon_centers_out = new_grid_lon_centers
+                new_grid_lat_centers_out = new_grid_lat_centers
+                data_latlon_projection_out = data_latlon_projection
+            else:
+                new_grid_lon_centers_out = np.append(new_grid_lon_centers_out, new_grid_lon_centers,axis=1)
+                new_grid_lat_centers_out = np.append(new_grid_lat_centers_out, new_grid_lat_centers,axis=1)
+                data_latlon_projection_out = np.append(data_latlon_projection_out, data_latlon_projection,axis=1)
             if plot_type == 'pcolormesh':
                 plot_lons = new_grid_lon_edges
                 plot_lats = new_grid_lat_edges
@@ -312,8 +319,8 @@ def plot_proj_to_latlon_grid(lons, lats, data,
                               less_output=less_output)
     
 
-    return f, ax, p, cbar, new_grid_lon_centers, new_grid_lat_centers,\
-        data_latlon_projection, gl
+    return f, ax, p, cbar, new_grid_lon_centers_out, new_grid_lat_centers_out,\
+        data_latlon_projection_out, gl
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
