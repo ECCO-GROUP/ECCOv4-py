@@ -58,14 +58,17 @@ def add_global_metadata(metadata, G, dataset_dim, less_output=True):
         # if we do add the field, we have to convert to the
         # appropriate data type
         if add_field == True:
-            if mtype == 's':
+            if isinstance(mc['value'], str) and 'TBD_' in mc['value']:
                 G.attrs[mname] = mc['value']
-            elif mtype == 'f':
-                G.attrs[mname] = float(mc['value'])
-            elif mtype == 'i':
-                G.attrs[mname] = np.int32(mc['value'])
             else:
-                print('INVALID MTYPE ! ', mtype)
+                if mtype == 's':
+                    G.attrs[mname] = mc['value']
+                elif mtype == 'f':
+                    G.attrs[mname] = float(mc['value'])
+                elif mtype == 'i':
+                    G.attrs[mname] = np.int32(mc['value'])
+                else:
+                    print('INVALID MTYPE ! ', mtype)
         else:
             print('\t> not adding ', mc)
 
