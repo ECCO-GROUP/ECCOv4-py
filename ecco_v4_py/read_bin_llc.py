@@ -13,6 +13,7 @@ The llc layout is used for ECCO v4.
 
 from __future__ import division,print_function
 from xmitgcm import open_mdsdataset
+from xmitgcm.file_utils import clear_cache
 import xmitgcm
 import numpy as np
 import xarray as xr
@@ -49,6 +50,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             mds_datatype = '>f4',
                             llc_method = 'bigchunks',
                             less_output=True,
+                            read_grid=True,
                             **kwargs):
 
     """
@@ -176,6 +178,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
         str(ecco_v4_start_day)  + ' ' +  str(ecco_v4_start_hour) + ':' +  \
         str(ecco_v4_start_min)  + ':' + str(ecco_v4_start_sec)
 
+    # clear cache so listdir() will find the newly downloaded mds files for the current timestep
+    clear_cache()
 
     if model_time_steps_to_load == 'all':
         if not less_output:
@@ -186,7 +190,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
         ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                        grid_dir = mds_grid_dir,
-                                       read_grid = True,
+                                       read_grid = read_grid,
                                        prefix = mds_files,
                                        geometry = 'llc',
                                        iters = 'all',
@@ -208,7 +212,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
         if isinstance(model_time_steps_to_load, list):
             ecco_dataset = open_mdsdataset(data_dir = mds_var_dir,
                                            grid_dir = mds_grid_dir,
-                                           read_grid = True,
+                                           read_grid = read_grid,
                                            prefix = mds_files,
                                            geometry = 'llc',
                                            iters = model_time_steps_to_load,
