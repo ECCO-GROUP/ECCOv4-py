@@ -70,7 +70,8 @@ def add_global_metadata(metadata, G, dataset_dim, less_output=True):
                 else:
                     print('INVALID MTYPE ! ', mtype)
         else:
-            print('\t> not adding ', mc)
+            if not less_output:
+                print('\t> not adding ', mc)
 
     return G
 
@@ -98,7 +99,8 @@ def add_coordinate_metadata(metadata_dict, G, less_output=True):
                     if not less_output:
                         print('\t',m_key, ':', mv[m_key])
         else:
-            print('...... no metadata found in dictionary')
+            if not less_output:
+                print('...... no metadata found in dictionary')
 
     return G
 
@@ -118,7 +120,8 @@ def add_variable_metadata(variable_metadata_dict, G, \
         mv = find_metadata_in_json_dictionary(var, 'name', variable_metadata_dict)
 
         if len(mv) == 0:
-            print('...... no metadata found in dictionary')
+            if not less_output:
+                print('...... no metadata found in dictionary')
 
         else:
             # loop through each key, add if not on exclude list
