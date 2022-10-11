@@ -119,11 +119,11 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         new_grid_lon_centers, new_grid_lat_centers =\
             np.meshgrid(new_grid_lon_centers_1D, new_grid_lat_centers_1D)
 
-        print(np.min(new_grid_lon_centers), np.max(new_grid_lon_centers))
-        print(np.min(new_grid_lon_edges), np.max(new_grid_lon_edges))
+        #print(np.min(new_grid_lon_centers), np.max(new_grid_lon_centers))
+        #print(np.min(new_grid_lon_edges), np.max(new_grid_lon_edges))
         
-        print(np.min(new_grid_lat_centers), np.max(new_grid_lat_centers))
-        print(np.min(new_grid_lat_edges), np.max(new_grid_lat_edges)) 
+        #print(np.min(new_grid_lat_centers), np.max(new_grid_lat_centers))
+        #print(np.min(new_grid_lat_edges), np.max(new_grid_lat_edges)) 
         
         # define the lat lon points of the two parts.
         new_grid  = pr.geometry.GridDefinition(lons=new_grid_lon_centers,
