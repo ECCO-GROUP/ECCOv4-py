@@ -7,7 +7,7 @@ def README():
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
-  version = '1.5.4',
+  version = '1.5.5',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty, Ou Wang, Tim Smith, and others',
   author_email = 'ian.fenty@jpl.nasa.gov, ecco-group@mit.edu',
@@ -17,10 +17,10 @@ setup(
   data_files=[('binary_data',['binary_data/basins.data', 'binary_data/basins.meta'])],
   python_requires = '>=3.7',
   install_requires=[
-        'numpy',
+    'numpy',
 	'future',
-        'numpy',
-        'Bottleneck',
+    'numpy',
+    'Bottleneck',
   	'Cartopy',
 	'cmocean',
 	'dask[complete]',
