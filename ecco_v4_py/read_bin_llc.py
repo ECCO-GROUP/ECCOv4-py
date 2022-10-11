@@ -31,7 +31,7 @@ from .ecco_utils import add_global_metadata
 from .ecco_utils import add_variable_metadata
 from .ecco_utils import add_coordinate_metadata
 from .ecco_utils import sort_all_attrs, sort_attrs
-
+from .ecco_utils import extract_yyyy_mm_dd_hh_mm_ss_from_datetime64 
 
 def load_ecco_vars_from_mds(mds_var_dir,
                             mds_grid_dir=None,
@@ -39,6 +39,8 @@ def load_ecco_vars_from_mds(mds_var_dir,
                             vars_to_load = 'all',
                             tiles_to_load = [0,1,2,3,4,5,6,7,8,9,10,11,12],
                             model_time_steps_to_load = 'all',
+                            model_start_datetime = np.datetime64('1992-01-01T12:00:00'),
+                            delta_t = 3600,
                             output_freq_code = '',
                             drop_unused_coords = False,
                             grid_vars_to_coords = True,
@@ -74,7 +76,6 @@ def load_ecco_vars_from_mds(mds_var_dir,
     to be the mid point of the time averaging period when the appropriate
     *output_freq_code* is passed.
 
-
     Parameters
     ----------
     mds_var_dir : str
@@ -103,6 +104,19 @@ def load_ecco_vars_from_mds(mds_var_dir,
 
         Note : the model time step indicates the time step when the the file was written.
         when the field is a time average, this time step shows the END of the averaging period.
+
+
+    model_start_datetime : numpy datetime64 object, optional, default: np.datetime64('1992-01-01T12:00:00')
+        a numpy datetime64 object with the time set to the beginning of the simulation. 
+        useful to change if loading an extension to the main solution where the 
+        output field iteration numbers have reset to zero.
+
+        default is 1992-01-01T12:00:00, the value used in ECCO V4. 
+
+    delta_t : int, optional, default 3600 (seconds) 
+        the length of the model time step, in seconds. V4 uses 1 hour (3600s) time steps 
+        useful to change if re-running the model with a different time step
+        Note: a different time step will change the solution 
 
     output_freq_code : str, optional, default empty string
         a code used to create the proper time indices on the fields after loading
@@ -161,20 +175,20 @@ def load_ecco_vars_from_mds(mds_var_dir,
         tiles_to_load = list(tiles_to_load)
 
     #ECCO v4 r3 starts 1992/1/1 12:00:00
-    ecco_v4_start_year = 1992
-    ecco_v4_start_mon  = 1
-    ecco_v4_start_day  = 1
-    ecco_v4_start_hour = 12
-    ecco_v4_start_min  = 0
-    ecco_v4_start_sec  = 0
+    #start_year = 1992
+    #start_mon  = 1
+    #start_day  = 1
+    #start_hour = 12
+    #start_min  = 0
+    #start_sec  = 0
 
-    # ECCO v4 r3 has 1 hour (3600 s) time steps
-    delta_t = 3600
-
+    start_year, start_mon, start_day, start_hour, start_min, start_sec = \
+      extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(model_start_datetime)
+ 
     # define reference date for xmitgcm
-    ref_date = str(ecco_v4_start_year) + '-' + str(ecco_v4_start_mon)  + '-' + \
-        str(ecco_v4_start_day)  + ' ' +  str(ecco_v4_start_hour) + ':' +  \
-        str(ecco_v4_start_min)  + ':' + str(ecco_v4_start_sec)
+    ref_date = str(start_year) + '-' + str(start_mon)  + '-' + \
+        str(start_day)  + ' ' +  str(start_hour) + ':' +  \
+        str(start_min)  + ':' + str(start_sec)
 
 
     if model_time_steps_to_load == 'all':
@@ -403,7 +417,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
             # drop 3D dimensions
             dims_to_drop = set(ecco_dataset.dims).intersection(set(['k','k_u','k_l','k_p1']))
             if not less_output:
-                print('\n dropping 3D dims and coords')
+                print('\n dropping 3D dims')
                 print(dims_to_drop)
 
             for dim in dims_to_drop:
@@ -412,11 +426,16 @@ def load_ecco_vars_from_mds(mds_var_dir,
                 ecco_dataset = ecco_dataset.drop(dim)
 
             # drop 3D coords
-            coords_to_drop = set(ecco_dataset.coords).intersection(set(['Z','Zp1','Zu','Zl']))
-            for coord in coords_to_drop:
-                if not less_output:
-                    print('--> dropping ', coord)
-                ecco_dataset = ecco_dataset.drop(coord)
+            if not less_output:
+                print('\n dropping 3D coords')
+            coords_to_drop = []
+            for coord in list(ecco_dataset.coords):
+                coord_dims = set(ecco_dataset.coords[coord].dims)
+                coord_tmp = coord_dims.intersection(dims_to_drop)
+                if len(coord_tmp) > 0:
+                    if not less_output:
+                        print('--> dropping ', coord)
+                        ecco_dataset = ecco_dataset.drop(coord)
 
     # apply global metadata
     if len(global_metadata) > 0:
