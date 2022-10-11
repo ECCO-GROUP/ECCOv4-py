@@ -278,6 +278,7 @@ def plot_tiles(tiles, cmap=None,
     
     # loop through the axes array and plot tiles where tile_order != -1
     cur_arr = np.zeros((nrows*nx,ncols*nx)) if get_array else None
+    cur_tile = -1
     for i, ax in enumerate(axarr.ravel()):
         ax.axis('off')
 
@@ -291,7 +292,7 @@ def plot_tiles(tiles, cmap=None,
                     
             elif isinstance(tiles, dask.array.core.Array) or \
                  isinstance(tiles, xr.core.dataarray.DataArray):
-                
+
                 if cur_tile_num in tiles.tile :
                     have_tile = True
                     cur_tile = tiles.sel(tile=cur_tile_num)
