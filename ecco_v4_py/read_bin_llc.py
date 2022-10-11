@@ -428,6 +428,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
             # drop 3D coords
             if not less_output:
                 print('\n dropping 3D coords')
+
             coords_to_drop = []
             for coord in list(ecco_dataset.coords):
                 coord_dims = set(ecco_dataset.coords[coord].dims)
@@ -435,7 +436,7 @@ def load_ecco_vars_from_mds(mds_var_dir,
                 if len(coord_tmp) > 0:
                     if not less_output:
                         print('--> dropping ', coord)
-                        ecco_dataset = ecco_dataset.drop(coord)
+                    ecco_dataset = ecco_dataset.drop(coord)
 
     # apply global metadata
     if len(global_metadata) > 0:
