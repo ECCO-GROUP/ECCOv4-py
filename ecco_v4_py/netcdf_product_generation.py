@@ -595,7 +595,7 @@ def create_nc_grid_files_on_native_grid_from_mds(grid_input_dir,
 
 
 #%%
-def get_time_steps_from_mds_files(mds_var_dir, mds_file):
+def get_time_steps_from_mds_files(mds_var_dir, mds_file, less_output=True):
 
     if isinstance(mds_var_dir, str):
         mds_var_dir = Path(mds_var_dir)
@@ -605,7 +605,8 @@ def get_time_steps_from_mds_files(mds_var_dir, mds_file):
     time_steps = []
 
     print ('get time steps')
-    print (tmp_files)
+    if not less_output:
+        print(tmp_files)
     for i in range(len(tmp_files)):
         time_steps.append(int(tmp_files[i].stem[-10:]))
 
