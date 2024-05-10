@@ -82,13 +82,42 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
         raise TypeError('orig_lons and orig_lats variable either a DataArray or numpy.ndarray. \n'
                 'Found type(orig_lons) = %s and type(orig_lats) = %s' %
                 (type(orig_lons), type(orig_lats)))
-
+    
     if type(orig_field) == xr.core.dataarray.DataArray:
         orig_field = orig_field.values
     elif type(orig_field) != np.ndarray and \
          type(orig_field) != np.ma.core.MaskedArray :
         raise TypeError('orig_field must be a type of DataArray, ndarray, or MaskedArray. \n'
                 'Found type(orig_field) = %s' % type(orig_field))
+
+    ## Modifications to allow time and depth dimensions (DS, 2023-04-20)    
+    # Collapse any non-horizontal dimensions into a single, final dimension:
+
+    # Get shape of orig_lats, then difference with orig_field
+    n_horiz_dims=len(orig_lats.shape)
+    n_total_dims=len(orig_field.shape)
+    n_extra_dims=n_total_dims-n_horiz_dims
+    horiz_dim_shape=orig_lats.shape # e.g. [13,90,90]    
+    if ( (n_extra_dims>0) & (np.prod(orig_field.shape) > np.prod(horiz_dim_shape) ) ):
+        # If there are extra dimensions (and they are meaningful/have len > 1)...
+        
+        # Check if extra dimensions are at beginning or end of orig_field...
+        if orig_field.shape[0]!=orig_lats.shape[0]:
+            # ... if at the beginning, collapse and move to end
+            extra_dims_at_beginning=True
+            extra_dim_shape=orig_field.shape[:n_extra_dims] # e.g. [312,50]
+            new_shape=np.hstack([np.prod(extra_dim_shape),\
+                                 np.prod(horiz_dim_shape)])          # e.g. from [312,50,13,90,90] to [15600,105300]
+            orig_field=orig_field.reshape(new_shape).transpose(1,0) # e.g. from [15600,105300] to [105300,15600]
+        else:
+            # ... if at the end, just collapse
+            extra_dims_at_beginning=False
+            extra_dim_shape=orig_field.shape[n_horiz_dims:] #e.g. [50,312]
+            new_shape=np.hstack([np.prod(horiz_dim_shape),\
+                                 np.prod(extra_dim_shape)]) # e.g. from [13,90,90,50,312] to [105300,15600]
+            orig_field=orig_field.reshape(new_shape)
+    ##
+
 
     # prepare for the nearest neighbor mapping
 
@@ -146,6 +175,22 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
             raise ValueError('mapping_method must be nearest_neighbor or bin_average. \n'
                     'Found mapping_method = %s ' % mapping_method)
 
+        ## Modifications to allow time and depth dimensions (DS, 2023-04-20)
+        if ( (n_extra_dims>0) & (np.prod(orig_field.shape) > np.prod(horiz_dim_shape) ) ):
+        # If there are extra dimensions (and they are meaningful/have len > 1)
+            new_horiz_shape=data_latlon_projection.shape[:2]
+            if extra_dims_at_beginning:
+                # If the extra dimensions were originally at the beginning, move back...
+                data_latlon_projection=data_latlon_projection.transpose(2,0,1)
+                # ... and unstack the additional dimensions
+                final_shape=np.hstack([extra_dim_shape,new_horiz_shape])
+                data_latlon_projection=data_latlon_projection.reshape(final_shape)
+            else:
+                # If the extra dimensions were originally at the end, just unstack
+                final_shape=np.hstack([extra_dim_shape,new_horiz_shape])
+                data_latlon_projection=data_latlon_projection.reshape(final_shape)
+        ##
+        
     else:
         raise ValueError('Number of lat and lon points to interpolate to must be > 0. \n'
                 'Found num_lats = %d, num lons = %d' % (num_lats,num_lons))
