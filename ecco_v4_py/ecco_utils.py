@@ -11,6 +11,7 @@ This module includes utility routines that operate on the Dataset or DataArray O
 
 from __future__ import division, print_function
 import numpy as np
+import pandas as pd
 import xarray as xr
 import datetime
 import dateutil
@@ -303,7 +304,7 @@ def make_time_bounds_and_center_times_from_ecco_dataset(ecco_dataset, \
         time_bnds    = time_bnds.T
 
     # make time bounds dataset
-    if 'time' not in ecco_dataset.dims.keys():
+    if 'time' not in ecco_dataset.dims:
          ecco_dataset = ecco_dataset.expand_dims(dim='time')
 
     #print ('-- tb shape ', time_bnds.shape)
@@ -388,7 +389,7 @@ def make_time_bounds_from_ds64(rec_avg_end, output_freq_code):
 def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
     """
 
-    Extract separate fields for year, monday, day, hour, min, sec from
+    Extract separate fields for year, month, day, hour, min, sec from
     a datetime64 object, or an array-like object of datetime64 objects
 
     Parameters
@@ -420,7 +421,7 @@ def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
         xdates = extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(xr.DataArray(dt64))
         return tuple([x.values for x in xdates])
     elif isinstance(dt64,np.datetime64):
-        xdates = extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(xr.DataArray(np.array([dt64])))
+        xdates = extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(xr.DataArray(pd.to_datetime(dt64)))
         return tuple([int(x.values) for x in xdates])
 
 #%%
