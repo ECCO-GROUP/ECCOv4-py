@@ -1,0 +1,14 @@
+numpy
+future
+numpy
+Bottleneck
+Cartopy
+cmocean
+dask[complete]
+matplotlib
+netCDF4
+pyresample
+python-dateutil
+xarray
+xmitgcm
+xgcm
