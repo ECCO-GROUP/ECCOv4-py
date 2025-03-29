@@ -1,3 +1,5 @@
 *.pyc
 *.swp
 
+ecco_v4_py/.ipynb_checkpoints/read_bin_llc-checkpoint.py
+.DS_Store
