@@ -39,6 +39,49 @@ MINOR version when they add functionality in a backwards-compatible manner, and
 
 MAINTENANCE version when they make backwards-compatible bug fixes.
 
+
+## Updating on pypi.org
+
+1. Make sure your ```~/.pypirc``` file has entries for [pypi] and [testpypi] with properly-scoped api tokens
+```
+[distutils]
+  index-servers =
+    pypi
+    ecco_v4_py 
+
+[pypi]
+  username = __token__
+  password = YOUR-PYPI-TOKEN-HERE
+
+[ecco_v4_py]
+  repository = https://upload.pypi.org/legacy/
+  username = __token__
+  password = YOUR-PYPI-TOKEN-HERE (can be scoped for just the ecco_v4_py package)
+
+[testpypi]
+  username = __token__
+  password = YOUR-TESTPYPI-TOKEN-HERE
+```
+2. Verify all code changes are up to date on github, including version number
+3. Navigate to ECCOv4_py directory
+4. Remove old "distribution" files by deleting the contents of the ```dist/``` directory 
+5. Rebuild the ```dist/``` files
+```
+python3 setup.py sdist bdist_wheel
+```
+6. Push changes to pypi test platform: test.pypi.org 
+```
+twine upload --repository testpypi dist/*
+```
+7. Verify code updates are on test.pypi.org: https://test.pypi.org/project/ecco-v4-py/
+8. Push changes to to pypi
+```
+twine upload dist/* --repository-url https://upload.pypi.org/legacy/
+```
+9. Verify code updates are on pypi.org: https://pypi.org/project/ecco-v4-py/
+
+
+
 ## Note on testing with `pytest`
 
 (credit to Tim Smith)
