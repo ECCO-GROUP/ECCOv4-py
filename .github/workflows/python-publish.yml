@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Upload new release to PyPI
 
 on:
   release:
@@ -15,7 +15,15 @@ on:
 jobs:
   release-build:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ecco_v4_py    
 
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -27,26 +35,19 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
+        python -m pip install --upgrade twine
         python -m pip install build
         
     - name: Build package 
       run: python -m build
     
-    - name: Upload distributions
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-dists
-        path: dist/
+#    - name: Upload distributions
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: release-dists
+#        path: dist/
 
-  pypi-publish:
-    name: Upload release to PyPI
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/ecco_v4_py    
-    needs: 
-      - release-build
-    steps:
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
