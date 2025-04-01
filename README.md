@@ -42,6 +42,10 @@ MAINTENANCE version when they make backwards-compatible bug fixes.
 
 ## Updating on pypi.org
 
+Note: Publishing a new 'release' will trigger an 'action' and publish the new release to pypi. The version number has to be different otherwise pypi will reject it and say 'version already exists'.
+
+The instructions below outline how to manually push code changes to pypi.
+
 1. Make sure your ```~/.pypirc``` file has entries for [pypi] and [testpypi] with properly-scoped api tokens
 ```
 [distutils]
