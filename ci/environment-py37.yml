@@ -16,7 +16,6 @@ dependencies:
   - netcdf4
   - numba
   - numpy
-  - pathlib
   - pip
   - pre-commit
   - proj
