@@ -169,7 +169,7 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     from os.path import split
                     s3 = s3fs.S3FileSystem(anon=False,\
                                            requester_pays=True)
-                    s3_datasets_list = [split(dataset_path)[-1]\
+                    s3_datasets_list = ['ECCO_L4_'+split(dataset_path)[-1]+'_LLC0090GRID_MONTHLY_V4R5'\
                                           for dataset_path in \
                                           s3.ls("s3://ecco-model-granules/netcdf/V4r5/native/mon_mean/")]
                 else:
