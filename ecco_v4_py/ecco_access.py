@@ -169,7 +169,7 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     from os.path import split
                     s3 = s3fs.S3FileSystem(anon=False,\
                                            requester_pays=True)
-                    s3_datasets_list = [split(dataset_path)[-1]\
+                    s3_datasets_list = ['ECCO_L4_'+split(dataset_path)[-1]+'_LLC0090GRID_MONTHLY_V4R5'\
                                           for dataset_path in \
                                           s3.ls("s3://ecco-model-granules/netcdf/V4r5/native/mon_mean/")]
                 else:
@@ -239,13 +239,13 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
         for kwarg in list(kwargs.keys()):
             if kwarg != 'jsons_root_dir':
                 del kwargs[kwarg]
-    elif mode == 's3_open':
-        for kwarg in list(kwargs.keys()):
-            if kwarg in ['n_workers','force_redownload','show_noredownload_msg']:
-                del kwargs[kwarg]
     else:
         if 'jsons_root_dir' in kwargs.keys():
             del kwargs['jsons_root_dir']
+    if mode == 's3_open':
+        for kwarg in list(kwargs.keys()):
+            if kwarg in ['n_workers','force_redownload','show_noredownload_msg']:
+                del kwargs[kwarg]
     
     
     # download or otherwise access granules, depending on mode
