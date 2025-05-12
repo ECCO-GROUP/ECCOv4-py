@@ -595,19 +595,31 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
             json_file = join(json_local_subdir,json_basename)
     
     
-    # get NASA Earthdata credentials for S3
-    creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
+    # access ECCO output using fsspec mapper object
+    if version == 'v4r5':
+        # generate mapper object
+        fs = fsspec.filesystem(\
+                    "reference",\
+                    fo=json_file,\
+                    remote_protocol="s3", 
+                    remote_options={"anon":False,\
+                                    "requester_pays":True},\
+                    skip_instance_cache=True)
+    else:
+        # get NASA Earthdata credentials for S3
+        creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
+        
+        # generate mapper object
+        fs = fsspec.filesystem(\
+                    "reference",\
+                    fo=json_file,\
+                    remote_protocol="s3", 
+                    remote_options={"anon":False,\
+                                    "key":creds['accessKeyId'],
+                                    "secret":creds['secretAccessKey'], 
+                                    "token":creds['sessionToken']},\
+                    skip_instance_cache=True)
     
-    # generate map object
-    fs = fsspec.filesystem(\
-                "reference",\
-                fo=json_file,\
-                remote_protocol="s3", 
-                remote_options={"anon":False,\
-                                "key":creds['accessKeyId'],
-                                "secret":creds['secretAccessKey'], 
-                                "token":creds['sessionToken']},\
-                skip_instance_cache=True)
     fsmap_obj = fs.get_mapper("")
     
     
