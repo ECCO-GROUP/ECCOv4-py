@@ -1,6 +1,6 @@
 ECCO Version 4: Fifth Release (1992-2019) [ECCO v4r5]
 
-These are the variables in the ECCO v4r5 output that can be downloaded as monthly averages on the native LLC90 grid:
+These are the variables in the ECCO v4r5 output that can be accessed as monthly averages on the native LLC90 grid:
 
 ShortName         Variable Name     Description (units)
 
@@ -97,6 +97,11 @@ ECCO_L4_OCEAN_AND_ICE_SURFACE_STRESS_LLC0090GRID_MONTHLY_V4R5
 ECCO_L4_OCEAN_BOLUS_STREAMFUNCTION_LLC0090GRID_MONTHLY_V4R5
                   GM_PsiX           Gent-McWilliams bolus transport streamfunction 'u' component. (m^2/s)
                   GM_PsiY           Gent-McWilliams bolus transport streamfunction 'v' component. (m^2/s)
+
+ECCO_L4_OCEAN_BOLUS_VELOCITY_LLC0090GRID_MONTHLY_V4R5
+                  UVELSTAR          Gent-McWilliams parameterized bolus velocity in the model +x direction scaled by time-varying grid cell thickness (m/s)
+                  VVELSTAR          Gent-McWilliams parameterized bolus velocity in the model +y direction scaled by time-varying grid cell thickness (m/s)
+                  WVELSTAR          Gent-McWilliams parameterized bolus velocity in the model +z direction (m/s)
 
 ECCO_L4_OCEAN_BOTTOM_PRESSURE_LLC0090GRID_MONTHLY_V4R5
                   OBP               Ocean bottom pressure, excluding global mean atmospheric pressure, given as equivalent water thickness. This is suitable for comparisons with GRACE data products. (m)

@@ -84,12 +84,17 @@ def query_shortnames(query,content_dict,\
                         continue
 
         # add query result to list
-        if query_ci in shortname.casefold():
+        if query_ci == shortname.casefold()
+            exactmatch_flag = True
             shortnames_match.append(shortname)
-        elif query_ci in str(curr_content).casefold():
-            shortnames_match.append(shortname)
+        else:
+            exactmatch_flag = False
+            if query_ci in shortname.casefold():
+                shortnames_match.append(shortname)
+            elif query_ci in str(curr_content).casefold():
+                shortnames_match.append(shortname)
     
-    return shortnames_match
+    return shortnames_match,exactmatch_flag
 
 
 
@@ -207,16 +212,20 @@ def ecco_podaac_varlist_query(query,version,grid=None,time_res='all'):
         raise ValueError('ECCO '+version+' is not currently available from PO.DAAC')
     
     # paths to variable list files
-    varlist_url_root = 'https://raw.githubusercontent.com/ECCO-GROUP/ECCO-v4-Python-Tutorial/master/ecco_access/varlist/'
+    varlist_url_root = 'https://raw.githubusercontent.com/ECCO-GROUP/ECCOv4-py/refs/heads/master/ecco_v4_py/varlist/'
     if version == 'v4r4':
-        varlist_url_ids = {'native,monthly':'v4r4_nctiles_monthly_varlist.txt',\
-                           'native,daily':'v4r4_nctiles_daily_varlist.txt',\
-                           'native,snapshot':'v4r4_nctiles_snapshots_varlist.txt',\
-                           'latlon,monthly':'v4r4_latlon_monthly_varlist.txt',\
-                           'latlon,daily':'v4r4_latlon_daily_varlist.txt',\
-                           'mixed,all':'v4r4_tseries_grid_varlist.txt'}
+        varlist_url_ids = {'native,monthly':'v4r4/v4r4_nctiles_monthly_varlist.txt',\
+                           'native,daily':'v4r4/v4r4_nctiles_daily_varlist.txt',\
+                           'native,snapshot':'v4r4/v4r4_nctiles_snapshots_varlist.txt',\
+                           'latlon,monthly':'v4r4/v4r4_latlon_monthly_varlist.txt',\
+                           'latlon,daily':'v4r4/v4r4_latlon_daily_varlist.txt',\
+                           'mixed,all':'v4r4/v4r4_tseries_grid_varlist.txt'}
     elif version == 'v4r5':
-        varlist_url_ids = {'native,monthly':'v4r5_nctiles_monthly_varlist.txt'}
+        varlist_url_ids = {'native,monthly':'v4r5/v4r5_nctiles_monthly_varlist.txt',\
+                           'native,daily':'v4r5/v4r5_nctiles_daily_varlist.txt',\
+                           'native,snapshot':'v4r5/v4r5_nctiles_snapshots_varlist.txt',\
+                           'latlon,monthly':'v4r5/v4r5_latlon_monthly_varlist.txt',\
+                           'latlon,daily':'v4r5/v4r5_latlon_daily_varlist.txt'}
     
     
     # set keys of grid types and time resolutions to search
@@ -262,25 +271,28 @@ def ecco_podaac_varlist_query(query,version,grid=None,time_res='all'):
         content_dict = {**content_dict,**curr_content_dict}
     
     # find matches to query in the varlists
-    shortnames_match = query_shortnames(query,content_dict,\
-                                        grid,test_grids,\
-                                        time_res,test_timeres)
+    shortnames_match,exactmatch_flag = query_shortnames(query,content_dict,\
+                                                        grid,test_grids,\
+                                                        time_res,test_timeres)
     
-    # print to screen the query match results
-    print_varlist_query_results(query,shortnames_match,\
-                                content_dict,varname_pos,descrip_pos)
-    
-    if len(shortnames_match) == 0:
-        raise ValueError('No valid matches to query found; please try again.')
-    if len(shortnames_match) == 1:
-        option_proceed = input('Proceed with option 1? [y/n]: ')
-        if option_proceed.casefold() == 'y':
-            option_num = 1
-        else:
-            raise ValueError('No valid matches to query found; please try again.')
+    if exactmatch_flag:
+        shortname_match = shortnames_match[0]
     else:
-        option_num = input('Please select option [1-'+str(len(shortnames_match))+']: ')
-    shortname_match = shortnames_match[int(option_num)-1]
-    print('Using dataset with ShortName: '+shortname_match)
+        # print to screen the query match results
+        print_varlist_query_results(query,shortnames_match,\
+                                    content_dict,varname_pos,descrip_pos)
+        
+        if len(shortnames_match) == 0:
+            raise ValueError('No valid matches to query found; please try again.')
+        if len(shortnames_match) == 1:
+            option_proceed = input('Proceed with option 1? [y/n]: ')
+            if option_proceed.casefold() == 'y':
+                option_num = 1
+            else:
+                raise ValueError('No valid matches to query found; please try again.')
+        else:
+            option_num = input('Please select option [1-'+str(len(shortnames_match))+']: ')
+        shortname_match = shortnames_match[int(option_num)-1]
+        print('Using dataset with ShortName: '+shortname_match)
     
     return shortname_match
