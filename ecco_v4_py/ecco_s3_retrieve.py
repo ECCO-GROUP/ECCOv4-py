@@ -166,6 +166,10 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         # include only the granules in the date range given by temporal_range
         s3_files_all_dates = np.array([np.datetime64(s3_file.split("_")[-5],'M')\
                                          for s3_file in s3_files_all])
+        sorted_ind = np.argsort(s3_files_all_dates)
+        s3_files_all_dates = s3_files_all_dates[sorted_ind]
+        s3_files_all = s3_files_all[sorted_ind]
+        
         in_range_ind = np.logical_and(\
                          s3_files_all_dates >= np.datetime64(StartDate,'M'),\
                          s3_files_all_dates <= np.datetime64(EndDate,'M'))\
