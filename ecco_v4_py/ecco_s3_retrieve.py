@@ -504,6 +504,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
     import glob
     import fsspec
     
+    
     # identify name of target json and local directory
     shortname_split = ShortName.split('_')
     if version == 'v4r4':
@@ -578,6 +579,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
         json_basename = basename(json_s3_file)
         json_file = join(json_local_subdir,json_basename)
         if not isfile(json_file):
+            os.makedirs(json_local_subdir,exist_ok=True)
             s3.get_file(json_s3_file,json_file)
     else:
         json_local_subdir = join(jsons_root_dir,json_subdir)
