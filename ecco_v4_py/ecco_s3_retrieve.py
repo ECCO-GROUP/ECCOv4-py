@@ -533,11 +533,14 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
         shortname_core = "_".join(ShortName.split("_")[2:-3])
         json_subdir = "MZZ_"+gridtime_id
         json_basename = shortname_core+"_"+gridtime_id+"_llc090_ECCOV4r5.json"
-    json_local_subdir = join(jsons_root_dir,json_subdir)
+    
     
     if jsons_root_dir is None:
         # retrieve jsons from s3://ecco-model-granules
         import s3fs
+        import os
+        
+        json_local_subdir = join(os.getcwd(),json_subdir)
         
         if prompt_request_payer:
             # give requester a chance to opt out of paying data transfer fees
@@ -577,6 +580,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
         if not isfile(json_file):
             s3.get_file(json_s3_file,json_file)
     else:
+        json_local_subdir = join(jsons_root_dir,json_subdir)
         if version == 'v4r4':
             if (('GEOMETRY' in ShortName) or ('MIX_COEFFS' in ShortName)):
                 if 'LLC' in gridtype:
