@@ -84,7 +84,7 @@ def query_shortnames(query,content_dict,\
                         continue
 
         # add query result to list
-        if query_ci == shortname.casefold()
+        if query_ci == shortname.casefold():
             exactmatch_flag = True
             shortnames_match.append(shortname)
         else:
