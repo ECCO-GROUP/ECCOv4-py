@@ -7,7 +7,7 @@ dependencies:
   - codecov
   - cartopy>=0.18.0
   - cmocean
-  - dask
+  - dask[complete]
   - docrep
   - fsspec
   - future
@@ -26,6 +26,13 @@ dependencies:
   - pyresample
   - scipy
   - xarray
-  - xgcm=0.5.0
+  - xgcm>=0.5.0
   - xmitgcm>=0.5.1
   - typing_extensions
+  - Bottleneck
+  - python-dateutil
+  - requests
+  - s3fs
+  - tqdm
+  - pandas
+
