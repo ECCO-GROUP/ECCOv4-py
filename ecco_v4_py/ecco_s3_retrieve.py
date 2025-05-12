@@ -555,23 +555,13 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
          
         if version == 'v4r4':
             json_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
-            if 'GEOMETRY' in ShortName:
-                # NOTE: native and latlon json_subdir are switched, pending correction!
+            if (('GEOMETRY' in ShortName) or ('MIX_COEFFS' in ShortName)):
                 if 'LLC' in gridtype:
-                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_05DEG_GEOMETRY"
-                    json_s3_file = s3.ls(join(json_subdir,'*native*.json'))[0]
+                    json_s3_file = s3.ls(join(json_s3_subdir,'*native*.json'))[0]
                 elif 'DEG' in gridtype:
-                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_LLC0090GRID_GEOMETRY"
-                    json_s3_file = s3.ls(join(json_subdir,'*latlon*.json'))[0]
+                    json_s3_file = s3.ls(join(json_s3_subdir,'*latlon*.json'))[0]
             else:
-                json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
-                if 'MIX_COEFFS' in ShortName:
-                    if 'LLC' in gridtype:
-                        json_s3_file = s3.ls(join(json_s3_subdir,'*native*.json'))[0]
-                    elif 'DEG' in gridtype:
-                        json_s3_file = s3.ls(join(json_s3_subdir,'*latlon*.json'))[0]
-                else:
-                    json_s3_file = s3.ls(join(json_s3_subdir,json_basename))
+                json_s3_file = s3.ls(join(json_s3_subdir,json_basename))
         elif version == 'v4r5':
             json_s3_subdir = "s3://ecco-model-granules/netcdf/V4r5/MZZ/" + json_subdir
             json_s3_file = join(json_s3_subdir,json_basename)
