@@ -456,7 +456,7 @@ def ecco_podaac_s3_open(ShortName,StartDate,EndDate,version,snapshot_interval='m
 ###================================================================================================================
 
 
-def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
+def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_request_payer=True):
     
     """
     
@@ -474,10 +474,23 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
                     fsspec/kerchunk-generated jsons are found.
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3-as-zarr
-                    -for-rapid-data-access-61e33f8fe685
-                    and stored as {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
-                    For v4r4, GRIDTYPE is '05DEG' or 'LLC0090GRID'.
+                    -for-rapid-data-access-61e33f8fe685.
+                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
+                    will be used.
+                    The jsons need to be stored in the following directories/formats:
+                    For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
+                    GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
                     TIME_RES is one of: ('MONTHLY','DAILY','SNAPSHOT','GEOMETRY','MIXING_COEFFS').
+                    For v4r5: {jsons_root_dir}/MZZ_{TIME_RES}_{GRIDTYPE}/{SHORTNAME_core}_{TIME_RES}_{GRIDTYPE}_llc090_ECCOV4r5.json.
+                    TIME_RES is one of: ('mon_mean','day_mean','snap');
+                    GRIDTYPE is one of: ('native','latlon').
+                    The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
+                    or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
+    
+    prompt_request_payer: bool, if True (default), user is prompted to approve 
+                                (by entering "y" or "Y") any access to a 
+                                requester pays bucket, otherwise request is canceled; 
+                                if False, data access proceeds without prompting.
 
     Returns
     -------
@@ -491,26 +504,89 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
     import glob
     import fsspec
     
-    
-    # identify where json file is found
+    # identify name of target json and local directory
     shortname_split = ShortName.split('_')
-    if 'GEOMETRY' in ShortName:
-        gridtype = shortname_split[-2]
-        time_res = 'GEOMETRY'
-    elif 'MIX_COEFFS' in ShortName:
-        gridtype = shortname_split[-2]
-        time_res = 'MIXING_COEFFS'
+    if version == 'v4r4':
+        if 'GEOMETRY' in ShortName:
+            gridtype = shortname_split[-2]
+            time_res = 'GEOMETRY'
+
+        elif 'MIX_COEFFS' in ShortName:
+            gridtype = shortname_split[-2]
+            time_res = 'MIXING_COEFFS'
+        else:
+            gridtype = shortname_split[-3]
+            time_res = shortname_split[-2]
+            json_basename = ShortName+".json"
+        json_subdir = "_".join(['MZZ',gridtype,time_res])
+    elif version == 'v4r5':
+        if 'MONTHLY' in ShortName:
+            gridtime_id = 'mon_mean_'
+        elif 'DAILY' in ShortName:
+            gridtime_id = 'day_mean_'
+        elif 'SNAPSHOT' in ShortName:
+            gridtime_id = 'snap_'
+        if 'LLC0090GRID' in ShortName:
+            gridtime_id += 'native'
+        elif '05DEG' in ShortName:
+            gridtime_id += 'latlon'
+        shortname_core = "_".join(ShortName.split("_")[2:-3])
+        json_subdir = "MZZ_"+gridtime_id
+        json_basename = shortname_core+"_"+gridtime_id+"_llc090_ECCOV4r5.json"
+    json_local_subdir = join(jsons_root_dir,json_subdir)
+    
+    if jsons_root_dir is None:
+        # retrieve jsons from s3://ecco-model-granules
+        import s3fs
+        
+        if prompt_request_payer:
+            # give requester a chance to opt out of paying data transfer fees
+            option_proceed = input("Files will be accessed from a requester pays S3 bucket.\n"\
+                                   "Requester is responsible for any data transfer fees.\n"\
+                                   "Do you want to proceed? [y/n]: ")
+            if option_proceed.casefold() != 'y':
+                raise Exception("Request canceled; no data transferred.")
+        s3 = s3fs.S3FileSystem(anon=False,\
+                               requester_pays=True)
+         
+        if version == 'v4r4':
+            json_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
+            if 'GEOMETRY' in ShortName:
+                # NOTE: native and latlon json_subdir are switched, pending correction!
+                if 'LLC' in gridtype:
+                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_05DEG_GEOMETRY"
+                    json_s3_file = s3.ls(join(json_subdir,'*native*.json'))[0]
+                elif 'DEG' in gridtype:
+                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_LLC0090GRID_GEOMETRY"
+                    json_s3_file = s3.ls(join(json_subdir,'*latlon*.json'))[0]
+            else:
+                json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
+                if 'MIX_COEFFS' in ShortName:
+                    if 'LLC' in gridtype:
+                        json_s3_file = s3.ls(join(json_s3_subdir,'*native*.json'))[0]
+                    elif 'DEG' in gridtype:
+                        json_s3_file = s3.ls(join(json_s3_subdir,'*latlon*.json'))[0]
+                else:
+                    json_s3_file = s3.ls(join(json_s3_subdir,json_basename))
+        elif version == 'v4r5':
+            json_s3_subdir = "s3://ecco-model-granules/netcdf/V4r5/MZZ/" + json_subdir
+            json_s3_file = join(json_s3_subdir,json_basename)
+        # if json is not already stored in current directory, retrieve it from S3 bucket
+        json_basename = basename(json_s3_file)
+        json_file = join(json_local_subdir,json_basename)
+        if not isfile(json_file):
+            s3.get_file(json_s3_file,json_file)
     else:
-        gridtype = shortname_split[-3]
-        time_res = shortname_split[-2]
-    json_subdir = join(jsons_root_dir,"_".join(['MZZ',gridtype,time_res]))
-    if (('GEOMETRY' in ShortName) or ('MIX_COEFFS' in ShortName)):
-        if 'LLC' in gridtype:
-            json_file = glob.glob(join(json_subdir,'*native*.json'))[0]
-        elif 'DEG' in gridtype:
-            json_file = glob.glob(join(json_subdir,'*latlon*.json'))[0]
-    else:
-        json_file = join(json_subdir,ShortName+'.json')
+        if version == 'v4r4':
+            if (('GEOMETRY' in ShortName) or ('MIX_COEFFS' in ShortName)):
+                if 'LLC' in gridtype:
+                    json_file = glob.glob(join(json_local_subdir,'*native*.json'))[0]
+                elif 'DEG' in gridtype:
+                    json_file = glob.glob(join(json_local_subdir,'*latlon*.json'))[0]
+            else:
+                json_file = join(json_local_subdir,json_basename)
+        else:
+            json_file = join(json_local_subdir,json_basename)
     
     
     # get NASA Earthdata credentials for S3
@@ -527,6 +603,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
                                 "token":creds['sessionToken']},\
                 skip_instance_cache=True)
     fsmap_obj = fs.get_mapper("")
+    
     
     return fsmap_obj
 

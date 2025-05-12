@@ -115,10 +115,18 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     fsspec/kerchunk-generated jsons are found.
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
-                    as-zarr-for-rapid-data-access-61e33f8fe685
-                    and stored as {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
-                    GRIDTYPE is '05DEG' or 'LLC0090GRID'.
+                    as-zarr-for-rapid-data-access-61e33f8fe685.
+                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
+                    will be used.
+                    The jsons need to be stored in the following directories/formats:
+                    For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
+                    GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
                     TIME_RES is one of: ('MONTHLY','DAILY','SNAPSHOT','GEOMETRY','MIXING_COEFFS').
+                    For v4r5: {jsons_root_dir}/MZZ_{TIME_RES}_{GRIDTYPE}/{SHORTNAME_core}_{TIME_RES}_{GRIDTYPE}_llc090_ECCOV4r5.json.
+                    TIME_RES is one of: ('mon_mean','day_mean','snap');
+                    GRIDTYPE is one of: ('native','latlon').
+                    The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
+                    or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.
     
@@ -215,8 +223,10 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
 
     # remove unneeded keyword arguments
     if mode == 's3_open_fsspec':
+        if 'jsons_root_dir' not in kwargs.keys():
+            kwargs['jsons_root_dir'] = None
         for kwarg in list(kwargs.keys()):
-            if kwarg != 'jsons_root_dir':
+            if kwarg not in ['jsons_root_dir','prompt_request_payer']:
                 del kwargs[kwarg]
     else:
         if 'jsons_root_dir' in kwargs.keys():
@@ -409,10 +419,18 @@ def ecco_podaac_to_xrdataset(query,version='v4r4',grid=None,time_res='all',\
                     fsspec/kerchunk-generated jsons are found.
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
-                    as-zarr-for-rapid-data-access-61e33f8fe685
-                    and stored as {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
-                    GRIDTYPE is '05DEG' or 'LLC0090GRID'.
+                    as-zarr-for-rapid-data-access-61e33f8fe685.
+                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
+                    will be used.
+                    The jsons need to be stored in the following directories/formats:
+                    For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
+                    GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
                     TIME_RES is one of: ('MONTHLY','DAILY','SNAPSHOT','GEOMETRY','MIXING_COEFFS').
+                    For v4r5: {jsons_root_dir}/MZZ_{TIME_RES}_{GRIDTYPE}/{SHORTNAME_core}_{TIME_RES}_{GRIDTYPE}_llc090_ECCOV4r5.json.
+                    TIME_RES is one of: ('mon_mean','day_mean','snap');
+                    GRIDTYPE is one of: ('native','latlon').
+                    The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
+                    or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.
     
