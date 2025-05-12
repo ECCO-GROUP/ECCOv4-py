@@ -48,7 +48,6 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
              Currently 'v4r5' only works with ['s3_open','s3_get','s3_get_ifspace'] modes, 
              or if the files are already stored in download_root_dir/ShortName/.
              Otherwise an error is returned.
-             'v4r5' only has grid='native' and time_res='monthly' data files available.
     
     grid: ('native','latlon',None), specifies whether to query datasets with output
           on the native grid or the interpolated lat/lon grid.
@@ -118,7 +117,7 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
                     as-zarr-for-rapid-data-access-61e33f8fe685
                     and stored as {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
-                    For v4r4, GRIDTYPE is '05DEG' or 'LLC0090GRID'.
+                    GRIDTYPE is '05DEG' or 'LLC0090GRID'.
                     TIME_RES is one of: ('MONTHLY','DAILY','SNAPSHOT','GEOMETRY','MIXING_COEFFS').
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.
@@ -158,36 +157,16 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
     pass
     
     
+    
     ## query varlists as needed to obtain shortnames
     
     def shortnames_find(query_list,version,grid,time_res):
         shortnames_list = []
-        if version == 'v4r5':
-            if ((grid == 'native') or (grid is None)):
-                if ((time_res == 'monthly') or (time_res == 'all')):
-                    import s3fs
-                    from os.path import split
-                    s3 = s3fs.S3FileSystem(anon=False,\
-                                           requester_pays=True)
-                    s3_datasets_list = ['ECCO_L4_'+split(dataset_path)[-1]+'_LLC0090GRID_MONTHLY_V4R5'\
-                                          for dataset_path in \
-                                          s3.ls("s3://ecco-model-granules/netcdf/V4r5/native/mon_mean/")]
-                else:
-                    raise ValueError("'"+time_res+"' time res can not currently be accessed for v4r5.\n"\
-                                     +"ecco_access can currently access only 'monthly' time_res v4r5 netCDF files.")
-            else:
-                raise ValueError("'"+grid+"' grid can not currently be accessed for v4r5.\n"\
-                                 +"ecco_access can currently access only 'native' grid v4r5 netCDF files.")
-                
         for query_item in query_list:
             if version == 'v4r5':
-                # see if the query is an existing dataset ID
-                # if not, then do a text search of the ECCO variable lists
-                if query_item in s3_datasets_list:
-                    shortnames_list.append(query_item)
-                else:
-                    shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
-                    shortnames_list.append(shortname_match)
+                # text search of the ECCO variable lists
+                shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
+                shortnames_list.append(shortname_match)
             else:    
                 # see if the query is an existing NASA Earthdata ShortName
                 # if not, then do a text search of the ECCO variable lists
@@ -367,7 +346,6 @@ def ecco_podaac_to_xrdataset(query,version='v4r4',grid=None,time_res='all',\
              Currently 'v4r5' only works with ['s3_open','s3_get','s3_get_ifspace'] modes, 
              or if the files are already stored in download_root_dir/ShortName/.
              Otherwise an error is returned.
-             'v4r5' only has grid='native' and time_res='monthly' data files available.
     
     grid: ('native','latlon',None), specifies whether to query datasets with output
           on the native grid or the interpolated lat/lon grid.
@@ -433,7 +411,7 @@ def ecco_podaac_to_xrdataset(query,version='v4r4',grid=None,time_res='all',\
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
                     as-zarr-for-rapid-data-access-61e33f8fe685
                     and stored as {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
-                    For v4r4, GRIDTYPE is '05DEG' or 'LLC0090GRID'.
+                    GRIDTYPE is '05DEG' or 'LLC0090GRID'.
                     TIME_RES is one of: ('MONTHLY','DAILY','SNAPSHOT','GEOMETRY','MIXING_COEFFS').
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.

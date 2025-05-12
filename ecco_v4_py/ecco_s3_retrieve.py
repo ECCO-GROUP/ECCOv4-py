@@ -149,8 +149,18 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         s3 = s3fs.S3FileSystem(anon=False,\
                                requester_pays=True)
         if version == 'v4r5':
+            if 'LLC0090GRID' in ShortName:
+                gridtime_id = 'native/'
+            elif '05DEG' in ShortName:
+                gridtime_id = 'latlon/'
+            if 'MONTHLY' in ShortName:
+                gridtime_id += 'mon_mean/'
+            elif 'DAILY' in ShortName:
+                gridtime_id += 'day_mean/'
+            elif 'SNAPSHOT' in ShortName:
+                gridtime_id += 'snap/'
             shortname_dir = "_".join(ShortName.split("_")[2:-3])
-            s3_files_all = s3.ls("s3://ecco-model-granules/netcdf/V4r5/native/mon_mean/"\
+            s3_files_all = s3.ls("s3://ecco-model-granules/netcdf/V4r5/"+gridtime_id\
                                  +shortname_dir+"/")
         
         # include only the granules in the date range given by temporal_range
@@ -454,8 +464,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
     ----------
     ShortName: str, the ShortName that identifies the dataset on PO.DAAC.
     
-    version: ('v4r4'), specifies ECCO version to query.
-             Only 'v4r4' files currently available using this access mode.
+    version: ('v4r4','v4r5'), specifies ECCO version to query.
     
     jsons_root_dir: str, the root/parent directory where the 
                     fsspec/kerchunk-generated jsons are found.
@@ -505,7 +514,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir):
     
     # generate map object
     fs = fsspec.filesystem(\
-                "reference", 
+                "reference",\
                 fo=json_file,\
                 remote_protocol="s3", 
                 remote_options={"anon":False,\
