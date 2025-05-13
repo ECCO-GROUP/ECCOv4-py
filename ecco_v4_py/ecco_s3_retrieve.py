@@ -168,19 +168,19 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
                                          for s3_file in s3_files_all])
         sorted_ind = np.argsort(s3_files_all_dates)
         s3_files_all_dates = s3_files_all_dates[sorted_ind]
-        s3_files_all = s3_files_all[sorted_ind]
         
         in_range_ind = np.logical_and(\
                          s3_files_all_dates >= np.datetime64(StartDate,'M'),\
                          s3_files_all_dates <= np.datetime64(EndDate,'M'))\
                          .nonzero()[0]
-        s3_files_list = [s3_files_all[ind] for ind in in_range_ind]
+        s3_files_list = [s3_files_all[sorted_ind[ind]] for ind in in_range_ind]
 
         # reduce granule list to single day if only one day in requested range
         if (('MONTHLY' in ShortName) or ('DAILY' in ShortName)):
             if ((SingleDay_flag == True) and (len(s3_files_list) > 1)):
                 day_index = np.argmin(np.abs(time_start - np.datetime64(StartDate,'D')))
                 s3_files_list = s3_files_list[day_index:(day_index+1)]
+        
         
         return s3_files_list
     
