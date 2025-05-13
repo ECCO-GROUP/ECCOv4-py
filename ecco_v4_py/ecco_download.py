@@ -438,7 +438,7 @@ def ecco_podaac_download(ShortName,StartDate,EndDate,version,snapshot_interval='
     
     # Download the granules
     
-    downloaded_files = download_files_wrapper(urls, download_dir, n_workers, force_redownload, show_noredownload_msg)
+    downloaded_files = download_files_wrapper(urls, download_dir, version, n_workers, force_redownload, show_noredownload_msg)
     
     if return_downloaded_files:
         if len(downloaded_files) == 1:
