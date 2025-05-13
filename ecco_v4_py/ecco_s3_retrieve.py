@@ -554,8 +554,8 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
         json_local_subdir = join(jsons_root_dir,json_subdir)
     json_file = join(json_local_subdir,json_basename)
     
-    if jsons_retrieve:
-        # retrieve json from s3://ecco-model-granules
+    if ((jsons_retrieve) and (not isfile(json_file))):
+        # retrieve json from s3://ecco-model-granules, if it is not already stored locally
         import s3fs
         import os
         
@@ -571,16 +571,12 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
          
         if version == 'v4r4':
             json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
-            json_s3_file = s3.ls(join(json_s3_subdir,json_basename))
         elif version == 'v4r5':
             json_s3_subdir = "s3://ecco-model-granules/netcdf/V4r5/MZZ/" + json_subdir
-            json_s3_file = join(json_s3_subdir,json_basename)
-        # if json is not already stored in current directory, retrieve it from S3 bucket
-        json_basename = basename(json_s3_file)
-        json_file = join(json_local_subdir,json_basename)
-        if not isfile(json_file):
-            os.makedirs(json_local_subdir,exist_ok=True)
-            s3.get_file(json_s3_file,json_file)
+        json_s3_file = join(json_s3_subdir,json_basename)
+        os.makedirs(json_local_subdir,exist_ok=True)
+        s3.get_file(json_s3_file,json_file)
+        
     elif not isfile(json_file):
         raise Exception("json file "+json_file+" not found.\n"\
                         +"To proceed, verify json file is stored in location above, \n"\
