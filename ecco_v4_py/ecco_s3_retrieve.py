@@ -457,7 +457,7 @@ def ecco_podaac_s3_open(ShortName,StartDate,EndDate,version,snapshot_interval='m
 
 
 def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retrieve=True,\
-                               prompt_request_payer=True)
+                               prompt_request_payer=True):
     
     """
     
