@@ -63,6 +63,7 @@ def query_shortnames(query,content_dict,\
     # make query case-insensitive
     query_ci = query.casefold()
     
+    exactmatch_flag = False
     shortnames_match = []
     for shortname,curr_content in content_dict.items():
 
@@ -88,7 +89,6 @@ def query_shortnames(query,content_dict,\
             exactmatch_flag = True
             shortnames_match.append(shortname)
         else:
-            exactmatch_flag = False
             if query_ci in shortname.casefold():
                 shortnames_match.append(shortname)
             elif query_ci in str(curr_content).casefold():

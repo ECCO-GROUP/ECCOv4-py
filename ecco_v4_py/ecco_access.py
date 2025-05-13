@@ -116,8 +116,7 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
                     as-zarr-for-rapid-data-access-61e33f8fe685.
-                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
-                    will be used.
+                    If None (default), jsons_root_dir will be set to ~/MZZ/{version}/.
                     The jsons need to be stored in the following directories/formats:
                     For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
                     GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
@@ -127,6 +126,11 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                     GRIDTYPE is one of: ('native','latlon').
                     The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
                     or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
+    
+    jsons_retrieve: bool, if True (default), and jsons are not already stored in jsons_root_dir, 
+                    retrieve from S3 bucket and store locally in jsons_root_dir.
+                    If False, and jsons are not stored in jsons_root_dir, 
+                    the data retrieval will fail.
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.
     
@@ -223,14 +227,14 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
 
     # remove unneeded keyword arguments
     if mode == 's3_open_fsspec':
-        if 'jsons_root_dir' not in kwargs.keys():
-            kwargs['jsons_root_dir'] = None
         for kwarg in list(kwargs.keys()):
-            if kwarg not in ['jsons_root_dir','prompt_request_payer']:
+            if kwarg not in ['jsons_root_dir','jsons_retrieve','prompt_request_payer']:
                 del kwargs[kwarg]
     else:
         if 'jsons_root_dir' in kwargs.keys():
             del kwargs['jsons_root_dir']
+        if 'jsons_retrieve' in kwargs.keys():
+            del kwargs['jsons_retrieve']
     if mode == 's3_open':
         for kwarg in list(kwargs.keys()):
             if kwarg in ['n_workers','force_redownload','show_noredownload_msg']:
@@ -420,8 +424,7 @@ def ecco_podaac_to_xrdataset(query,version='v4r4',grid=None,time_res='all',\
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3
                     as-zarr-for-rapid-data-access-61e33f8fe685.
-                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
-                    will be used.
+                    If None (default), jsons_root_dir will be set to ~/MZZ/{version}/.
                     The jsons need to be stored in the following directories/formats:
                     For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
                     GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
@@ -431,6 +434,11 @@ def ecco_podaac_to_xrdataset(query,version='v4r4',grid=None,time_res='all',\
                     GRIDTYPE is one of: ('native','latlon').
                     The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
                     or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
+    
+    jsons_retrieve: bool, if True (default), and jsons are not already stored in jsons_root_dir, 
+                    retrieve from S3 bucket and store locally in jsons_root_dir.
+                    If False, and jsons are not stored in jsons_root_dir, 
+                    the data retrieval will fail.
     
     n_workers: int, number of workers to use in concurrent downloads. Benefits typically taper off above 5-6.
     

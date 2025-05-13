@@ -438,8 +438,8 @@ def ecco_podaac_s3_open(ShortName,StartDate,EndDate,version,snapshot_interval='m
     if ((version == 'v4r5') and prompt_request_payer):
         # give requester a chance to opt out of paying data transfer fees
         option_proceed = input("Files will be accessed from a requester pays S3 bucket.\n"\
-                               "Requester is responsible for any data transfer fees.\n"\
-                               "Do you want to proceed? [y/n]: ")
+                               +"Requester is responsible for any data transfer fees.\n"\
+                               +"Do you want to proceed? [y/n]: ")
         if option_proceed.casefold() != 'y':
             raise Exception("Request canceled; no data transferred.")
     
@@ -456,7 +456,8 @@ def ecco_podaac_s3_open(ShortName,StartDate,EndDate,version,snapshot_interval='m
 ###================================================================================================================
 
 
-def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_request_payer=True):
+def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retrieve=True,\
+                               prompt_request_payer=True):
     
     """
     
@@ -471,12 +472,12 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
     version: ('v4r4','v4r5'), specifies ECCO version to query.
     
     jsons_root_dir: str, the root/parent directory where the 
-                    fsspec/kerchunk-generated jsons are found.
+                    fsspec/kerchunk-generated jsons are found, 
+                    or will be stored in if jsons_retrieve=True.
                     jsons are generated using the steps described here:
                     https://medium.com/pangeo/fake-it-until-you-make-it-reading-goes-netcdf4-data-on-aws-s3-as-zarr
                     -for-rapid-data-access-61e33f8fe685.
-                    If None (default), json files on the s3://ecco-model-granules bucket (requester pays)
-                    will be used.
+                    If None (default), jsons_root_dir will be set to ~/MZZ/{version}/.
                     The jsons need to be stored in the following directories/formats:
                     For v4r4: {jsons_root_dir}/MZZ_{GRIDTYPE}_{TIME_RES}/{SHORTNAME}.json.
                     GRIDTYPE is '05DEG' or 'LLC0090GRID' for v4r4;
@@ -486,6 +487,11 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
                     GRIDTYPE is one of: ('native','latlon').
                     The SHORTNAME_core is the SHORTNAME without the 'ECCO_L4_' at the beginning, 
                     or the grid/time/version IDs at the end (e.g., 'LLC0090GRID_MONTHLY_V4R5').
+    
+    jsons_retrieve: bool, if True (default), and jsons are not already stored in jsons_root_dir, 
+                    retrieve from S3 bucket and store locally in jsons_root_dir.
+                    If False, and jsons are not stored in jsons_root_dir, 
+                    the data retrieval will fail.
     
     prompt_request_payer: bool, if True (default), user is prompted to approve 
                                 (by entering "y" or "Y") any access to a 
@@ -504,16 +510,24 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
     import glob
     import fsspec
     
+    
     # identify name of target json and local directory
     shortname_split = ShortName.split('_')
     if version == 'v4r4':
         if 'GEOMETRY' in ShortName:
             gridtype = shortname_split[-2]
             time_res = 'GEOMETRY'
-
+            if gridtype == 'LLC0090GRID':
+                json_basename = "GRID_GEOMETRY_ECCO_V4r4_native_llc0090.nc.json"
+            elif gridtype == '05DEG':
+                json_basename = "GRID_GEOMETRY_ECCO_V4r4_latlon_0p50deg.nc.json"
         elif 'MIX_COEFFS' in ShortName:
             gridtype = shortname_split[-2]
             time_res = 'MIXING_COEFFS'
+            if gridtype == 'LLC0090GRID':
+                json_basename = "OCEAN_3D_MIXING_COEFFS_ECCO_V4r4_native_llc0090.nc.json"
+            elif gridtype == '05DEG':
+                json_basename = "OCEAN_3D_MIXING_COEFFS_ECCO_V4r4_latlon_0p50deg.nc.json"
         else:
             gridtype = shortname_split[-3]
             time_res = shortname_split[-2]
@@ -533,77 +547,67 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,prompt_requ
         shortname_core = "_".join(ShortName.split("_")[2:-3])
         json_subdir = "MZZ_"+gridtime_id
         json_basename = shortname_core+"_"+gridtime_id+"_llc090_ECCOV4r5.json"
-    json_local_subdir = join(jsons_root_dir,json_subdir)
     
     if jsons_root_dir is None:
-        # retrieve jsons from s3://ecco-model-granules
+        json_local_subdir = join(expanduser('~'),'MZZ',version,json_subdir)
+    else:
+        json_local_subdir = join(jsons_root_dir,json_subdir)
+    json_file = join(json_local_subdir,json_basename)
+    
+    if ((jsons_retrieve) and (not isfile(json_file))):
+        # retrieve json from s3://ecco-model-granules, if it is not already stored locally
         import s3fs
+        import os
         
         if prompt_request_payer:
             # give requester a chance to opt out of paying data transfer fees
             option_proceed = input("Files will be accessed from a requester pays S3 bucket.\n"\
-                                   "Requester is responsible for any data transfer fees.\n"\
-                                   "Do you want to proceed? [y/n]: ")
+                                   +"Requester is responsible for any data transfer fees.\n"\
+                                   +"Do you want to proceed? [y/n]: ")
             if option_proceed.casefold() != 'y':
                 raise Exception("Request canceled; no data transferred.")
         s3 = s3fs.S3FileSystem(anon=False,\
                                requester_pays=True)
          
         if version == 'v4r4':
-            json_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
-            if 'GEOMETRY' in ShortName:
-                # NOTE: native and latlon json_subdir are switched, pending correction!
-                if 'LLC' in gridtype:
-                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_05DEG_GEOMETRY"
-                    json_s3_file = s3.ls(join(json_subdir,'*native*.json'))[0]
-                elif 'DEG' in gridtype:
-                    json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/MZZ_LLC0090GRID_GEOMETRY"
-                    json_s3_file = s3.ls(join(json_subdir,'*latlon*.json'))[0]
-            else:
-                json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
-                if 'MIX_COEFFS' in ShortName:
-                    if 'LLC' in gridtype:
-                        json_s3_file = s3.ls(join(json_s3_subdir,'*native*.json'))[0]
-                    elif 'DEG' in gridtype:
-                        json_s3_file = s3.ls(join(json_s3_subdir,'*latlon*.json'))[0]
-                else:
-                    json_s3_file = s3.ls(join(json_s3_subdir,json_basename))
+            json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
         elif version == 'v4r5':
             json_s3_subdir = "s3://ecco-model-granules/netcdf/V4r5/MZZ/" + json_subdir
-            json_s3_file = join(json_s3_subdir,json_basename)
-        # if json is not already stored in current directory, retrieve it from S3 bucket
-        json_basename = basename(json_s3_file)
-        json_file = join(json_local_subdir,json_basename)
-        if not isfile(json_file):
-            s3.get_file(json_s3_file,json_file)
+        json_s3_file = join(json_s3_subdir,json_basename)
+        os.makedirs(json_local_subdir,exist_ok=True)
+        s3.get_file(json_s3_file,json_file)
+        
+    elif not isfile(json_file):
+        raise Exception("json file "+json_file+" not found.\n"\
+                        +"To proceed, verify json file is stored in location above, \n"\
+                        +"or set jsons_retrieve=True.")
+    
+    # access ECCO output using fsspec mapper object
+    if version == 'v4r5':
+        # generate mapper object
+        fs = fsspec.filesystem(\
+                    "reference",\
+                    fo=json_file,\
+                    remote_protocol="s3", 
+                    remote_options={"anon":False,\
+                                    "requester_pays":True},\
+                    skip_instance_cache=True)
     else:
-        if version == 'v4r4':
-            if (('GEOMETRY' in ShortName) or ('MIX_COEFFS' in ShortName)):
-                if 'LLC' in gridtype:
-                    json_file = glob.glob(join(json_local_subdir,'*native*.json'))[0]
-                elif 'DEG' in gridtype:
-                    json_file = glob.glob(join(json_local_subdir,'*latlon*.json'))[0]
-            else:
-                json_file = join(json_local_subdir,json_basename)
-        else:
-            json_file = join(json_local_subdir,json_basename)
+        # get NASA Earthdata credentials for S3
+        creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
+        
+        # generate mapper object
+        fs = fsspec.filesystem(\
+                    "reference",\
+                    fo=json_file,\
+                    remote_protocol="s3", 
+                    remote_options={"anon":False,\
+                                    "key":creds['accessKeyId'],
+                                    "secret":creds['secretAccessKey'], 
+                                    "token":creds['sessionToken']},\
+                    skip_instance_cache=True)
     
-    
-    # get NASA Earthdata credentials for S3
-    creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
-    
-    # generate map object
-    fs = fsspec.filesystem(\
-                "reference",\
-                fo=json_file,\
-                remote_protocol="s3", 
-                remote_options={"anon":False,\
-                                "key":creds['accessKeyId'],
-                                "secret":creds['secretAccessKey'], 
-                                "token":creds['sessionToken']},\
-                skip_instance_cache=True)
     fsmap_obj = fs.get_mapper("")
-    
     
     return fsmap_obj
 
@@ -707,8 +711,8 @@ def ecco_podaac_s3_get(ShortName,StartDate,EndDate,version,snapshot_interval='mo
     if ((version == 'v4r5') and prompt_request_payer):
         # give requester a chance to opt out of paying data transfer fees
         option_proceed = input("Files will be accessed from a requester pays S3 bucket.\n"\
-                               "Requester is responsible for data transfer fees.\n"\
-                               "Do you want to proceed? [y/n]: ")
+                               +"Requester is responsible for data transfer fees.\n"\
+                               +"Do you want to proceed? [y/n]: ")
         if option_proceed.casefold() != 'y':
             raise Exception("Request canceled; no data transferred.")
     
@@ -872,8 +876,8 @@ def ecco_podaac_s3_get_diskaware(ShortNames,StartDate,EndDate,version,snapshot_i
     if ((version == 'v4r5') and prompt_request_payer):
         # give requester a chance to opt out of paying data transfer fees
         option_proceed = input("Files will be accessed from a requester pays S3 bucket.\n"\
-                               "Requester is responsible for data transfer fees.\n"\
-                               "Do you want to proceed? [y/n]: ")
+                               +"Requester is responsible for data transfer fees.\n"\
+                               +"Do you want to proceed? [y/n]: ")
         if option_proceed.casefold() != 'y':
             raise Exception("Request canceled; no data transferred.")
 
