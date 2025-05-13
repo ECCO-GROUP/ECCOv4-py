@@ -184,9 +184,11 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                 # if not, then do a text search of the ECCO variable lists
                 response = requests.get(url="https://cmr.earthdata.nasa.gov/search/collections.json", 
                                         params={'ShortName':query_item})
-                if len(response.json()['feed']['entry']) > 0:
+#                 if len(response.json()['feed']['entry']) > 0:
+                try:
                     shortnames_list.append(query_item)
-                else:
+#                 else:
+                except:
                     shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
                     shortnames_list.append(shortname_match)
         
