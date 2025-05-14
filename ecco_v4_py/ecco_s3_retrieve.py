@@ -217,17 +217,17 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         
         # Query CMR for the desired ECCO Dataset
         s3_files_list = get_granules(input_search_params,ShortName,SingleDay_flag)
-        
-        # for snapshot datasets with monthly snapshot_interval, only include snapshots at beginning/end of months
-        if 'SNAPSHOT' in ShortName:
-            if snapshot_interval == 'monthly':
-                import re
-                s3_files_list_copy = list(tuple(s3_files_list))
-                for s3_file in s3_files_list:
-                    snapshot_date = re.findall("_[0-9]{4}-[0-9]{2}-[0-9]{2}",s3_file)[0][1:]
-                    if snapshot_date[8:] != '01':
-                        s3_files_list_copy.remove(s3_file)
-                s3_files_list = s3_files_list_copy
+    
+    # for snapshot datasets with monthly snapshot_interval, only include snapshots at beginning/end of months
+    if 'SNAPSHOT' in ShortName:
+        if snapshot_interval == 'monthly':
+            import re
+            s3_files_list_copy = list(tuple(s3_files_list))
+            for s3_file in s3_files_list:
+                snapshot_date = re.findall("_[0-9]{4}-[0-9]{2}-[0-9]{2}",s3_file)[0][1:]
+                if snapshot_date[8:] != '01':
+                    s3_files_list_copy.remove(s3_file)
+            s3_files_list = s3_files_list_copy
     
     
     return s3_files_list
