@@ -141,6 +141,7 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
 
         return s3_files_list
     
+    
     def get_granules_ecco_bucket(StartDate: str, EndDate: str,\
                                    ShortName: str, version: str, SingleDay_flag: bool):
         import s3fs
@@ -164,14 +165,15 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
                                  +shortname_dir+"/")
         
         # include only the granules in the date range given by temporal_range
-        s3_files_all_dates = np.array([np.datetime64(s3_file.split("_")[-5],'M')\
-                                         for s3_file in s3_files_all])
+        s3_files_all_datestr = [s3_file.split("_")[-5] for s3_file in s3_files_all]
+        s3_files_all_dates = np.array([np.datetime64(datestr[:np.fmin(len(datestr),13)],'h')\
+                                         for datestr in s3_files_all_datestr])
         sorted_ind = np.argsort(s3_files_all_dates)
         s3_files_all_dates = s3_files_all_dates[sorted_ind]
         
         in_range_ind = np.logical_and(\
-                         s3_files_all_dates >= np.datetime64(StartDate,'M'),\
-                         s3_files_all_dates <= np.datetime64(EndDate,'M'))\
+                         s3_files_all_dates >= np.datetime64(StartDate,'D'),\
+                         s3_files_all_dates <= np.datetime64(EndDate,'D'))\
                          .nonzero()[0]
         s3_files_list = [s3_files_all[sorted_ind[ind]] for ind in in_range_ind]
 
@@ -215,17 +217,17 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         
         # Query CMR for the desired ECCO Dataset
         s3_files_list = get_granules(input_search_params,ShortName,SingleDay_flag)
-        
-        # for snapshot datasets with monthly snapshot_interval, only include snapshots at beginning/end of months
-        if 'SNAPSHOT' in ShortName:
-            if snapshot_interval == 'monthly':
-                import re
-                s3_files_list_copy = list(tuple(s3_files_list))
-                for s3_file in s3_files_list:
-                    snapshot_date = re.findall("_[0-9]{4}-[0-9]{2}-[0-9]{2}",s3_file)[0][1:]
-                    if snapshot_date[8:] != '01':
-                        s3_files_list_copy.remove(s3_file)
-                s3_files_list = s3_files_list_copy
+    
+    # for snapshot datasets with monthly snapshot_interval, only include snapshots at beginning/end of months
+    if 'SNAPSHOT' in ShortName:
+        if snapshot_interval == 'monthly':
+            import re
+            s3_files_list_copy = list(tuple(s3_files_list))
+            for s3_file in s3_files_list:
+                snapshot_date = re.findall("_[0-9]{4}-[0-9]{2}-[0-9]{2}",s3_file)[0][1:]
+                if snapshot_date[8:] != '01':
+                    s3_files_list_copy.remove(s3_file)
+            s3_files_list = s3_files_list_copy
     
     
     return s3_files_list
