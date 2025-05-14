@@ -165,7 +165,6 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
     
     """
     
-    
     pass
     
     
@@ -184,15 +183,14 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                 if len(response.json()['feed']['entry']) > 0:
                     # Earthdata CMR found a match for the ShortName; no need to query varlists
                     varlist_query = False
+                    shortnames_list.append(query_item)
             else:
-                print('NASA Earthdata CMR Search is not working currently;\n'\
+                print('NASA Earthdata CMR Search is not working currently.\n'\
                       +'Searching ECCO variable lists...')
             if varlist_query:
                 # text search of the ECCO variable lists
                 shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
                 shortnames_list.append(shortname_match)
-            else:
-                shortnames_list.append(query_item)
         
         return shortnames_list
     
