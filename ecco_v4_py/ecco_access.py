@@ -169,28 +169,30 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
     pass
     
     
-    
     ## query varlists as needed to obtain shortnames
     
     def shortnames_find(query_list,version,grid,time_res):
         shortnames_list = []
         for query_item in query_list:
-            if version == 'v4r5':
+            # see if the query is an existing NASA Earthdata ShortName
+            # if not, then do a text search of the ECCO variable lists
+            response = requests.get(url="https://cmr.earthdata.nasa.gov/search/collections.json", 
+                                    params={'ShortName':query_item})
+            
+            varlist_query = True
+            if response.status_code == 200:
+                if len(response.json()['feed']['entry']) > 0:
+                    # Earthdata CMR found a match for the ShortName; no need to query varlists
+                    varlist_query = False
+            else:
+                print('NASA Earthdata CMR Search is not working currently;\n'\
+                      +'Searching ECCO variable lists...')
+            if varlist_query:
                 # text search of the ECCO variable lists
                 shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
                 shortnames_list.append(shortname_match)
-            else:    
-                # see if the query is an existing NASA Earthdata ShortName
-                # if not, then do a text search of the ECCO variable lists
-                response = requests.get(url="https://cmr.earthdata.nasa.gov/search/collections.json", 
-                                        params={'ShortName':query_item})
-#                 if len(response.json()['feed']['entry']) > 0:
-                try:
-                    shortnames_list.append(query_item)
-#                 else:
-                except:
-                    shortname_match = ecco_podaac_varlist_query(query_item,version,grid,time_res)
-                    shortnames_list.append(shortname_match)
+            else:
+                shortnames_list.append(query_item)
         
         return shortnames_list
     
