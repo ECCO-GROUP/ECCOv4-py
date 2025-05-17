@@ -18,7 +18,6 @@ from urllib import request
 from http.cookiejar import CookieJar
 from getpass import getpass
 import requests
-import zarr
     
 
 def setup_earthdata_login_auth(url: str='urs.earthdata.nasa.gov'):
