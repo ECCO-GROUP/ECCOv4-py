@@ -117,7 +117,7 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
             response = get_results(params=params)
             if 'feed' in response.keys():
                 for curr_entry in response['feed']['entry']:
-                    time_start = np.append(time_start,np.datetime64(curr_entry['time_start'],'ns'))
+                    time_start = np.append(time_start,np.datetime64(curr_entry['time_start'][:-1],'ns'))
                     for curr_link in curr_entry['links']:
                         if "direct download access via S3" in curr_link['title']:
                             s3_files_list.append(curr_link['href'])
@@ -130,7 +130,7 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
             else:
                 # do another CMR search since previous search hit the allowed maximum
                 # number of entries (2000)
-                params['temporal'] = str(np.datetime64(response['feed']['entry'][-1]['time_end'],'D')\
+                params['temporal'] = str(np.datetime64(response['feed']['entry'][-1]['time_end'][:-1],'D')\
                                          + np.timedelta64(1,'D'))+params['temporal'][10:]
 
         # reduce granule list to single day if only one day in requested range
