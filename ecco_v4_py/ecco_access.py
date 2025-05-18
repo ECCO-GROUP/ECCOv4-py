@@ -161,7 +161,7 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
                    Values are of type str if query finds only one granule/file
                    for that ShortName; of type list if query finds 
                    multiple granules in the same dataset; 
-                   or of type fsspec.mapping.FSMap if mode = 's3_open_fsspec'.
+                   or of type zarr.storage.FsspecStore if mode = 's3_open_fsspec'.
                    Only returned if return_granules=True (default).
     
     """
