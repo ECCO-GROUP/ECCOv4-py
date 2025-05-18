@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+# -*- coding: utf- -*-
 
 from __future__ import division,print_function
 import numpy as np
@@ -24,7 +24,8 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                        new_grid_max_lon, 
                        new_grid_delta_lon,
                        radius_of_influence = 120000,
-                       fill_value = None, mapping_method = 'bin_average') :
+                       fill_value = None, mapping_method = 'bin_average',
+                       neighbors=9) :
     """Take a field from a source grid and interpolate to a target grid.
 
     Parameters
@@ -45,8 +46,8 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
          longitudinal extent of new lat-lon grid cells in degrees
 
     radius_of_influence : float, optional.  Default 120000 m
-        the radius of the circle within which the input data is search for
-        when mapping to the new grid
+        the radius of the circle within which data from the
+        original field (orig_field) is used when mapping to the new grid
 
     fill_value : float, optional. Default None
 		value to use in the new lat-lon grid if there are no valid values
@@ -59,6 +60,14 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
             					 to the target grid
             'bin_average'      - Use the average value from the source grid
 								 to the target grid
+
+    neighbors : int, optional. Default 9
+        from pyresample ("neighbours" parameter, note English alternative spelling)
+        The maximum number of neigbors on the original field (orig_field)
+        to use when mapping the original field to the new grid.
+        If bin-averaging, pyresample will only include up to 'neighbors' 
+        number of closest points. Setting this number higher increases memory
+        usage. see pyresample for me information
 
     RETURNS:
     new_grid_lon_centers, new_grid_lat_centers : ndarrays
@@ -170,7 +179,8 @@ def resample_to_latlon(orig_lons, orig_lats, orig_field,
                     pr.kd_tree.resample_custom(orig_grid, orig_field, new_grid,
                                                 radius_of_influence=radius_of_influence,
                                                 weight_funcs = wf,
-                                                fill_value=fill_value)
+                                                fill_value=fill_value, 
+                                                neighbours=neighbors)
         else:
             raise ValueError('mapping_method must be nearest_neighbor or bin_average. \n'
                     'Found mapping_method = %s ' % mapping_method)
