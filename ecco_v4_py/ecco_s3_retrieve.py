@@ -502,7 +502,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
 
     Returns
     -------
-    fsmap_obj: fsspec.mapping.FSMap object, can be passed directly to xarray.open_dataset 
+    zstore: zarr.storage.FsspecStore, can be passed directly to xarray.open_dataset 
                (with engine='zarr')
     
     """
@@ -511,7 +511,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
     
     import glob
     import fsspec
-    
+    import zarr
     
     # identify name of target json and local directory
     shortname_split = ShortName.split('_')
@@ -593,7 +593,8 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                     remote_protocol="s3", 
                     remote_options={"anon":False,\
                                     "requester_pays":True},\
-                    skip_instance_cache=True)
+                    skip_instance_cache=True,\
+                    asynchronous=True)
     else:
         # get NASA Earthdata credentials for S3
         creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
@@ -607,11 +608,12 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                                     "key":creds['accessKeyId'],
                                     "secret":creds['secretAccessKey'], 
                                     "token":creds['sessionToken']},\
-                    skip_instance_cache=True)
+                    skip_instance_cache=True,\
+                    asynchronous=True)
     
-    fsmap_obj = fs.get_mapper("")
+    zstore = zarr.storage.FsspecStore(fs,path="")
     
-    return fsmap_obj
+    return zstore
 
 
 
