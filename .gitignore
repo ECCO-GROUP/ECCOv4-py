@@ -1,6 +1,7 @@
 *.pyc
 *.swp
-
+*.ipynb_checkpoints
+*.ipynb_checkpoints/*
 ecco_v4_py/.ipynb_checkpoints/read_bin_llc-checkpoint.py
 .DS_Store
 build/lib/ecco_v4_py/__init__.py

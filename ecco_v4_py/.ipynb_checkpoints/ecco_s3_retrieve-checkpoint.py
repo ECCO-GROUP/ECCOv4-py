@@ -18,7 +18,6 @@ from urllib import request
 from http.cookiejar import CookieJar
 from getpass import getpass
 import requests
-import zarr
     
 
 def setup_earthdata_login_auth(url: str='urs.earthdata.nasa.gov'):
@@ -118,7 +117,7 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
             response = get_results(params=params)
             if 'feed' in response.keys():
                 for curr_entry in response['feed']['entry']:
-                    time_start = np.append(time_start,np.datetime64(curr_entry['time_start'][:-1],'ns'))
+                    time_start = np.append(time_start,np.datetime64(curr_entry['time_start'],'ns'))
                     for curr_link in curr_entry['links']:
                         if "direct download access via S3" in curr_link['title']:
                             s3_files_list.append(curr_link['href'])
@@ -131,7 +130,7 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
             else:
                 # do another CMR search since previous search hit the allowed maximum
                 # number of entries (2000)
-                params['temporal'] = str(np.datetime64(response['feed']['entry'][-1]['time_end'][:-1],'D')\
+                params['temporal'] = str(np.datetime64(response['feed']['entry'][-1]['time_end'],'D')\
                                          + np.timedelta64(1,'D'))+params['temporal'][10:]
 
         # reduce granule list to single day if only one day in requested range
@@ -503,7 +502,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
 
     Returns
     -------
-    zstore: zarr.storage.FsspecStore, can be passed directly to xarray.open_dataset 
+    fsmap_obj: fsspec.mapping.FSMap object, can be passed directly to xarray.open_dataset 
                (with engine='zarr')
     
     """
@@ -512,7 +511,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
     
     import glob
     import fsspec
-    import zarr
+    
     
     # identify name of target json and local directory
     shortname_split = ShortName.split('_')
@@ -593,8 +592,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                     fo=json_file,\
                     remote_protocol="s3", 
                     remote_options={"anon":False,\
-                                    "requester_pays":True},\
-                    asynchronous=True)
+                                    "requester_pays":True})
     else:
         # get NASA Earthdata credentials for S3
         creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
@@ -607,13 +605,12 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                     remote_options={"anon":False,\
                                     "key":creds['accessKeyId'],
                                     "secret":creds['secretAccessKey'], 
-                                    "token":creds['sessionToken']},\
-                    asynchronous=True)
+                                    "token":creds['sessionToken']})
     
-    zstore = zarr.storage.FsspecStore(fs,path="")
+    fs.asynchronous = True
+    fsmap_obj = zarr.storage.FsspecStore(fs)
     
-    
-    return zstore
+    return fsmap_obj
 
 
 
