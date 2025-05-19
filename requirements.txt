@@ -1,12 +1,12 @@
-numpy
-future
-Bottleneck
-Cartopy
+bottleneck
+cartopy
 cmocean
 dask[complete]
 fsspec
+future
 matplotlib
 netCDF4
+numpy
 pandas
 pyresample
 python-dateutil
@@ -14,5 +14,5 @@ requests
 s3fs
 tqdm
 xarray
-xmitgcm
 xgcm
+xmitgcm
