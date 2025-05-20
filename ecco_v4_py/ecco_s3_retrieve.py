@@ -143,13 +143,16 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         return s3_files_list
     
     
+    
     def get_granules_ecco_bucket(StartDate: str, EndDate: str,\
                                    ShortName: str, version: str, SingleDay_flag: bool):
         import s3fs
         
         # find all granules in the dataset identified by ShortName
         s3 = s3fs.S3FileSystem(anon=False,\
-                               requester_pays=True)
+                               requester_pays=True,\
+                               asynchronous=False)
+
         if version == 'v4r5':
             if 'LLC0090GRID' in ShortName:
                 gridtime_id = 'native/'
@@ -172,10 +175,16 @@ def ecco_podaac_s3_query(ShortName,StartDate,EndDate,version,snapshot_interval='
         sorted_ind = np.argsort(s3_files_all_dates)
         s3_files_all_dates = s3_files_all_dates[sorted_ind]
         
-        in_range_ind = np.logical_and(\
-                         s3_files_all_dates >= np.datetime64(StartDate,'D'),\
-                         s3_files_all_dates <= np.datetime64(EndDate,'D'))\
-                         .nonzero()[0]
+        if 'MONTHLY' in ShortName:
+            in_range_ind = np.logical_and(\
+                             s3_files_all_dates >= np.datetime64(StartDate,'M'),\
+                             s3_files_all_dates < np.datetime64(EndDate,'M') + np.timedelta64(1,'M'))\
+                             .nonzero()[0]
+        else:
+            in_range_ind = np.logical_and(\
+                             s3_files_all_dates >= np.datetime64(StartDate,'D'),\
+                             s3_files_all_dates < np.datetime64(EndDate,'D') + np.timedelta64(1,'D'))\
+                             .nonzero()[0]
         s3_files_list = [s3_files_all[sorted_ind[ind]] for ind in in_range_ind]
 
         # reduce granule list to single day if only one day in requested range
@@ -259,7 +268,7 @@ def init_S3FileSystem(version):
     import s3fs
     
     if version == 'v4r5':
-        s3 = s3fs.S3FileSystem(anon=False,requester_pays=True)
+        s3 = s3fs.S3FileSystem(anon=False,requester_pays=True,asynchronous=False)
     else:
         creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
         s3 = s3fs.S3FileSystem(anon=False,
@@ -570,7 +579,8 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
             if option_proceed.casefold() != 'y':
                 raise Exception("Request canceled; no data transferred.")
         s3 = s3fs.S3FileSystem(anon=False,\
-                               requester_pays=True)
+                               requester_pays=True,\
+                               asynchronous=False)
          
         if version == 'v4r4':
             json_s3_subdir = "s3://ecco-model-granules/V4r4/mzz_jsons/" + json_subdir
