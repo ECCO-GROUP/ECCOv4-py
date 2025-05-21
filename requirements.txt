@@ -16,3 +16,4 @@ tqdm
 xarray
 xgcm
 xmitgcm
+zarr

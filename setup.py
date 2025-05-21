@@ -34,7 +34,8 @@ setup(
   'tqdm',
   'xarray',
   'xmitgcm',
-  'xgcm >= 0.5.0'],
+  'xgcm >= 0.5.0',
+  'zarr'],
   tests_require=['pytest','coverage'],
   license='MIT',
   classifiers=[
