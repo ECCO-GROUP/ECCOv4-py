@@ -35,4 +35,5 @@ dependencies:
   - s3fs
   - tqdm
   - pandas
+  - zarr
 
