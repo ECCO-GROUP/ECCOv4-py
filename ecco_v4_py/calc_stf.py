@@ -90,7 +90,7 @@ def calc_meridional_stf_dens(ds, lat_vals, sig_levels,
         sig = sig_levels[ss]
         y = v*dz*dx*np.heaviside(sigS-sig,1)*-1
         yy = y.sum(dim='k')
-        x = utot*dz*dy*np.heaviside(sigW-sig,1)*-1
+        x = u*dz*dy*np.heaviside(sigW-sig,1)*-1
         xx = x.sum(dim='k')
         if any(x in ['time','month','year'] for x in list(U.dims)):
             yvol[:,ss,:] = yy
