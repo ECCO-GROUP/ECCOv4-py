@@ -9,7 +9,7 @@ dependencies:
   - cmocean
   - dask[complete]
   - docrep
-  - fsspec
+  - fsspec>=2024.12.0
   - future
   - geos
   - matplotlib
@@ -32,7 +32,7 @@ dependencies:
   - Bottleneck
   - python-dateutil
   - requests
-  - s3fs
+  - s3fs>=2024.12.0
   - tqdm
   - pandas
   - zarr
