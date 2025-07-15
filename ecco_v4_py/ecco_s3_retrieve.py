@@ -618,7 +618,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                                     "key":creds['accessKeyId'],
                                     "secret":creds['secretAccessKey'], 
                                     "token":creds['sessionToken']},\
-                    asynchronous=True)
+                    asynchronous=False)
     
     zstore = zarr.storage.FsspecStore(fs,path="")
     
