@@ -35,5 +35,5 @@ dependencies:
   - s3fs>=2024.12.0
   - tqdm
   - pandas
-  - zarr
+  - zarr>=3.0.7
 
