@@ -1,5 +1,6 @@
 ### This function allows users to query ECCO variables and datasets, and then gain access via direct download, or opening files remotely on S3
 
+from .ecco_download import setup_earthdata_login_auth
 from .ecco_download import ecco_podaac_query
 from .ecco_download import ecco_podaac_download
 from .ecco_download import ecco_podaac_download_diskaware

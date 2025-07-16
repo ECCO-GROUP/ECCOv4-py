@@ -27,6 +27,30 @@ from tqdm import tqdm
 from urllib import request    
 
 
+
+def setup_earthdata_login_auth(url: str='urs.earthdata.nasa.gov'):
+    """Helper subroutine to log into NASA EarthData"""
+    # look for the netrc file and use the login/password
+    try:
+        username, _, password = netrc(file=_netrc).authenticators(url)
+
+    # if the file is not found, prompt the user for the login/password
+    except (FileNotFoundError, TypeError):
+        print('Please provide Earthdata Login credentials for access.')
+        username, password = input('Username: '), getpass('Password: ')
+    
+    manager = request.HTTPPasswordMgrWithDefaultRealm()
+    manager.add_password(None, url, username, password)
+    auth = request.HTTPBasicAuthHandler(manager)
+    jar = CookieJar()
+    processor = request.HTTPCookieProcessor(jar)
+    opener = request.build_opener(auth, processor)
+    request.install_opener(opener)
+
+
+###================================================================================================================
+
+
 def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='monthly'):
     
     """
