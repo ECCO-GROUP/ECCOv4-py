@@ -991,10 +991,11 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
     
     ### Helper subroutine to gracefully download single files and avoids re-downloading if file already exists.
     # To force redownload of the file, pass **True** to the boolean argument *force* (default **False**)\n,
-    def download_file(url: str, output_file: str, force: bool=False):
+    def download_file(url: str, output_file: str, force: bool=False, show_noredownload_msg: bool=True):
         """url (str): the HTTPS url from which the file will download
         output_file (str): the filename (with path) of the output file
         force (bool): download even if the file exists locally already
+        show_noredownload_msg (bool): show no re-download messages (vs. not showing messages)
         """
         
         output_dir,output_filename = os.path.split(output_file)
@@ -1004,7 +1005,8 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
         
         # if the file has already been downloaded, skip    
         if isfile(output_file) and force is False:
-            print(output_filename + ' already exists, and force=False, not re-downloading')
+            if show_noredownload_msg:
+                print(output_filename + ' already exists, and force=False, not re-downloading')
             return output_file,0
         
         with requests.get(url) as r:
@@ -1051,7 +1053,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
             max_retries = 3
             n_retry = 1
             while n_retry <= max_retries:
-                time.sleep(5*(n_retry**2))
+                time.sleep(5*(n_retry**1))
                 try:
                     result = download_file(url=url, output_file=ncout, force=force,\
                                            show_noredownload_msg=show_noredownload_msg)
@@ -1160,7 +1162,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
                 grans_urls.remove(gran_url)
             else:
                 gran_count += 1
-  
+    
     num_grans = len(grans_urls)
     print (f'\nTotal number of matching granules: {num_grans}')  
     
