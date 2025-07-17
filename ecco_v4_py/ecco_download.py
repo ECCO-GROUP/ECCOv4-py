@@ -93,11 +93,11 @@ def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='mon
     
     #=====================================================
     
+    
     ### Define Helper Subroutines
     
     ### Helper subroutines to make the API calls to search CMR and parse response
     def set_params(params: dict):
-#         params.update({'scroll': "true", 'page_size': 2000})
         params.update({'page_size': 2000})
         return {par: val for par, val in params.items() if val is not None}
     
@@ -814,7 +814,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
     
     ### Helper subroutines to make the API calls to search CMR and parse response
     def set_params(params: dict):
-        params.update({'scroll': "true", 'page_size': 2000})
+        params.update({'page_size': 2000})
         return {par: val for par, val in params.items() if val is not None}
     
     
