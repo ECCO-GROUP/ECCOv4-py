@@ -215,8 +215,8 @@ def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='mon
             sizes = np.where(~np.isnan(sizes),sizes,np.nanmean(sizes))
         else:
             input_search_params['temporal'] = ['1992-01-01','2017-12-31']
-            _,gran_sizes_all = get_granules(input_search_params)
-            sizes_all = (2**20)*np.asarray(grans_all['Size']).astype('float64')
+            _,gran_sizes_all = get_granules(input_search_params,ShortName,SingleDay_flag)
+            sizes_all = (2**20)*np.asarray(gran_sizes_all).astype('float64')
             sizes_all = np.where(sizes_all > (2**10),sizes_all,np.nan) 
             sizes = np.where(~np.isnan(sizes),sizes,np.nanmean(sizes_all))
         sizes = list(sizes)
