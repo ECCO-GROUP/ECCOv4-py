@@ -239,6 +239,8 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
             del kwargs['jsons_root_dir']
         if 'jsons_retrieve' in kwargs.keys():
             del kwargs['jsons_retrieve']
+        if 'prompt_request_payer' in kwargs.keys():
+            del kwargs['prompt_request_payer']
     if mode == 's3_open':
         for kwarg in list(kwargs.keys()):
             if kwarg in ['n_workers','force_redownload','show_noredownload_msg']:
