@@ -604,7 +604,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                     remote_protocol="s3", 
                     remote_options={"anon":False,\
                                     "requester_pays":True},\
-                    asynchronous=True)
+                    asynchronous=False)
     else:
         # get NASA Earthdata credentials for S3
         creds = requests.get('https://archive.podaac.earthdata.nasa.gov/s3credentials').json()
@@ -618,7 +618,7 @@ def ecco_podaac_s3_open_fsspec(ShortName,version,jsons_root_dir=None,jsons_retri
                                     "key":creds['accessKeyId'],
                                     "secret":creds['secretAccessKey'], 
                                     "token":creds['sessionToken']},\
-                    asynchronous=True)
+                    asynchronous=False)
     
     zstore = zarr.storage.FsspecStore(fs,path="")
     

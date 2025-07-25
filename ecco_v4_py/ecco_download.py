@@ -27,6 +27,34 @@ from tqdm import tqdm
 from urllib import request    
 
 
+
+def setup_earthdata_login_auth(url: str='urs.earthdata.nasa.gov'):
+    """Helper subroutine to log into NASA EarthData"""
+    
+    # Predict the path of the netrc file depending on os/platform type.
+    _netrc = join(expanduser('~'), "_netrc" if system()=="Windows" else ".netrc")
+    
+    # look for the netrc file and use the login/password
+    try:
+        username, _, password = netrc(file=_netrc).authenticators(url)
+
+    # if the file is not found, prompt the user for the login/password
+    except (FileNotFoundError, TypeError):
+        print('Please provide Earthdata Login credentials for access.')
+        username, password = input('Username: '), getpass('Password: ')
+    
+    manager = request.HTTPPasswordMgrWithDefaultRealm()
+    manager.add_password(None, url, username, password)
+    auth = request.HTTPBasicAuthHandler(manager)
+    jar = CookieJar()
+    processor = request.HTTPCookieProcessor(jar)
+    opener = request.build_opener(auth, processor)
+    request.install_opener(opener)
+
+
+###================================================================================================================
+
+
 def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='monthly'):
     
     """
@@ -65,32 +93,11 @@ def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='mon
     
     #=====================================================
     
+    
     ### Define Helper Subroutines
-    
-    ### Helper subroutine to log into NASA EarthData
-    
-    # not pretty but it works
-    def setup_earthdata_login_auth(url: str='urs.earthdata.nasa.gov'):
-        # look for the netrc file and use the login/password
-        try:
-            username, _, password = netrc(file=_netrc).authenticators(url)
-    
-        # if the file is not found, prompt the user for the login/password
-        except (FileNotFoundError, TypeError):
-            print('Please provide Earthdata Login credentials for access.')
-            username, password = input('Username: '), getpass('Password: ')
-        
-        manager = request.HTTPPasswordMgrWithDefaultRealm()
-        manager.add_password(None, url, username, password)
-        auth = request.HTTPBasicAuthHandler(manager)
-        jar = CookieJar()
-        processor = request.HTTPCookieProcessor(jar)
-        opener = request.build_opener(auth, processor)
-        request.install_opener(opener)
     
     ### Helper subroutines to make the API calls to search CMR and parse response
     def set_params(params: dict):
-#         params.update({'scroll': "true", 'page_size': 2000})
         params.update({'page_size': 2000})
         return {par: val for par, val in params.items() if val is not None}
     
@@ -169,9 +176,6 @@ def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='mon
     
     ## Log into Earthdata using your username and password
     
-    # Predict the path of the netrc file depending on os/platform type.
-    _netrc = join(expanduser('~'), "_netrc" if system()=="Windows" else ".netrc")
-    
     # actually log in with this command:
     setup_earthdata_login_auth()
     
@@ -211,8 +215,8 @@ def ecco_podaac_query(ShortName,StartDate,EndDate,version,snapshot_interval='mon
             sizes = np.where(~np.isnan(sizes),sizes,np.nanmean(sizes))
         else:
             input_search_params['temporal'] = ['1992-01-01','2017-12-31']
-            _,gran_sizes_all = get_granules(input_search_params)
-            sizes_all = (2**20)*np.asarray(grans_all['Size']).astype('float64')
+            _,gran_sizes_all = get_granules(input_search_params,ShortName,SingleDay_flag)
+            sizes_all = (2**20)*np.asarray(gran_sizes_all).astype('float64')
             sizes_all = np.where(sizes_all > (2**10),sizes_all,np.nan) 
             sizes = np.where(~np.isnan(sizes),sizes,np.nanmean(sizes_all))
         sizes = list(sizes)
@@ -810,7 +814,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
     
     ### Helper subroutines to make the API calls to search CMR and parse response
     def set_params(params: dict):
-        params.update({'scroll': "true", 'page_size': 2000})
+        params.update({'page_size': 2000})
         return {par: val for par, val in params.items() if val is not None}
     
     
@@ -987,10 +991,11 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
     
     ### Helper subroutine to gracefully download single files and avoids re-downloading if file already exists.
     # To force redownload of the file, pass **True** to the boolean argument *force* (default **False**)\n,
-    def download_file(url: str, output_file: str, force: bool=False):
+    def download_file(url: str, output_file: str, force: bool=False, show_noredownload_msg: bool=True):
         """url (str): the HTTPS url from which the file will download
         output_file (str): the filename (with path) of the output file
         force (bool): download even if the file exists locally already
+        show_noredownload_msg (bool): show no re-download messages (vs. not showing messages)
         """
         
         output_dir,output_filename = os.path.split(output_file)
@@ -1000,7 +1005,8 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
         
         # if the file has already been downloaded, skip    
         if isfile(output_file) and force is False:
-            print(output_filename + ' already exists, and force=False, not re-downloading')
+            if show_noredownload_msg:
+                print(output_filename + ' already exists, and force=False, not re-downloading')
             return output_file,0
         
         with requests.get(url) as r:
@@ -1047,7 +1053,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
             max_retries = 3
             n_retry = 1
             while n_retry <= max_retries:
-                time.sleep(5*(n_retry**2))
+                time.sleep(5*(n_retry**1))
                 try:
                     result = download_file(url=url, output_file=ncout, force=force,\
                                            show_noredownload_msg=show_noredownload_msg)
@@ -1156,7 +1162,7 @@ def ecco_podaac_download_subset(ShortName,StartDate=None,EndDate=None,snapshot_i
                 grans_urls.remove(gran_url)
             else:
                 gran_count += 1
-  
+    
     num_grans = len(grans_urls)
     print (f'\nTotal number of matching granules: {num_grans}')  
     

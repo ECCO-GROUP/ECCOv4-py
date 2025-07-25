@@ -1,5 +1,6 @@
 ### This function allows users to query ECCO variables and datasets, and then gain access via direct download, or opening files remotely on S3
 
+from .ecco_download import setup_earthdata_login_auth
 from .ecco_download import ecco_podaac_query
 from .ecco_download import ecco_podaac_download
 from .ecco_download import ecco_podaac_download_diskaware
@@ -238,6 +239,8 @@ def ecco_podaac_access(query,version='v4r4',grid=None,time_res='all',\
             del kwargs['jsons_root_dir']
         if 'jsons_retrieve' in kwargs.keys():
             del kwargs['jsons_retrieve']
+        if 'prompt_request_payer' in kwargs.keys():
+            del kwargs['prompt_request_payer']
     if mode == 's3_open':
         for kwarg in list(kwargs.keys()):
             if kwarg in ['n_workers','force_redownload','show_noredownload_msg']:

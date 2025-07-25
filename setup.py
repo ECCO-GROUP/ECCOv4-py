@@ -7,7 +7,7 @@ def README():
 setup(
   name = 'ecco_v4_py',
   packages = ['ecco_v4_py'], # this must be the same as the name above
-  version = '1.7.7',
+  version = '1.7.8',
   description = 'Estimating the Circulation and Climate of the Ocean (ECCO) Version 4 Python Package',
   author = 'Ian Fenty, Ou Wang, Tim Smith, Andrew Delman, and others',
   author_email = 'ian.fenty@jpl.nasa.gov, ecco-group@mit.edu',
@@ -35,7 +35,7 @@ setup(
   'xarray',
   'xmitgcm',
   'xgcm >= 0.5.0',
-  'zarr'],
+  'zarr >= 3.0.7'],
   tests_require=['pytest','coverage'],
   license='MIT',
   classifiers=[
