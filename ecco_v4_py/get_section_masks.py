@@ -380,7 +380,7 @@ def _apply_rotation_matrix(rot_mat,xyz):
 def _convert_latlon_to_cartesian(lon, lat):
     """Convert latitude, longitude (degrees) to cartesian coordinates
     Note: conversion to cartesian differs from what is found at e.g. Wolfram
-    because here lat \in [-pi/2, pi/2] with 0 at equator, not [0, pi], pi/2 at equator
+    because here lat in [-pi/2, pi/2] with 0 at equator, not [0, pi], pi/2 at equator
 
     Parameters
     ----------
