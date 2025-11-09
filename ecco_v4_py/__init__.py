@@ -1,3 +1,5 @@
+from .calc_meridional_trsp_isopycnals import calc_meridional_stf_dens
+
 from .calc_meridional_trsp import calc_meridional_vol_trsp, \
         calc_meridional_heat_trsp, calc_meridional_salt_trsp, \
         meridional_trsp_at_depth
