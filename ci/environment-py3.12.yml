@@ -9,7 +9,6 @@ dependencies:
   - cmocean
   - dask[complete]
   - docrep
-  - fsspec>=2024.12.0
   - future
   - geos
   - matplotlib
@@ -31,9 +30,5 @@ dependencies:
   - typing_extensions
   - Bottleneck
   - python-dateutil
-  - requests
-  - s3fs>=2024.12.0
-  - tqdm
   - pandas
-  - zarr>=3.0.7
 
