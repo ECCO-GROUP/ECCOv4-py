@@ -74,18 +74,11 @@ from .tile_plot_proj import plot_global
 
 from ecco_v4_py import vector_calc
 
-from .ecco_access import ecco_podaac_access
-from .ecco_access import ecco_podaac_to_xrdataset
-
-__all__ = ['calc_meridional_trsp',
+__all__ = ['calc_meridional_trsp_isopycnals',
+           'calc_meridional_trsp',
            'calc_section_trsp',
            'calc_stf',
-           'ecco_acc_dates',
-           'ecco_access',
-           'ecco_download',
-           'ecco_s3_retrieve',
            'ecco_utils',
-           'ecco_varlist',
            'get_section_masks',
            'llc_array_conversion',
            'netcdf_product_generation',
