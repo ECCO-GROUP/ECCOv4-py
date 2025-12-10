@@ -16,7 +16,6 @@ import numpy as np
 import warnings
 import matplotlib.pylab as plt
 import xarray as xr
-from distutils.util import strtobool
 import pyresample as pr
 import xmitgcm
 import dask
