@@ -341,23 +341,38 @@ def load_ecco_vars_from_mds(mds_var_dir,
             print ('ecco dataset time_bnds typ   ', type(ecco_dataset.time_bnds))
             print ('ecco dataset time_bnds       ', ecco_dataset.time_bnds)
 
+        # if time.values is a single number (may never evaluate since even
+        # asking for just one time step seems to give time.values as an array)
         if isinstance(ecco_dataset.time.values, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
             ecco_dataset['time'].values = center_times
 
+        # if center_times is a single number
         elif isinstance(center_times, np.datetime64):
             if not less_output:
                 print ('replacing time.values....')
             center_times = np.array(center_times)
-            ecco_dataset['time'].values[:] = center_times
+            
+            # somehow completely replacing the time array with a new array
+            # is fine, but trying to change the values of the original time array
+            # throws 'read only' errors.
 
+            # broken command, with error that 'time' is read-only
+            # ecco_dataset['time'].values[:] = center_times
+
+            # fix
+            tmp_time = np.copy(ecco_dataset.time.values)
+            tmp_time[:] = np.array(center_times)
+
+            ecco_dataset['time'] = tmp_time
+
+        # if time.values is an array and center_times is an array
         elif isinstance(ecco_dataset.time.values, np.ndarray) and \
               isinstance(center_times, np.ndarray):
             if not less_output:
                 print ('replacing time.values....')
             ecco_dataset = ecco_dataset.assign_coords({'time': center_times})
-            #ecco_dataset['time'] = center_times
 
 
     # Drop mask Ctrl fields
