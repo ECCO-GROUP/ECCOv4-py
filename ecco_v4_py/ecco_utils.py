@@ -422,7 +422,7 @@ def extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(dt64):
         return tuple([x.values for x in xdates])
     elif isinstance(dt64,np.datetime64):
         xdates = extract_yyyy_mm_dd_hh_mm_ss_from_datetime64(xr.DataArray(pd.to_datetime(dt64)))
-        return tuple([int(x.values) for x in xdates])
+        return tuple(int(np.ravel(x.values)[0]) for x in xdates)
 
 #%%
 def minimal_metadata(ds):
